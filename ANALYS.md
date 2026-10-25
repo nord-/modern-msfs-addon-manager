@@ -101,37 +101,90 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 - **Plattform:** .NET 10 som minimum (.NET 11 släpps snart – sikta på att kunna lyfta).
 - **Repo:** https://github.com/nord-/modern-msfs-addon-manager (publikt, MIT).
 - **MSFS 2020: must have.**
+- **Snabb start är ett fokus.** All skanning av kataloger och BGL-filer sker på en bakgrundstråd. Gränssnittet ska gå att använda direkt.
 - **Prioritering av addon-typer:** 1) **Scenery** (huvudfokus: flygplatser, karta, GSX), 2) **Aircraft**, 3) allt annat samlas under **"Övrigt"** (bibliotek, verktyg, moduler, AI-trafik osv.), med enkel av/på men ingen specialbehandling.
 - **MSFS 2024: nice to have, out of scope för MVP.** (Designa så att sim-specifika delar kan bytas – sökvägar, content-format, inbyggda flygplatser.)
 - **Begränsning:** MSFS 2020 läser in Community-paketen en gång vid uppstart, så av/på slår igenom först vid nästa start. Varken BOB eller Addons Linker kommer runt det. Appen bör upptäcka att simmen körs och visa "slår igenom vid nästa start" (som BOB gör). Den ska också undvika att ta bort länkar under körning, eftersom simmen kan ha filer öppna.
+
+## Designbeslut (grilling 2026-10-25)
+
+Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
+
+**Modell**
+- **Package** är det sim:en laddar. **Addon** är en namngiven samling av ett eller flera Packages och den enhet användaren slår av och på. All av/på sker på Addon-nivå.
+- Ett Package kan tillhöra flera Addons, till exempel ett Asset pack i `Scenery\Objects`. Det är på så länge minst en påslagen Addon innehåller det. När en Addon slås av tas bara de Packages bort som ingen annan påslagen Addon behöver.
+- Addons bildas genom att appen föreslår och användaren godkänner. Förslagen bygger på `creator`, namnprefix och `dependencies`. Utan godkännande blir varje Package en egen Addon.
+- **Partial**: en Addon där bara vissa Packages är på. Ett klick på en Partial-Addon slår på alla dess Packages.
+- Category härleds från `content_type` i manifestet och kan åsidosättas manuellt: **Scenery**, **Aircraft** eller **Other**.
+- Scenery delas i **Airport scenery** och **Landscape**. Airport scenery visas under sin **Airport** i hierarkin.
+- Ett Package hör till en Airport om (1) en BGL-fil innehåller en airport-post för koden, (2) namnet eller titeln innehåller koden som ett eget ord, eller (3) användaren har kopplat det manuellt. Automatiska kopplingar kan tas bort. Ett paket kan höra till flera Airports. Geografisk närhet kan komma senare.
+  - Exempel: `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam` och `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting` hamnar alla under EHAM. Det är tre lager som kompletterar varandra, inte konkurrerar.
+- Airport-noden visar sina Addons med var sin toggle, plus en toggle för alla.
+- En Airport identifieras med sin ICAO-kod, eller med sin lokala ident när ICAO saknas (`OG20`, `U60`, `MA33`).
+- **Liveries** visas under sitt flygplan via `base_container` i `aircraft.cfg`, men är egna Addons. Appen varnar när en livery är på men flygplanet är av.
+
+**Libraries och Community**
+- Ett **Library** är en rotmapp som användaren registrerar. Den skannas rekursivt, appen flyttar aldrig filer och mappstrukturen påverkar inte logiken.
+- Varje post i Community klassas som Managed, External, Fixed, Broken eller Stray.
+- Sim-managed packages (Official och Packages-roten) läses men ändras aldrig. Bara scenery från dem visas, inga flygplan.
+- Av/på görs med directory junctions, som inte kräver admin.
+- **Första starten:** appen hittar Community via `InstalledPackagesPath` i `UserCfg.opt` (både Steam och Store), analyserar vart befintliga junctions pekar och föreslår Libraries utifrån det. Användaren bekräftar och kan lägga till fler efter den första skanningen.
+- **Duplicate copy**: samma Package i flera Libraries. Appen varnar och låter användaren välja vilken kopia som länkas. Förvalt är den som Community redan pekar på.
+
+**State och avstämning**
+- Hybridmodell: appen har eget state men stämmer av mot Community vid start. Vid avvikelse visas en synk-dialog där riktningen väljs per rad, och det finns knappar för att välja samma riktning för alla. "Behåll Community" är förvalt.
+- Användardata (Libraries, Addons, kopplingar, dolda objekt, åsidosatta kategorier) sparas som JSON i `%APPDATA%`. Skanningscachen (paket, flygplatser, thumbnails) sparas i SQLite i `%LOCALAPPDATA%`.
+
+**Varningar**
+- Bara **Duplicate package** varnas, alltså samma paket på flera ställen som sim:en laddar från (t.ex. ESGG/ESSA i Packages-roten och via Community). Plus Duplicate copy och livery utan flygplan, enligt ovan.
+- Flera paket som hör till samma Airport visas neutralt ("3 paket"). Ett paket som ersätter eller patchar officiell scenery visas som "ersätter inbyggd", utan varning. Det känns igen på `dependencies` eller på filöverlapp i `layout.json`.
+
+**Prestanda och bakgrundsarbete**
+- Senast sparat läge visas direkt vid start. Avstämningen mot Community körs först i bakgrunden, därefter BGL-skanningen. Gränssnittet uppdateras efter hand.
+- Skanningen är inkrementell och bygger på sökväg och tidsstämpel eller storlek på `manifest.json` och `layout.json`. Full omskanning görs med F5.
+- Första skanningen sker i ordningen Community → Libraries → Sim-managed packages, med förloppsindikator.
+- Av/på fungerar alltid, även under skanning.
+- Community och alla Libraries bevakas, och berörda paket skannas om i bakgrunden.
+- Medan MSFS körs köas alla ändringar och visas som "väntar". De verkställs automatiskt när sim:en stängs.
+
+**Karta, GSX och sök**
+- Kartan visar som standard flygplatser med riktig scenery, alltså Addons plus Asobos handgjorda. "Visa alla flygplatser" tar fram de generiska, med klustring.
+- GSX: status per Airport (Installed / Missing / Two profiles) plus Profile only. Profiler läses från `%APPDATA%\Virtuali\GSX\MSFS` och från scenery-mappar med egna profiler. Profiler installeras med dra och släpp, och det finns en djuplänk till flightsim.to för profiler som saknas. Status visas bara för Airports med riktig scenery.
+- Sök efter scenery som inte är installerad: djuplänkar till flightsim.to och SimMarket som konfigurerbara URL-mallar.
+- Thumbnails tas från paketets egna filer, med platshållare per typ som reserv.
+
+**Teknik och leverans**
+- C# / .NET 10, WPF + WPF-UI, karta med WebView2 + Leaflet och tiles utan API-nyckel.
+- Gränssnittet är **bara på engelska**, utan stöd för flera språk.
+- **Bara mörkt tema.**
+- Distribueras som **framework-dependent single-file exe** via GitHub Releases. .NET 10 Desktop Runtime följer inte med. Saknas den visar .NET:s egen startfil en dialog med länk till nedladdning från Microsoft. Appen visar en notis när det finns en ny release, men uppdaterar sig inte automatiskt.
+
+**Utanför MVP:n**
+- MSFS 2024 (men sim-specifika delar ska gå att byta).
+- Presets.
+- Aktivering per flygning (à la BOB och SimBrief).
+- Installation från zip-arkiv.
+- Daves profilanalysator på kartan.
+- Geografisk koppling av scenery till Airport.
+- Sök med fler butiker än flightsim.to och SimMarket.
 
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |
 |---|---|---|
-| Bibliotek + av/på | Låg | Läs `manifest.json` (title, creator, content_type, package_version). Av/på = skapa/ta bort **directory junction** (kräver inte admin, till skillnad från symlinks). Måste kunna läsa och respektera befintliga junctions från Addons Linker så att migrering blir smärtfri. |
-| Presets | Låg | Namngivna uppsättningar aktiva addons. |
-| Community-inventering | Låg–medel | Klassa varje post: vår länk / främmande länk / symlink / riktig mapp / trasig / skräpfil. |
-| Karta – installerade flygplatser | Medel | ICAO + koordinater ur addonens BGL-filer. Formatet är kartlagt (bl.a. Little Navmap, open source). |
-| Karta – inbyggda flygplatser (2020) | Medel–hög | Bas-BGL:er ligger på disk i 2020 (Official/OneStore resp. Steam) och kan skannas. Alternativ/komplement: OurAirports-data för koordinater. (2024 strömmar → SimConnect facilities, men det är utanför MVP.) |
-| GSX-profiler | Låg | Matcha ICAO från filnamn i `%APPDATA%\Virtuali\GSX\MSFS`. Visa Installed / Missing / Two profiles. |
-| Sök oinstallerad scenery | Oklar | Inget officiellt API hos flightsim.to / SimMarket / Marketplace; scraping är skört och sannolikt mot villkoren. **MVP: djuplänkar** – klick på flygplats utan scenery öppnar sökning på flightsim.to/SimMarket för ICAO. |
+| Libraries + Addons + av/på | Medel | Läsa `manifest.json`, junctions, Addons med delade Packages och Partial-läge. Ta över befintliga junctions från Addons Linker. |
+| Community-inventering och avstämning | Medel | Klassa poster, jämföra med sparat state, synk-dialog. |
+| Bakgrundsskanning och cache | Medel | Inkrementell skanning, SQLite-cache, filbevakning, prioritetsordning. |
+| BGL-tolkning (flygplatser) | Medel–hög | Airport-poster ur Community-, Library- och Official-paket. Formatet är kartlagt (bl.a. Little Navmap, open source). |
+| Hierarki: Airport → Addons, flygplan → liveries | Medel | Kopplingsregler, manuella kopplingar. |
+| Karta | Medel | WebView2 + Leaflet, klustring av cirka 40 000 flygplatser. |
+| GSX-profiler | Låg–medel | `.ini` och `.py`, profiler i scenery-mappar, dra och släpp. |
+| Djuplänkar för sök | Låg | URL-mallar. |
 | Snyggt gränssnitt | Medel | Tar mest tid i praktiken. |
 
-**Tidsbedömning:** MVP (bibliotek, av/på, presets, karta installerade + inbyggda, GSX-markering, djuplänkar) ≈ 3–6 veckors fokuserat kvällsarbete. Polerad version (bilder, dubblettkontroll, liveries, robust hantering av trasiga länkar) ungefär lika mycket till.
+**Tidsbedömning:** Med Addons, delade Packages och avstämning i första versionen blir MVP:n snarare 5–8 veckors fokuserat kvällsarbete än de 3–6 som först bedömdes.
 
-## Teknikval (förslag)
+## Nästa steg
 
-- **C# / .NET 10**, **WPF** + **WPF-UI** (Fluent, mörkt tema). Alternativ att väga: WinUI 3 eller Avalonia.
-- **Karta:** WebView2 + Leaflet med OSM-tiles (mörk stil, t.ex. CartoDB Dark Matter) – klarar tusentals markörer.
-- **SimConnect:** officiell managed wrapper (behövs först för t.ex. teleport/inbyggda flygplatser i 2024).
-- Avfärdat: Tauri (SimConnect från Rust är krångligt), Electron (tungt).
-
-## Öppna frågor till nästa session
-
-1. Ska vi ta över befintligt lager `C:\Spel\Addons` som det är (mappstrukturen = kategorier), eller ha egen metadata/taggar ovanpå?
-2. Hur behandla främmande junctions (Orbx, FSDT, Neofly) – visa och tillåta av/på, eller bara visa?
-3. Riktiga mappar i Community (Navigraph m.fl.) – "always on", eller erbjuda att flytta ut?
-4. Ska per-flygning-aktivering (à la BOB/SimBrief) med i MVP eller senare?
-5. Bilder/thumbnails: från addonens `ContentInfo`/thumbnail-filer, eller egen katalog?
-6. Börja med `superpowers:brainstorming` → spec → plan innan kod.
+1. ADR:er för de beslut som är svåra att ändra (se nedan).
+2. Spec och plan, sedan kod på en egen branch.

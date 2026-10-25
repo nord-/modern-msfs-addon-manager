@@ -93,12 +93,13 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 **Källkod och licens:** https://github.com/DaveGaming01/davesgsxprofilemanagersource. Licensen är **GPL-3.0**. Koden är skriven i TypeScript med Electron, Vite och Tailwind, plus en `worker`-del.
 - Idéer, filformat och sökvägar är inte upphovsrättsskyddade och får användas fritt.
 - Att kopiera eller **översätta** kod till C# räknas som ett härlett verk. Om appen sedan distribueras måste den då också vara GPL-3.0, med öppen källkod.
-- Två vägar: (a) läs koden som referens och skriv egen kod, så att vi kan välja licens fritt, eller (b) licensiera vår app som GPL-3.0 och låna fritt. **Det beslutet tar vi innan vi skriver kod.**
+- Två vägar: (a) läs koden som referens och skriv egen kod, så att vi kan välja licens fritt, eller (b) licensiera vår app som GPL-3.0 och låna fritt. **Beslutat 2026-10-25: MIT, väg (a).** Daves kod används bara som referens.
 - Särskilt intressant att läsa: tolkningen av GSX-profilernas `.ini` och `.py`, skanningen av `UserCfg.opt` och mapplayouterna, och regeln för ICAO i Asobos paketnamn.
 
 ## Krav (beslutade)
 
 - **Plattform:** .NET 10 som minimum (.NET 11 släpps snart – sikta på att kunna lyfta).
+- **Repo:** https://github.com/nord-/modern-msfs-addon-manager (publikt, MIT).
 - **MSFS 2020: must have.**
 - **MSFS 2024: nice to have, out of scope för MVP.** (Designa så att sim-specifika delar kan bytas – sökvägar, content-format, inbyggda flygplatser.)
 - **Begränsning:** MSFS 2020 läser in Community-paketen en gång vid uppstart, så av/på slår igenom först vid nästa start. Varken BOB eller Addons Linker kommer runt det. Appen bör upptäcka att simmen körs och visa "slår igenom vid nästa start" (som BOB gör). Den ska också undvika att ta bort länkar under körning, eftersom simmen kan ha filer öppna.
@@ -132,5 +133,4 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 3. Riktiga mappar i Community (Navigraph m.fl.) – "always on", eller erbjuda att flytta ut?
 4. Ska per-flygning-aktivering (à la BOB/SimBrief) med i MVP eller senare?
 5. Bilder/thumbnails: från addonens `ContentInfo`/thumbnail-filer, eller egen katalog?
-6. Licens för vår app: egen kod med valfri licens, eller GPL-3.0 så att vi kan låna kod från Dave's GSX Profile Manager?
-7. Börja med `superpowers:brainstorming` → spec → plan innan kod.
+6. Börja med `superpowers:brainstorming` → spec → plan innan kod.

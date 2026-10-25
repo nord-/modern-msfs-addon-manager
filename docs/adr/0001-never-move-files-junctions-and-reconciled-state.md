@@ -5,7 +5,7 @@ Packages stay where the user put them in their Libraries. Turning an Addon on or
 ## Considered Options
 
 - **Move Packages into an app-owned library** (as BOB Dispatcher does). Rejected: uninstalling the app or switching tools leaves Community pointing at nothing, and users believe their files are damaged.
-- **Community as the only source of truth, no own state.** Rejected: Addons with shared Packages, Partial state and manual Airport links can't be derived from the folder alone.
+- **Community as the only source of truth, no own state.** Rejected: Addons, Catalogs, manual Airport links and the user's on/off choices while the sim runs can't be derived from the folder alone.
 - **Own state only, never reconciled.** Rejected: other tools (Addons Linker, installers) change Community, and the app would silently drift from what the sim actually loads.
 
 ## Consequences

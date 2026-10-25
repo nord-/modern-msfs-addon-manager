@@ -133,7 +133,7 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 **Libraries och Community**
 - Ett **Library** är en rotmapp som användaren registrerar. Den skannas rekursivt, appen flyttar aldrig filer och mappstrukturen påverkar inte logiken.
 - Varje post i Community klassas som Managed, External, Fixed, Ignored, Broken eller Stray.
-- Sim-managed packages (i `Official`) läses men ändras aldrig. **Rättelse 2026-10-25:** mapparna direkt i Packages-roten är inga paket utan simmens WASM-cache (bara `work` och kompilerade filer, inget `manifest.json`), och de ignoreras. Bara scenery från dem visas, inga flygplan.
+- Sim-managed packages (i `Official`) läses men ändras aldrig. **Rättelse 2026-10-25:** mapparna direkt i Packages-roten är inga paket utan simmens WASM-cache (bara `work` och kompilerade filer, inget `manifest.json`), och de ignoreras. Från Sim-managed packages visas scenery. Flygplan därifrån går aldrig att slå av eller på, men visas som låst bas för liveries och mods.
 - Av/på görs med directory junctions, som inte kräver admin.
 - **Första starten:** appen hittar Community via `InstalledPackagesPath` i `UserCfg.opt` (både Steam och Store), analyserar vart befintliga junctions pekar och föreslår Libraries utifrån det. Användaren bekräftar och kan lägga till fler efter den första skanningen.
 - **Duplicate copy**: samma Package i flera Libraries. Appen varnar och låter användaren välja vilken kopia som länkas. Förvalt är den som Community redan pekar på.

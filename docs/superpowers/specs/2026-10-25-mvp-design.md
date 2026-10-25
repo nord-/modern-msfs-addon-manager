@@ -62,8 +62,10 @@ This app replaces Addons Linker for that workflow. Scenery is the focus, aircraf
 - A Package is found by recursively walking a Library. A folder containing `manifest.json` is a Package; the walk does not descend into it.
 - Package identity is its folder name (the name the sim uses). The junction in Community gets the same name.
 - A Package's display name is its manifest `title`, or its folder name when the title is empty. The folder name is shown as secondary text, because titles repeat (five Packages are titled "Simple Scenery" on Rickard's machine).
-- The same name more than once across the Libraries (in two Libraries, or at two depths in one) is a **Duplicate copy**. One copy is the active copy: by default the one Community already points to, otherwise the first found; the user can change it. Only the active copy can be linked. Changing the active copy of a linked Package re-points the link.
+- The same name more than once across the Libraries (in two Libraries, or at two depths in one) is a **Duplicate copy**. One copy is the active copy: by default the one Community already points to, otherwise the first by Library registration order, then path; the user can change it. Only the active copy can be linked. Changing the active copy of a linked Package re-points the link.
 - Unregistering a Library never deletes anything; its Managed entries become External entries.
+- **Missing Packages:** all user data for a Package (choice, Addon membership, Catalog placement, active copy, manual links, flags) is kept while the Package can't be found, for example when a Library drive is unplugged, a folder is renamed, or a tool deletes and re-creates a Package during an update. The Package is shown as missing. When a Package with the same name reappears, it resumes its old place. Only an explicit user action forgets a missing Package.
+- **Moved Packages:** a Broken link whose name matches a Package found in a registered Library is a stale Managed entry, not a plain Broken one. The sync dialog offers to re-point it to the new location (preselected), through the apply path.
 
 ### 6.2 Community entries
 
@@ -74,11 +76,11 @@ Every entry in Community is classified on each reconcile:
 | Managed | Junction or symlink whose target is a Package in a registered Library | Remove; the app only ever creates junctions |
 | External | Junction or symlink pointing outside every registered Library | Show only |
 | Fixed | Real folder with `manifest.json` | Show only |
-| Ignored | Real folder without `manifest.json`, or a link whose target isn't a Package (for example `flybywire-current-install-0`). The sim ignores it | Show as neutral info |
-| Broken | Link whose target doesn't exist | Remove the link, after confirmation |
+| Ignored | Real folder without `manifest.json` (for example `flybywire-current-install-0`), or a link whose target isn't a Package. The sim ignores it | Show as neutral info |
+| Broken | Link whose target doesn't exist and whose name matches no Library Package | Remove the link, after confirmation |
 | Stray | Loose file | Show only, with a warning |
 
-- Link targets are compared as resolved, normalised paths (with or without trailing backslash; Addons Linker adds one, Neofly doesn't), never by entry name.
+- Link targets are compared as resolved, normalised paths, never by entry name: strip the `\\?\` prefix, ignore a trailing backslash (Addons Linker adds one, Neofly doesn't), and resolve relative symlink targets against Community.
 - Removing a link must remove only the link itself, never the target's contents.
 - **Name taken:** the app never creates a link where any Community entry with that name already exists. The Package then can't be turned on, and the app says which entry holds the name.
 
@@ -91,12 +93,13 @@ Every entry in Community is classified on each reconcile:
   - an **Addon**: all its Packages;
   - a **Catalog**: all Packages of all Addons below it, at any depth.
 - Turning an Addon or Catalog on or off never changes Addons it only **uses**. Used Addons are shown dimmed in the using Addon's properties and can't be switched from there.
-- **Managed elsewhere** is a per-Package flag (it can be set for a whole Library). Such a Package's link is never created or removed by the app, by any action at any level; bulk actions skip it and say so. Its Addon shows a lock.
+- **Managed elsewhere** is an attribute of a Library, inherited by every Package in it, including Packages that appear there later; it can be overridden per Package. A Package is locked when its active copy lies in such a Library (so a user's own copy of `neofly-neofly-cargo` in `C:\Spel\Addons` isn't locked by marking the Neofly Library). A locked Package's link is never created or removed by the app, by any action at any level; bulk actions skip it and say so. Its Addon shows a lock.
+- **Name taken** (6.2) rejects a turn-on at apply time; the choice isn't stored.
 - Fixed and External entries appear as read-only Addons with a lock where they belong in the tree.
 
 ### 6.4 Categories, tabs and Catalogs
 
-- Category comes from manifest `content_type`: `SCENERY` → Scenery, `AIRCRAFT` and `LIVERY` → Aircraft, everything else → Other. Exception: a Package whose `aircraft.cfg` files declare `isAirTraffic=1` (for example `fsltl-traffic-base`, 2,551 such files) is Other and isn't parsed for Liveries. The user can override Category per Addon.
+- Category comes from manifest `content_type`: `SCENERY` → Scenery, `AIRCRAFT` and `LIVERY` → Aircraft, everything else → Other. Exceptions: a `SCENERY` Package with no BGL files at all (`fsdreamteam-gsx-pro`, `neofly-neofly-smokes`) is Other; a Package where any `aircraft.cfg` declares `isAirTraffic=1` (for example `fsltl-traffic-base`, 2,551 such files) is Other and isn't parsed for Liveries. The user can override Category per Addon.
 - Top level:
 
   ```
@@ -112,30 +115,39 @@ Every entry in Community is classified on each reconcile:
   - **Airports** when its Packages belong to an Airport (6.5);
   - **Scenery → Other** when it is an Asset pack: used by another Addon, or containing only shared models and no placed scenery or airports — *builder's call on the exact content test; the user can move it*;
   - **Landscapes** otherwise.
-- **Initial Catalogs (first run):** each tab's tree mirrors the Library folders that hold its Addons, for example `Scenery\Europe` → Catalog "Europe" in the Airports tab and, separately, in the Landscapes tab if it holds Landscape too. A folder that holds several Packages becomes a Catalog (`SKIATHOS V1.2`, `Mid Western Victoria`), not an Addon. An Addon whose Packages lie in different folders goes to the Catalog that holds most of them — *my call*. Afterwards Catalogs are independent of the disk: the user creates, renames, nests and moves them freely.
+- **Initial Catalogs (first run):** each tab's tree mirrors the Library folders that hold its Addons, for example `Scenery\Europe` → Catalog "Europe" in the Airports tab and, separately, in the Landscapes tab if it holds Landscape too. The mapping:
+  - A Library root is not a Catalog. A top-level folder that only repeats the Category (`Scenery`, `Aircraft`) is skipped.
+  - A folder that holds several Packages becomes a Catalog (`SKIATHOS V1.2`, `Mid Western Victoria`), not an Addon.
+  - A chain of folders with a single child collapses into one level; a folder holding a single Package gives no Catalog.
+  - Tool layouts collapse to the product: `Orbx Library\msfs\<product>\Community\<pkg>` gives at most one level, not a "Community" Catalog per product.
+  - Folders with the same path from different Libraries merge into one Catalog.
+  - An Addon whose Packages lie in different folders goes to the Catalog that holds most of them; on a tie, the Catalog of a linked Package, else alphabetically first — *my call*.
+
+  Afterwards Catalogs are independent of the disk: the user creates, renames, nests and moves them freely.
 - Addons and Catalogs can be hidden. A "Show hidden" switch brings them back.
 
 ### 6.5 Addons and Airports
 
 - **Initial Addons (first run, and for new Packages later):**
-  - All Packages belonging to the same Airport form **one Addon per Airport**, named from the Airport (for example "EHAM Schiphol" with `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam`, `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting`). A Package that belongs to several Airports joins the Addon of the first and is noted on the others — *my call*.
-  - Aircraft Packages form one Addon per aircraft (6.6).
+  - All Packages belonging to the same Airport form **one Addon per Airport**, named from the Airport (for example "EHAM Schiphol" with `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam`, `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting`). The Addon is **anchored** to that Airport. A Package that belongs to several Airports joins the Addon of the alphabetically first code and is noted on the others — *my call*.
+  - Aircraft Packages form one Addon per aircraft, anchored to its container (6.6).
   - Every other Package is its own Addon.
-  - The user can then merge, split, rename and move Addons freely, and the app keeps that.
+  - The user can then merge, split, rename and move Addons freely, and the app keeps that. Anchors survive rename and merge; when splitting, the user decides which part keeps the anchor.
+  - **New Packages later** join the Addon anchored to their Airport or container if one exists, otherwise they become a new Addon. They never rearrange existing Addons.
 - A Package belongs to an Airport if:
   1. one of its BGL files contains an airport record with that code, unless the Package is excluded (below), or
-  2. rule 1 found no airport record in it, it is a Scenery Package, and its folder name or manifest title contains the code as a separate 3–4 character token (`…-esgj`, `EHAM …`) that is not on a stop-list of common words (`PACK`, `SAVE`, `SWIM`, `SANS` and similar), or
+  2. rule 1 found no counted airport record in it, it is a Scenery Package, and its folder name or manifest title contains the code as a separate token that is not on a stop-list of common words (`PACK`, `SAVE`, `SWIM`, `SANS` and similar). 4–5 character tokens may sit anywhere (`…-esgj`, `EHAM …`); 3-character tokens only count as the leading token (`u60-u60`, `c53-…`), because about 3,000 generic idents are 3 characters long, or
   3. the user linked it manually.
 
   The user can remove automatic links. Some real airport Packages have neither an airport record nor a code token (for example `005builds-lszrsceneryv11`, `grancanaria`); they land in Landscapes until linked manually, so linking needs an Airport search.
-- An Airport is identified by its ICAO code, or by its local ident when it has none (`OG20`, `MA44`, `U60`, `3U2`, `YX01`). Only 3–4 character idents count; longer ones (`VOLC1`–`VOLC5` in `microsoft-airport-voloport`) and empty ones are ignored.
+- An Airport is identified by its ICAO code, or by its local ident when it has none (`OG20`, `MA44`, `U60`, `3U2`, `YX01`). Idents of 3–5 characters count, as in the sim; add-on airports use 5-character idents (`YALR1`, `YHAC1` from sltcreations, official `RJTIH`). Empty idents are ignored. Non-airports with airport records (`VOLC1`–`VOLC5` in `microsoft-airport-voloport`, `NEOF2` in `neofly-neofly-cargo`) are kept out by the exclusion list.
 - Airport data (code, name, position) is read from airport records in BGL files (MSFS 2020: section type `0x03`, record id `0x0056`) of Library Packages, Community entries and Sim-managed packages.
-- **Encrypted official airports:** some handcrafted official airports have no readable BGL (`asobo-airport-eddf-frankfurt`, `-egll-heathrow`, `-kden-denver`, `-lemd-adolfo-suarez`, `-omdb-dubai-intl`, `-heca-cairo`, `-fact-cape-town`). For Sim-managed packages without BGLs, the code comes from the package name (`*-airport-<code>-*`) and the name and position from the generic record for that code.
+- **Encrypted official airports:** some handcrafted official airports have no readable BGL (`asobo-airport-eddf-frankfurt`, `-egll-heathrow`, `-kden-denver`, `-lemd-adolfo-suarez`, `-omdb-dubai-intl`, `-heca-cairo`, `-fact-cape-town`). For Sim-managed airport packages where no airport record is found (no BGL at all, or BGLs without an airport record like `asobo-airport-lfcs-saucats`), the code comes from the package name (`*-airport-<code>-*`) and the name and position from the generic record for that code.
 - **Excluded from rule 1:**
   - Packages with airport records for **more than 10 airports** (configurable). Verified: `fs-base-genericairports` 40,351, `fs-base-nav` 22,555, `navigraph-navdata` 15,629, `fsdreamteam-gsx-world-of-jetways-2020` 897, `microsoft-nordics2-point-of-interest` 87. The user can opt a Package back in.
-  - Packages on a configurable exclusion list. Defaults include `navigraph-navdata*`, `*-point-of-interest`, `fsdreamteam-gsx-world-of-jetways*` and `microsoft-airport-voloport`.
+  - Packages on a configurable exclusion list. Defaults include `navigraph-navdata*`, `*-point-of-interest`, `fsdreamteam-gsx-world-of-jetways*`, `microsoft-airport-voloport` and `neofly-*`.
 - **Real scenery** for an Airport: at least one non-excluded Library, Community or Sim-managed package belongs to it. That includes `asobo-airport-*`, World Update partner airports and Marketplace airports — *my call*. Airports known only from generic or navigation data have no real scenery.
-- **Replaces built-in:** a non-official Package belonging to an Airport that a handcrafted official package also belongs to. A dependency on the official package or overlapping relative paths in `layout.json` are extra signals. This is information, not a warning.
+- **Replaces built-in:** a Package that isn't Sim-managed, belonging to an Airport that a Sim-managed airport package also belongs to. (World Update partner airports such as `microsoft-airport-edny-friedrichshafen` have third-party creators but are Sim-managed, so the test is where the Package lives, not who made it.) A dependency on the official package or overlapping relative paths in `layout.json` are extra signals. This is information, not a warning.
 - **Uses:** an Addon uses another when one of its Packages lists a Package of the other in manifest `dependencies`, or when the user sets it manually.
 
 ### 6.6 Aircraft and Liveries
@@ -143,9 +155,9 @@ Every entry in Community is classified on each reconcile:
 - Aircraft identity is the **Container** name (the folder under `SimObjects\Airplanes\` that holds an `aircraft.cfg`). Containers are indexed across Library Packages, Community entries and Sim-managed packages. Where `aircraft.cfg` is unreadable (encrypted official or Marketplace aircraft with `.fsarchive` files), container names come from paths in `layout.json`.
 - `base_container` is a relative path (`..\Aerosoft_CRJ_900`); its last segment names the container.
 - A **Livery** Package is one where every `aircraft.cfg` has a `base_container` whose container isn't provided by the same Package. Most Liveries declare `content_type: AIRCRAFT`, so `content_type` alone can't tell. Livery detection runs only for the Aircraft Category.
-- **One Addon per aircraft:** the Package providing a container, plus its Liveries and mods, form one Addon. Liveries and mods are Packages of that Addon and can be switched one by one in its properties.
-  - When the aircraft itself isn't a Library Package (default, Marketplace, Fixed or External), the Addon holds only the Liveries and mods, and the aircraft is shown as its locked base.
-  - A **mod** provides a container that another Package also provides (`mge-asobo-aircraft-c152` provides `Asobo_C152`, like the official C152). A mod that provides several containers joins the Addon of the first and is noted on the others.
+- **One Addon per aircraft, keyed by container:** every Library Package that provides the container, plus the Liveries whose `base_container` names it, form one Addon. They are Packages of that Addon and can be switched one by one in its properties. When two Library Packages provide the same container (`sal1800-cessna-170b-backcountry` and `sal1800-cessna-super-170b-OPTIONAL` both provide `Cessna-170B-Backcountry`), both join the same Addon; scan order never decides.
+  - When a Sim-managed, Fixed or External Package also provides the container, it is shown as the Addon's locked base, and the Library Packages that provide the same container are labelled **mods** (`mge-asobo-aircraft-c152` provides `Asobo_C152`, like the official C152).
+  - A Package that provides several containers joins the Addon of the alphabetically first one and is noted on the others.
   - A Package without `aircraft.cfg` (`flybywire_A320Neo_Cabin`, `simflight-C152-interior-navtablet`) is matched by its `SimObjects\Airplanes\<folder>` names first, then by `dependencies` naming a known aircraft Package, otherwise it is its own Addon in Other.
 
 ### 6.7 Warnings
@@ -154,7 +166,7 @@ Only these are warnings:
 
 - **Duplicate package**: the same Package name in Community and in `Official`.
 - **Duplicate copy**: the same Package more than once across the Libraries.
-- **Livery without aircraft**: a Livery is on while its aircraft, a Library Package, is off. Liveries for always-loaded aircraft never warn.
+- **Livery without aircraft**: a Livery is on while no provider of its base container is on or always loaded.
 - **Used Addon off**: an Addon with any Package on uses an Addon that is entirely off.
 - **Broken** and **Stray** entries in Community.
 - **Two GSX profiles** for one Airport (8).
@@ -164,6 +176,8 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 ### 6.8 Applying changes and the sim
 
 - **Every link change** (on/off at any level, "restore app state" in the sync dialog, removing a Broken link, changing an active copy) goes through one apply path.
+- **Write order:** the link is changed first; only when that succeeds are the choice and the Community snapshot saved, in one write. A failure leaves the stored state as it was and is reported.
+- **Startup self-check:** after reconciling, the app checks every Managed Package for "on ⇔ linked". Any mismatch (for example after a crash between link and save) becomes a row in the sync dialog, even when Community matches the snapshot.
 - The app detects whether MSFS 2020 (`FlightSimulator.exe`) is running.
 - While it runs, the apply path doesn't touch Community. It records which Packages are affected and shows them as **Pending**; Pending takes precedence over other display states. When the sim exits, the app re-derives the links of those Packages from the stored choices and applies them. Switching a Package on, off and on again while the sim runs therefore results in one correct change.
 - The pending set is persisted. If the app is closed while the sim runs, it is applied on the next app start, after reconciliation, if the sim isn't running then — *my call*.
@@ -174,7 +188,11 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 
 1. Locate `UserCfg.opt` (Steam: `%APPDATA%\Microsoft Flight Simulator\`; Microsoft Store: under `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_…\LocalCache\`), read `InstalledPackagesPath`, derive Community and Official. If not found, ask the user to pick the Community folder.
 2. Classify Community and collect the targets of all existing links.
-3. **Propose Libraries:** take each link target's parent folder as a candidate; merge candidates upward while the merged folder contains no Package itself and its other children are candidates too; stop at drive and well-known tool roots (`Orbx Library\msfs`, `FSDT Addon Manager\MSFS`). On Rickard's machine this should give `C:\Spel\Addons`, `C:\Spel\Orbx Library\msfs`, `C:\Spel\FSDT Addon Manager\MSFS` and `C:\Spel\Neofly\addons`. The user can adjust, add and remove roots in the same dialog, and add more Libraries later in Settings.
+3. **Propose Libraries:**
+   1. Link targets under a well-known tool root (`…\Orbx Library\msfs\`, `…\FSDT Addon Manager\MSFS\`, `…\Neofly\addons\`) propose that root directly.
+   2. For the others, start at each target's parent folder and move upward while the next parent is not a drive root or tool root, contains no Package directly, and every one of its subfolders has at least one Package somewhere beneath it. Subfolders don't need to be link targets: unlinked Packages count too. Merge identical results.
+
+   On Rickard's machine this gives `C:\Spel\Addons` (it stops there because `C:\Spel` also holds folders without Packages, such as `vPilot`), `C:\Spel\Orbx Library\msfs`, `C:\Spel\FSDT Addon Manager\MSFS` and `C:\Spel\Neofly\addons`. The user can adjust, add and remove roots in the same dialog, and add more Libraries later in Settings.
 4. **Propose Managed elsewhere** for Libraries owned by other tools (FSDT, Orbx, Neofly), unticked by default, with a plain explanation of the trade-off: the app won't switch those Packages, and switching them here would be undone by the tool if it relinks.
 5. Adopt the current Community state: each Package is on if linked, off if not. No sync dialog on first run.
 6. Run discovery, then the content scan (7.3). On/off is available as soon as discovery is done.
@@ -197,7 +215,7 @@ Two passes:
 
 - Order on first scan: Community → Libraries → Sim-managed packages, with visible progress. The generic airports (about 40,000 in almost 5,000 BGL files) are read once and cached.
 - Incremental by default: a Package is re-read only if its path, or the timestamp or size of `manifest.json` or `layout.json`, has changed. F5 forces a full rescan.
-- Community and all Libraries are watched for changes; affected Packages are rescanned in the background. Watchers overflow during large installs (`C:\Spel\Addons` holds about 123,000 files), so an overflow triggers an incremental rescan.
+- Community and all Libraries are watched for changes; affected Packages are rescanned in the background. Community is watched non-recursively; changes inside linked Packages are seen through the Library watchers. Watchers overflow during large installs (`C:\Spel\Addons` holds about 123,000 files), so an overflow triggers an incremental rescan.
 - From Sim-managed packages, the app reads Scenery and aircraft containers. Their aircraft are never toggleable.
 
 ### 7.4 Reconciliation
@@ -215,7 +233,7 @@ Two passes:
 - `.off` files are disabled profiles: shown as disabled, not counted.
 - `.py` files belong to the Airport by code, not by base name (`essa-orbx.py` belongs with `essa-bwib1r-noolvdgs.ini`). A `.py` doesn't need an `.ini` with the same name. When an Airport has two profiles, its `.py` files are listed with the Airport, not paired with one profile.
 - Status per Airport: **Installed**, **Missing**, **Two profiles** (two or more active `.ini` profiles in the GSX folder for one code; real cases today: LDSP, LFMN, LFPG). Profiles with no matching real scenery appear as **Profile only**.
-- **Profiles shipped with scenery:** some Packages carry a profile in a subfolder (`GSX\`, `GSX-PROFILE\`, `GSX-Profile-EPKK\`). They are shown as "shipped with scenery, not installed" with an action to copy the profile into the GSX folder, and they don't count for Two profiles. GSX's own log (`Couatl.err`) has only ever shown it loading profiles from its own folder, which supports this; see 15.
+- **Profiles shipped with scenery:** some Packages carry a profile in a subfolder (`GSX\`, `GSX-PROFILE\`, `GSX-Profile-EPKK\`). They are recognised by `<code>….ini`/`.py` file names, not by the folder name (`aerosoft-crj\Data\GSX\` holds aircraft `gsx.cfg` files, not profiles). They are shown as "shipped with scenery, not installed" with an action to copy the profile into the GSX folder, and they don't count for Two profiles. GSX's own log (`Couatl.err`) has only ever shown it loading profiles from its own folder, which supports this; see 15.
 - Status is shown only for Airports with real scenery (plus Profile only rows), together with whether the Airport's scenery is on.
 - Dropping a profile file onto the app copies it into the GSX folder, asking before overwriting.
 - Missing profiles get a deep link to flightsim.to, filtered to GSX profiles for the code.
@@ -261,6 +279,9 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Core rules are unit tested without touching disk: on/off at each level, computed Mixed, Uses and its warning, Managed elsewhere skipping, initial Addons and Catalogs, Airport linking (threshold, exclusions, stop-list, encrypted official airports), Livery and mod rules, warnings, pending set, reconciliation diff.
 - Junction handling is tested against temporary folders, including guard tests that removing a link leaves the target untouched, that a failed creation leaves no empty folder, and that a taken name is never overwritten.
 - BGL reading and GSX file-name parsing are tested with small fixtures, including the real-world names above. Official sim files are not committed to the repo.
+- Guard tests for the state machine: a moved Package is re-pointed, a missing Package keeps its user data, a failed link change saves nothing, the self-check catches "on but not linked".
+- **First-run fixture:** a sanitised copy of Rickard's Community (entry names, kinds, targets) and Library tree (folders and manifests, no content) is committed, so Library proposal, initial Addons and initial Catalogs are tested as a whole scenario.
+- A collision report (all Package name and title tokens against the generic idents) is part of the content-scan tests, so the token stop-list is checked against data.
 - An opt-in integration test runs against the local MSFS install.
 
 ## 14. Left to the builder
@@ -275,13 +296,17 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 
 ## 15. Open investigation
 
-- **Does GSX Pro load profiles shipped inside scenery Packages?** Evidence so far (GSX's own log) says no. If it turns out yes, shipped profiles count as active, and Two profiles may change for ESSA, ESGG, EDDF and EPKK on Rickard's machine.
+- **Does GSX Pro load profiles shipped inside scenery Packages?** Evidence so far (GSX's own log) says no. If it turns out yes, shipped profiles count as active, and Two profiles may change for ESSA, ESGG, EDDF and EPKK on Rickard's machine. Note that a shipped and an installed profile can be variants of the same profile (ESSA: `essa-bwib1r.ini` and `essa-bwib1r-noolvdgs.ini`), which would make a plain Two profiles warning a false alarm.
 
 ## 16. Calls I made (please check)
 
 - Spec written in English, like GLOSSARY.md and the ADRs.
 - An Addon whose Packages lie in different folders is placed in the Catalog holding most of them.
-- A Package belonging to several Airports, or a mod providing several containers, joins the first Addon and is noted on the others.
+- A Package belonging to several Airports, or providing several containers, joins the Addon of the alphabetically first one and is noted on the others.
+- Addons are anchored to their Airport or container, so new Packages find the right Addon after renames and merges.
+- Missing Packages keep all user data until the user forgets them; moved Packages are re-pointed.
+- `neofly-*` is on the default exclusion list (its cargo package carries a fake airport record).
+- `SCENERY` Packages without any BGL go to Other.
 - Marketplace and World Update partner airports count as real scenery.
 - Managed elsewhere is proposed for FSDT, Orbx and Neofly Libraries, unticked by default.
 - Changes to Community from other tools while the app runs offer the sync dialog, with "don't ask again this session".

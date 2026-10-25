@@ -116,7 +116,11 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - Addons bildas genom att appen föreslår och användaren godkänner. Förslagen bygger på `creator`, namnprefix och `dependencies`. Utan godkännande blir varje Package en egen Addon.
 - En Addons av/på är **användarens val och sparas**. Ett Package är länkat om minst en påslagen Addon innehåller det (beslutat vid spec-granskningen 2026-10-25).
 - **Partial**: en Addon där Community avviker från användarens val, till exempel efter "behåll Community". Ett klick på en Partial-Addon slår på alla dess Packages.
-- Mappar i ett Library ger grupperingsförslag på varje nivå med fler än ett paket, till exempel både "Europe" och "SKIATHOS V1.2" (2026-10-25).
+- **Varje Package har alltid en egen Addon**, och grupperade Addons läggs ovanpå (2026-10-25, efter Fable-granskningen).
+- **Scenery har två vyer** med samma toggles: **Mappar** (Library-mapparna som de ligger, t.ex. Scenery → Europe → LFBZ) och **Flygplatser** (Airports + Landscape). Mapp- och flygplatsnoder är inga Addons. Deras toggle slår av eller på allt under sig (2026-10-25).
+- **Managed elsewhere**: en Addon som ett annat verktyg återskapar (FSDT, Orbx Central) kan markeras. Den visas då låst och hamnar aldrig i synk-dialogen. FSDT- och Orbx-Libraries föreslås som sådana vid första starten (2026-10-25).
+- **Tröskel**: ett paket med airport-poster för fler än 10 flygplatser räknas inte som Airport scenery som standard (t.ex. World of Jetways med 897 och Nordics POI med 87), plus en undantagslista (2026-10-25).
+- **Undersökningspunkt:** läser GSX Pro profiler som följer med scenery-paket? Tills vidare visas de som "medföljer scenery, ej installerad", och bara GSX-mappen räknas för Two profiles.
 - Category härleds från `content_type` i manifestet och kan åsidosättas manuellt: **Scenery**, **Aircraft** eller **Other**.
 - Scenery delas i **Airport scenery** och **Landscape**. Airport scenery visas under sin **Airport** i hierarkin.
 - Ett Package hör till en Airport om (1) en BGL-fil innehåller en airport-post för koden, (2) namnet eller titeln innehåller koden som ett eget ord, eller (3) användaren har kopplat det manuellt. Automatiska kopplingar kan tas bort. Ett paket kan höra till flera Airports. Geografisk närhet kan komma senare.
@@ -128,7 +132,7 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 **Libraries och Community**
 - Ett **Library** är en rotmapp som användaren registrerar. Den skannas rekursivt, appen flyttar aldrig filer och mappstrukturen påverkar inte logiken.
 - Varje post i Community klassas som Managed, External, Fixed, Broken eller Stray.
-- Sim-managed packages (Official och Packages-roten) läses men ändras aldrig. Bara scenery från dem visas, inga flygplan.
+- Sim-managed packages (i `Official`) läses men ändras aldrig. **Rättelse 2026-10-25:** mapparna direkt i Packages-roten är inga paket utan simmens WASM-cache (bara `work` och kompilerade filer, inget `manifest.json`), och de ignoreras. Bara scenery från dem visas, inga flygplan.
 - Av/på görs med directory junctions, som inte kräver admin.
 - **Första starten:** appen hittar Community via `InstalledPackagesPath` i `UserCfg.opt` (både Steam och Store), analyserar vart befintliga junctions pekar och föreslår Libraries utifrån det. Användaren bekräftar och kan lägga till fler efter den första skanningen.
 - **Duplicate copy**: samma Package i flera Libraries. Appen varnar och låter användaren välja vilken kopia som länkas. Förvalt är den som Community redan pekar på.
@@ -138,7 +142,7 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - Användardata (Libraries, Addons, kopplingar, dolda objekt, åsidosatta kategorier) sparas som JSON i `%APPDATA%`. Skanningscachen (paket, flygplatser, thumbnails) sparas i SQLite i `%LOCALAPPDATA%`.
 
 **Varningar**
-- Bara **Duplicate package** varnas, alltså samma paket på flera ställen som sim:en laddar från (t.ex. ESGG/ESSA i Packages-roten och via Community). Plus Duplicate copy och livery utan flygplan, enligt ovan.
+- Bara **Duplicate package** varnas, alltså samma paket både i Community och i `Official`. (ESGG/ESSA i Packages-roten var ett felaktigt exempel, se rättelsen ovan.) Plus Duplicate copy och livery utan flygplan, enligt ovan.
 - Flera paket som hör till samma Airport visas neutralt ("3 paket"). Ett paket som ersätter eller patchar officiell scenery visas som "ersätter inbyggd", utan varning. Det känns igen på `dependencies` eller på filöverlapp i `layout.json`.
 
 **Prestanda och bakgrundsarbete**

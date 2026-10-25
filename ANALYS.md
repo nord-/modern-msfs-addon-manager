@@ -110,28 +110,29 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 
 Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 
-**Modell**
-- **Package** är det sim:en laddar. **Addon** är en namngiven samling av ett eller flera Packages och den enhet användaren slår av och på. All av/på sker på Addon-nivå.
-- Ett Package kan tillhöra flera Addons, till exempel ett Asset pack i `Scenery\Objects`. Det är på så länge minst en påslagen Addon innehåller det. När en Addon slås av tas bara de Packages bort som ingen annan påslagen Addon behöver.
-- Addons bildas genom att appen föreslår och användaren godkänner. Förslagen bygger på `creator`, namnprefix och `dependencies`. Utan godkännande blir varje Package en egen Addon.
-- En Addons av/på är **användarens val och sparas**. Ett Package är länkat om minst en påslagen Addon innehåller det (beslutat vid spec-granskningen 2026-10-25).
-- **Partial**: en Addon där Community avviker från användarens val, till exempel efter "behåll Community". Ett klick på en Partial-Addon slår på alla dess Packages.
-- **Varje Package har alltid en egen Addon**, och grupperade Addons läggs ovanpå (2026-10-25, efter Fable-granskningen).
-- **Scenery har två vyer** med samma toggles: **Mappar** (Library-mapparna som de ligger, t.ex. Scenery → Europe → LFBZ) och **Flygplatser** (Airports + Landscape). Mapp- och flygplatsnoder är inga Addons. Deras toggle slår av eller på allt under sig (2026-10-25).
-- **Managed elsewhere**: en Addon som ett annat verktyg återskapar (FSDT, Orbx Central) kan markeras. Den visas då låst och hamnar aldrig i synk-dialogen. FSDT- och Orbx-Libraries föreslås som sådana vid första starten (2026-10-25).
+**Reviderad modell (2026-10-25, efter andra Fable-granskningen och förtydligande av Rickard):**
+- **Package** är det sim:en laddar och det enda som har ett eget av/på-läge (användarens val, sparat).
+- **Addon** är ett eller flera paket som hör ihop, t.ex. "EHAM Schiphol" med tre paket. Varje paket tillhör **exakt en** Addon. Addon är lövet i trädet, och paketen är egenskaper på Addonen, inte noder.
+- **Catalog** är användarens egen gruppering i appen, t.ex. "Europe", och kan ligga i flera nivåer. Vid första starten speglar den Library-mapparna, men sedan är den fri från disken. Mappar med flera paket (t.ex. `SKIATHOS V1.2`) blir Catalogs.
+- Av/på går på alla nivåer: Catalog (allt under), Addon (alla dess paket) och enskilt paket. Addons och Catalogs visar På, Av eller **Mixed**, uträknat från paketen. Begreppen "egen Addon", "grupperad Addon" och Partial är strukna.
+- Från början blir paket som hör till samma flygplats **en Addon per flygplats**. Flygplan blir en Addon per flygplan, och allt annat ett paket per Addon. Användaren kan sedan slå ihop, dela upp och flytta fritt.
+- **Uses:** en Addon kan använda en annan utan att innehålla den, t.ex. en flygplats som använder `library1v14-cbj`. Det används visas nedtonat och går inte att slå av eller på därifrån. Relationen hittas via `dependencies` eller sätts manuellt. Appen varnar när en Addon är på men något den använder är av.
+- **Struktur:** Scenery (flikarna Airports, Landscapes och Other för Asset packs), Aircraft och Other. Varje flik har sitt eget katalogträd. Vyerna "Mappar/Flygplatser" är ersatta av detta.
+- **Managed elsewhere** är en flagga per paket (kan sättas för ett helt Library) och skyddar länken mot alla ändringar. Vid första starten föreslås FSDT-, Orbx- och Neofly-Libraries, men inte förvalt.
+- Vad ett klick gör var bestäms när gränssnittet designas, inte i specen.
 - **Tröskel**: ett paket med airport-poster för fler än 10 flygplatser räknas inte som Airport scenery som standard (t.ex. World of Jetways med 897 och Nordics POI med 87), plus en undantagslista (2026-10-25).
 - **Undersökningspunkt:** läser GSX Pro profiler som följer med scenery-paket? Tills vidare visas de som "medföljer scenery, ej installerad", och bara GSX-mappen räknas för Two profiles.
 - Category härleds från `content_type` i manifestet och kan åsidosättas manuellt: **Scenery**, **Aircraft** eller **Other**.
-- Scenery delas i **Airport scenery** och **Landscape**. Airport scenery visas under sin **Airport** i hierarkin.
+- Scenery delas i flikarna **Airports**, **Landscapes** och **Other** (Asset packs), se ovan.
 - Ett Package hör till en Airport om (1) en BGL-fil innehåller en airport-post för koden, (2) namnet eller titeln innehåller koden som ett eget ord, eller (3) användaren har kopplat det manuellt. Automatiska kopplingar kan tas bort. Ett paket kan höra till flera Airports. Geografisk närhet kan komma senare.
   - Exempel: `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam` och `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting` hamnar alla under EHAM. Det är tre lager som kompletterar varandra, inte konkurrerar.
-- Airport-noden visar sina Addons med var sin toggle, plus en toggle för alla.
+- Flygplats-Addonen innehåller alla paket som hör till flygplatsen (t.ex. EHAM:s tre lager).
 - En Airport identifieras med sin ICAO-kod, eller med sin lokala ident när ICAO saknas (`OG20`, `U60`, `MA33`).
-- **Liveries** visas under sitt flygplan via `base_container` i `aircraft.cfg`, men är egna Addons. Appen varnar när en livery är på men flygplanet är av.
+- **Aircraft:** en Addon per flygplan. Flygplanspaketet, dess liveries och mods ingår, och de kan slås av och på ett och ett i Addonens egenskaper. Appen varnar när en livery är på men flygplanet (ett Library-paket) är av.
 
 **Libraries och Community**
 - Ett **Library** är en rotmapp som användaren registrerar. Den skannas rekursivt, appen flyttar aldrig filer och mappstrukturen påverkar inte logiken.
-- Varje post i Community klassas som Managed, External, Fixed, Broken eller Stray.
+- Varje post i Community klassas som Managed, External, Fixed, Ignored, Broken eller Stray.
 - Sim-managed packages (i `Official`) läses men ändras aldrig. **Rättelse 2026-10-25:** mapparna direkt i Packages-roten är inga paket utan simmens WASM-cache (bara `work` och kompilerade filer, inget `manifest.json`), och de ignoreras. Bara scenery från dem visas, inga flygplan.
 - Av/på görs med directory junctions, som inte kräver admin.
 - **Första starten:** appen hittar Community via `InstalledPackagesPath` i `UserCfg.opt` (både Steam och Store), analyserar vart befintliga junctions pekar och föreslår Libraries utifrån det. Användaren bekräftar och kan lägga till fler efter den första skanningen.

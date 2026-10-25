@@ -101,6 +101,7 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 - **Plattform:** .NET 10 som minimum (.NET 11 släpps snart – sikta på att kunna lyfta).
 - **Repo:** https://github.com/nord-/modern-msfs-addon-manager (publikt, MIT).
 - **MSFS 2020: must have.**
+- **Prioritering av addon-typer:** 1) **Scenery** (huvudfokus: flygplatser, karta, GSX), 2) **Aircraft**, 3) allt annat samlas under **"Övrigt"** (bibliotek, verktyg, moduler, AI-trafik osv.), med enkel av/på men ingen specialbehandling.
 - **MSFS 2024: nice to have, out of scope för MVP.** (Designa så att sim-specifika delar kan bytas – sökvägar, content-format, inbyggda flygplatser.)
 - **Begränsning:** MSFS 2020 läser in Community-paketen en gång vid uppstart, så av/på slår igenom först vid nästa start. Varken BOB eller Addons Linker kommer runt det. Appen bör upptäcka att simmen körs och visa "slår igenom vid nästa start" (som BOB gör). Den ska också undvika att ta bort länkar under körning, eftersom simmen kan ha filer öppna.
 

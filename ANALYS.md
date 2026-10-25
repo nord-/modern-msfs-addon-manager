@@ -114,7 +114,9 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - **Package** är det sim:en laddar. **Addon** är en namngiven samling av ett eller flera Packages och den enhet användaren slår av och på. All av/på sker på Addon-nivå.
 - Ett Package kan tillhöra flera Addons, till exempel ett Asset pack i `Scenery\Objects`. Det är på så länge minst en påslagen Addon innehåller det. När en Addon slås av tas bara de Packages bort som ingen annan påslagen Addon behöver.
 - Addons bildas genom att appen föreslår och användaren godkänner. Förslagen bygger på `creator`, namnprefix och `dependencies`. Utan godkännande blir varje Package en egen Addon.
-- **Partial**: en Addon där bara vissa Packages är på. Ett klick på en Partial-Addon slår på alla dess Packages.
+- En Addons av/på är **användarens val och sparas**. Ett Package är länkat om minst en påslagen Addon innehåller det (beslutat vid spec-granskningen 2026-10-25).
+- **Partial**: en Addon där Community avviker från användarens val, till exempel efter "behåll Community". Ett klick på en Partial-Addon slår på alla dess Packages.
+- Mappar i ett Library ger grupperingsförslag på varje nivå med fler än ett paket, till exempel både "Europe" och "SKIATHOS V1.2" (2026-10-25).
 - Category härleds från `content_type` i manifestet och kan åsidosättas manuellt: **Scenery**, **Aircraft** eller **Other**.
 - Scenery delas i **Airport scenery** och **Landscape**. Airport scenery visas under sin **Airport** i hierarkin.
 - Ett Package hör till en Airport om (1) en BGL-fil innehåller en airport-post för koden, (2) namnet eller titeln innehåller koden som ett eget ord, eller (3) användaren har kopplat det manuellt. Automatiska kopplingar kan tas bort. Ett paket kan höra till flera Airports. Geografisk närhet kan komma senare.

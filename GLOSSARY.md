@@ -13,14 +13,14 @@ A named collection of one or more Packages that the user turns on or off as one 
 _Avoid_: Bundle, group, product
 
 **Partial**:
-The state of an Addon where some of its Packages are on and others are off.
+The state of an Addon whose Packages in Community don't match the user's on/off choice for it.
 
 **Asset pack**:
 A Package of shared objects or models that other Packages use, such as an object library.
 _Avoid_: Library, model library, object library
 
 **Library**:
-A folder the user registers with the app as a home for Packages. Packages can sit at any depth inside it, and its folder structure has no meaning to the app.
+A folder the user registers with the app as a home for Packages. Packages can sit at any depth inside it. Its folders only serve as suggestions for Addons.
 _Avoid_: Addon folder, repository, store
 
 **Community**:

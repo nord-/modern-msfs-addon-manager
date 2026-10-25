@@ -65,7 +65,7 @@ This app replaces Addons Linker for that workflow. Scenery is the focus, aircraf
 - The same name more than once across the Libraries (in two Libraries, or at two depths in one) is a **Duplicate copy**. One copy is the active copy: by default the one Community already points to, otherwise the first by Library registration order, then path; the user can change it. Only the active copy can be linked. Changing the active copy of a linked Package re-points the link.
 - Unregistering a Library never deletes anything; its Managed entries become External entries.
 - **Missing Packages:** all user data for a Package (choice, Addon membership, Catalog placement, active copy, manual links, flags) is kept while the Package can't be found, for example when a Library drive is unplugged, a folder is renamed, or a tool deletes and re-creates a Package during an update. The Package is shown as missing. When a Package with the same name reappears, it resumes its old place. Only an explicit user action forgets a missing Package.
-- **Moved Packages:** a Broken link whose name matches a Package found in a registered Library is a stale Managed entry, not a plain Broken one. The sync dialog offers to re-point it to the new location (preselected), through the apply path.
+- **Moved Packages:** a Broken link whose name matches a Package found in a registered Library is a stale Managed entry, not a plain Broken one. The sync dialog offers to re-point it to the new location (preselected) or to turn the Package off, which removes the stale link; both go through the apply path, and the row doesn't come back.
 
 ### 6.2 Community entries
 
@@ -189,6 +189,7 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 1. Locate `UserCfg.opt` (Steam: `%APPDATA%\Microsoft Flight Simulator\`; Microsoft Store: under `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_…\LocalCache\`), read `InstalledPackagesPath`, derive Community and Official. If not found, ask the user to pick the Community folder.
 2. Classify Community and collect the targets of all existing links.
 3. **Propose Libraries:**
+   0. Only existing junction targets are used. Symlinks (made by other tools' installers, such as SayIntentions' three links into `%APPDATA%\SayIntentionsAI`) and missing targets are not; the user can add such folders by hand.
    1. Link targets under a well-known tool root (`…\Orbx Library\msfs\`, `…\FSDT Addon Manager\MSFS\`, `…\Neofly\addons\`) propose that root directly.
    2. For the others, start at each target's parent folder and move upward while the next parent is not a drive root or tool root, contains no Package directly, and every one of its subfolders has at least one Package somewhere beneath it. Subfolders don't need to be link targets: unlinked Packages count too. Merge identical results.
 
@@ -221,7 +222,7 @@ Two passes:
 ### 7.4 Reconciliation
 
 - The app stores the **last accepted Community snapshot**: every entry with its resolved target. Reconciling compares that snapshot with the current Community, not with the user's choices.
-- Changes to External, Fixed and Ignored entries, and to Managed elsewhere Packages, are recorded silently and never open the dialog.
+- Changes to External, Fixed and Ignored entries, and to Managed elsewhere Packages, are recorded silently and never open the dialog. For Managed elsewhere Packages, "recorded" means the stored choice follows Community.
 - If other differences exist, a sync dialog lists them, one row per Package, grouped by Addon. Each row chooses "keep Community" (preselected) or "restore app state"; one choice can be applied to all rows.
 - "Keep Community" sets the Package's stored choice to match Community. "Restore app state" changes the link through the apply path (6.8). Either way, the snapshot is updated.
 - If Community changes while the app runs and the change didn't come from the app (for example Addons Linker, which may run alongside), the user is told and offered the same sync dialog, with a way to not be asked again for the rest of the session. The app never silently overwrites such a change — *my call*.

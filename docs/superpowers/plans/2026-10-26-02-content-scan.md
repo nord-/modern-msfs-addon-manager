@@ -52,7 +52,7 @@ These apply across Tasks 1–22. Each task restates the ones it implements.
 - **C4 Counted records.** A Package's airport records count for rule 1 unless the Package is excluded: more distinct Airport codes than `AirportThreshold` (default 10), or its name matches an exclusion pattern. An opted-in Package is never excluded. Records of a Package excluded **by pattern** are ignored everywhere: they are no known codes and create no Airports (spec 6.5: voloport, neofly and points of interest are not airports). Records of a Package excluded **only by the threshold** (generic airports, navigation data) still supply known codes, names and positions.
 - **C5 Identity.** Content is keyed by normalised path (`PathNormalizer.Normalize`); user data is keyed by `PackageName`, so a setting for a name applies to every content with that name (all Duplicate copies). `OptedIn`, `ManualAirportLinks` and `RemovedAirportLinks` apply to every source, Sim-managed included (spec 6.5: an encrypted Marketplace airport with a non-standard name can only be linked by hand).
 - **C6 Cache facts, derive the rest.** The cache stores what was read from disk. Categories, Airport links, Airports, Built-in replacements and the aircraft index are recomputed in memory on every analysis (spec 11 is updated in Task 14).
-- **C7 Order never decides.** Every rule result is independent of the order Packages were scanned in. Every list a rule returns is sorted by Package name, then path (`OrdinalIgnoreCase`), then Airport code where it has one; a container's display name is its spelling in the first provider (else first Livery or Attached Package) in that order.
+- **C7 Order never decides.** Every rule result is independent of the order Packages were scanned in. Every list a rule returns is sorted by Package name, then path (`OrdinalIgnoreCase`), then Airport code where it has one; a container's display name is its spelling in the first Provider in that order, else the first LockedBase, else the first Livery's base container, else the first Attached folder (Task 12).
 - **C8 Every copy is content.** Inactive Duplicate copies are scanned and analysed like active ones (they get links and aircraft roles); plan 3 shows and switches only the active copy. Tests that count Packages count distinct names.
 
 ## Tracks
@@ -123,7 +123,7 @@ tests/
 - Produces:
   - `public readonly struct AirportCode : IEquatable<AirportCode>` with `string Value` (upper-case), `static bool TryParse(string? text, out AirportCode code)` (C3: trims, 3–5 ASCII letters/digits), case-insensitive equality, `==`/`!=`, `ToString() => Value`. `default(AirportCode)` is safe to compare and hash (treat a `null` `Value` as `""`, as `PackageName` does).
   - `public readonly record struct GeoPoint(double Latitude, double Longitude);`
-  - `public sealed record AirportRecord(AirportCode Code, string? Name, GeoPoint? Position);` — `Name`/`Position` are always set by the BGL reader; the content fixture may omit them (Task 21).
+  - `public sealed record AirportRecord(AirportCode Code, string? Name, GeoPoint? Position);` — `Position` is always set by the BGL reader; `Name` is `null` when the record has no readable name child (Task 6); the content fixture may omit both (Task 19).
   - `public sealed record AircraftConfig(string Container, string? BaseContainer);` — `Container` is the folder holding the `aircraft.cfg`; `BaseContainer` is the last segment of `base_container`, or `null`.
   - `public enum PackageSource { Library, Community, SimManaged }` — `Community` means a Fixed or External entry.
   - `public sealed record ChangeMarker(long ManifestTicks, long ManifestSize, long? LayoutTicks, long? LayoutSize);`
@@ -259,7 +259,7 @@ Format (FSDeveloper wiki "BGL File Format"; Task 4 confirms it on real files):
 
 `records` is listed only for section type 0x03, and only records with id 0x56 get `fixedSize`, `code`, `name`, `latitude`, `longitude` and `children`; other records there have them `null`/empty (and `FromShape` zero-fills them). Fixed-field offsets in an airport record (documented, confirmed in Task 4): longitude `u32` at 0x0C, latitude `u32` at 0x10, packed code `u32` at 0x28; `longitude = raw * 360.0 / (3 * 0x10000000) - 180.0`, `latitude = 90.0 - raw * 180.0 / (2 * 0x10000000)`. `fixedSize` is found, not assumed (`BglFile.FindAirportFixedSize`): the first of 0x44, 0x38, 0x3C, 0x48, 0x4C (the documented MSFS size first) from which the child records (`u16 id, u32 size`, size ≥ 6) end exactly at the record's end; `null` when none fits. `name` is the `0x0019` child's bytes after its 6-byte header, decoded as UTF-8, trailing NULs trimmed (so "Zürich" survives).
 
-`bgl-dump` with a folder argument looks at the `.bgl` files in ordinal path order, recursively. With `--code` it picks the first whose airport records include that code (exit 1 with a message when none does). Without `--code` it picks the first with a 0x03 section, else the first `.bgl` (so a Package without airport records, like `asobo-airport-lfcs-saucats`, still dumps). It always prints the chosen file's path to stderr, and exits 1 only when the folder has no `.bgl`. With a file it dumps that file. It prints the shape to stdout, or writes it with `--out`. Read-only (C1).
+`bgl-dump` with a folder argument looks at the `.bgl` files in ordinal path order, recursively. With `--code` it picks the first whose airport records include that code. Without `--code` it picks the first with a 0x03 section, else the first `.bgl` (so a Package without airport records, like `asobo-airport-lfcs-saucats`, still dumps). It always prints the chosen file's path to stderr. Exit code 1 with a message when the folder has no `.bgl`, or when `--code` is given and no file holds that code; otherwise 0. With a file it dumps that file. It prints the shape to stdout, or writes it with `--out`. Read-only (C1).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -300,7 +300,7 @@ public void Unreadable_files_return_null_and_never_throw(string kind)
 }
 ```
 
-`BglBuilder.Airport(code, name, lat, lon, fixedSize)` writes the record header, the fixed part with code/latitude/longitude at the offsets above (rest zero) and one `0x0019` name child. `BglBuilder.Broken(kind)` returns the five broken files named in the test.
+`BglBuilder.Airport(code, name, lat, lon, fixedSize)` writes the record header, the fixed part with code/latitude/longitude at the offsets above (rest zero) and one `0x0019` name child. `BglBuilder.Broken(kind)` returns the five broken files named in the test, plus `"bad-record-size"` (valid header and tables; inside the 0x03 subsection one good airport record followed by a record whose size field is 2), used by Task 6.
 
 - [ ] **Step 2: Run to verify failure** → FAIL.
 - [ ] **Step 3: Implement** `BglFile`, `AirportCodeCodec`, `BglShapes` and `BglDumpCommand` (System.Text.Json, camelCase, hex strings for `type`/`id`, indented).
@@ -332,7 +332,7 @@ dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\asobo-airport-lfcs-sau
 
 (Adjust the EHAM and sltcreations paths to where the Packages really are; `status` and the plan-1 fixture list them.)
 
-- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), any `name` starts with `TT:` (a localisation key, not a display name; per Rickard's decision of 2026-10-26 the plan then gets an extra task before Task 6 that resolves keys through the sim's `en-US.locPak`, written and approved before the BGL track goes on), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
+- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), the record sizes in any 0x03 subsection don't add up to its `dataSize` (Task 6's consistency rule would then reject good files), any `name` starts with `TT:` (a localisation key, not a display name; per Rickard's decision of 2026-10-26 the plan then gets an extra task before Task 6 that resolves keys through the sim's `en-US.locPak`, written and approved before the BGL track goes on), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
 - [ ] **Step 4: Commit and push** — `git commit -m "test: add BGL structure dumps from real files"`, then `git push` (to `plan-2/bgl-track`, see Handover).
 
 ---
@@ -379,7 +379,7 @@ public void Built_file_has_the_same_structure_as_the_real_one(string name)
 - Consumes: `BglFile`, `AirportCodeCodec`, `BglBuilder.FromShape`/`LoadShape` (Task 5), `AirportCode`, `AirportRecord`, `GeoPoint` (Task 1).
 - Produces:
   - `public sealed record BglScan(bool Readable, IReadOnlyList<uint> SectionTypes, IReadOnlyList<AirportRecord> Airports);`
-  - `public static class BglContentReader { BglScan Read(string bglPath); BglScan Read(Stream stream); }` — reads only the header, tables and the data of 0x03 subsections; never throws for bad content (C2); records with an invalid code are skipped (C3).
+  - `public static class BglContentReader { BglScan Read(string bglPath); BglScan Read(Stream stream); }` — reads only the header, tables and the data of 0x03 subsections; never throws for bad content (C2); records with an invalid code are skipped (C3). A 0x03 subsection whose record walk is inconsistent (`BglFile.IsConsistent` false) or yields a different number of records than its `RecordCount` makes the whole file `Readable = false` with no airports, so encrypted or garbage data never turns into fake Airports.
   - `AirportRecordReader` finds each record's fixed size with `BglFile.FindAirportFixedSize` (Task 3) and walks the children from there to find the `0x0019` name; when no size fits, the record keeps its code and position with a `null` name.
 
 - [ ] **Step 1: Write the failing tests**
@@ -409,6 +409,11 @@ public void Built_file_has_the_same_structure_as_the_real_one(string name)
 [Fact] public void Airport_without_name_child_has_null_name() { … Assert.Null(record.Name); }
 [Theory] [InlineData("wrong-magic")] [InlineData("data-past-end")] [InlineData("random")]
 public void Broken_files_are_unreadable(string kind) => Assert.False(BglContentReader.Read(new MemoryStream(BglBuilder.Broken(kind))).Readable);
+[Fact] public void Bad_record_size_inside_an_airport_subsection_makes_the_file_unreadable()
+{
+    var scan = BglContentReader.Read(new MemoryStream(BglBuilder.Broken("bad-record-size")));   // valid header and tables, a 0x03 record with size 2 after one good airport
+    Assert.False(scan.Readable); Assert.Empty(scan.Airports);
+}
 ```
 
 - [ ] **Step 2: Run to verify failure** → FAIL.
@@ -473,6 +478,7 @@ public void Reads_cfg_facts(string text, string? baseContainer, bool airTraffic)
 
 Behaviour:
 - `ReadMarker`: `LastWriteTimeUtc.Ticks` and `Length` of `manifest.json` and (when present) `layout.json`; `null` when `manifest.json` is gone.
+- **Vanished vs unreachable:** `ReadMarker` and `Read` return `null` (vanished) only when the Package folder's parent folder still exists. When the parent is gone too (drive unplugged, Library root removed, share dropped), they throw `DirectoryNotFoundException`, so the scanner keeps the old content (C2, Review Focus 2).
 - `HasBgl`: any `.bgl` in `LayoutReader.Read`; `null` without a layout.
 - `Read`: files from `LayoutReader.ListFiles`. `HasBgl` = any `.bgl`. Every `.bgl` goes through `BglContentReader`; unreadable ones increase `UnreadableBglCount`; section types and airport records are merged. `AirplaneFolders` = distinct `SimObjects\Airplanes\<folder>` names; `EncryptedAirplaneFolders` = those with a `.fsarchive` file and no `aircraft.cfg`. Each `SimObjects\Airplanes\<folder>\aircraft.cfg` is read in path order; the first one with `IsAirTraffic` stops cfg reading and sets `IsAirTraffic = true` with an empty `AircraftConfigs` (spec 6.4: not parsed for Liveries). `ThumbnailPath` = the absolute path of the first `ContentInfo\<any>\Thumbnail.jpg`. Returns `null` when the folder no longer exists. Paths normalised (C5).
 - Access (C2): `ReadMarker` and `Read` let `IOException` and `UnauthorizedAccessException` propagate when the Package folder, `manifest.json` or `layout.json` can't be opened or listed, including the fallback walk failing at the Package root. Problems with single files inside the Package (a BGL or `aircraft.cfg` that can't be opened) don't throw: a BGL counts in `UnreadableBglCount`, a cfg is skipped.
@@ -515,6 +521,7 @@ Behaviour:
 }
 
 [Fact] public void Marker_changes_with_layout_and_is_null_without_manifest() { … }
+[Fact] public void Missing_parent_throws_instead_of_vanishing() { … Directory.Delete(libraryRoot, true); Assert.Throws<DirectoryNotFoundException>(() => reader.ReadMarker(pkg)); }
 [Fact] public void Vanished_folder_reads_null() { … Directory.Delete(pkg, true); Assert.Null(reader.Read(Target(pkg), marker)); }
 [Fact] public void Reading_changes_nothing_on_disk() { var before = Snapshot(pkg); Read(pkg); Assert.Equal(before, Snapshot(pkg)); } // names, sizes, LastWriteTimeUtc, CreationTimeUtc (not LastAccessTime: NTFS may update it on read)
 [Fact] public void Lower_case_layout_paths_are_found() { var pkg = Package("livery", (@"simobjects\airplanes\X_Livery\aircraft.cfg", Cfg("base_container=\"..\\Y\""))); Assert.Equal([new AircraftConfig("X_Livery", "Y")], Read(pkg).AircraftConfigs); }
@@ -531,7 +538,7 @@ Behaviour:
 
 **Files:**
 - Create: `src/AddonManager.Core/Content/ContentSettings.cs`, `src/AddonManager.Infrastructure/JsonConverters.cs`
-- Modify: `src/AddonManager.Core/State/UserState.cs` (add `ContentSettings Content { get; set; } = new();`), `src/AddonManager.Infrastructure/JsonUserStateStore.cs` (move `PackageNameConverter` to `JsonConverters.cs`, add `AirportCodeConverter`, also as dictionary key), `tests/AddonManager.Core.Tests/Fakes/InMemoryUserStateStore.cs` (`Copy` deep-copies `Content` with `ContentSettings.Clone()`)
+- Modify: `src/AddonManager.Core/State/UserState.cs` (add `ContentSettings Content { get; set; } = new();`; `Forget` also calls `Content.Forget`), `src/AddonManager.Infrastructure/JsonUserStateStore.cs` (move `PackageNameConverter` to `JsonConverters.cs`, add `AirportCodeConverter`, also as dictionary key), `tests/AddonManager.Core.Tests/Fakes/InMemoryUserStateStore.cs` (`Copy` deep-copies `Content` with `ContentSettings.Clone()`)
 - Test: `tests/AddonManager.Core.Tests/Content/ContentSettingsTests.cs`, extend `tests/AddonManager.Infrastructure.Tests/JsonUserStateStoreTests.cs`
 
 **Interfaces:**
@@ -551,6 +558,7 @@ Behaviour:
     - `bool IsStopWord(string token)` — case-insensitive.
     - `void LinkManually(PackageName, AirportCode)` (also removes it from `RemovedAirportLinks`) and `void RemoveLink(PackageName, AirportCode)` (also removes it from `ManualAirportLinks`).
     - `ContentSettings Clone()` — a deep copy (Task 17 snapshots with it).
+    - `void Forget(PackageName name)` — removes the name from `OptedIn`, `ManualAirportLinks` and `RemovedAirportLinks`. The plan-1 `UserState.Forget(name)` calls it, so forgetting a missing Package also drops its manual links and flags (spec 6.1), and a later Package with the same name starts clean.
   - `internal static class JsonConverters` in Infrastructure: `PackageNameConverter`, `AirportCodeConverter` (Task 14 reuses them). Invalid Airport codes in user data are dropped on load, never an error (C3): `AirportCodeConverter` reads an invalid code as `default(AirportCode)`, and `JsonUserStateStore.Load` then removes `default` codes from `ManualAirportLinks` and `RemovedAirportLinks` and drops entries whose set ends up empty.
 
 ANALYS decision "Användardata": Package-level inputs to Airport linking are stored here (plan 2); Category override per Addon is plan 3.
@@ -566,6 +574,12 @@ ANALYS decision "Användardata": Package-level inputs to Airport linking are sto
 public void Default_exclusions(string name, bool excluded) => Assert.Equal(excluded, new ContentSettings().MatchesExclusion(new(name)));
 
 [Fact] public void Manual_link_undoes_a_removal_and_vice_versa() { … }
+[Fact] public void Forgetting_a_package_drops_its_content_settings()
+{
+    var s = new UserState(); s.Content.OptedIn.Add(new("p")); s.Content.LinkManually(new("p"), Code("LOWI"));
+    s.Forget(new("p"));
+    Assert.Empty(s.Content.OptedIn); Assert.Empty(s.Content.ManualAirportLinks);
+}
 
 // JsonUserStateStoreTests
 [Fact] public void Plan1_user_data_without_content_loads_defaults() { File.WriteAllText(file, """{"schemaVersion":1,"libraries":[],"packages":{}}"""); Assert.Equal(10, store.Load().Content.AirportThreshold); }
@@ -703,10 +717,10 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
   - `public sealed record BuiltInReplacement(PackageContent Package, AirportCode Code);`
   - `public static class AirportCatalog`
     - `IReadOnlyDictionary<AirportCode, Airport> Build(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links, ContentSettings settings)` — every known code (`AirportLinker.KnownCodes`) plus every linked code; records of Packages excluded by pattern are never used (C4).
-    - `IReadOnlyList<BuiltInReplacement> ReplacesBuiltIn(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links)`
+    - `IReadOnlyList<BuiltInReplacement> ReplacesBuiltIn(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links, IReadOnlyDictionary<AirportCode, Airport> airports, ContentSettings settings)` — `airports` is `Build`'s result (for `HasBuiltIn`), `settings` decides exclusion (C4).
 
 Rules (spec 6.5):
-- **Name and position:** taken from the first record for the code with a usable name (position likewise, independently), where a name that is empty or starts with `TT:` (a localisation key such as `TT:AIRPORTEU.EDDF.name`) is not usable, searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record.
+- **Name and position:** taken from the first record for the code with a usable name (position likewise, independently), where a name that is empty or starts with `TT:` (a localisation key such as `TT:AIRPORTEU.EDDF.name`) is not usable, searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record. Index once: group the usable records by code (`ToLookup`) in that order, so `Build` is linear in the number of records (about 100,000 on Rickard's install; the 1 s cached-startup budget in Task 20 depends on it).
 - `HasRealScenery`: at least one link from a Package that isn't excluded (C4, spec 6.5 "non-excluded"), or any Manual link (the user said so). `HasBuiltIn`: at least one such link from a Sim-managed Package.
 - **Replaces built-in:** a link from a non-Sim-managed Package that isn't excluded (C4), or a Manual link from one, to an Airport with `HasBuiltIn`; also, as the extra signal, a non-Sim-managed Package whose manifest `dependencies` name a Sim-managed Package linked to that Airport. *My call:* the second extra signal in spec 6.5, overlapping `layout.json` paths, is left out: it would mean caching every file path of every Sim-managed airport Package, and the dependency signal plus own links cover the real cases. It's information, not a warning.
 
@@ -951,6 +965,7 @@ Behaviour (spec 7.3):
 [Fact] public void Full_rescan_rereads_everything() { … Assert.Equal(targets.Count, r.Read); }
 [Fact] public void Reads_in_the_given_order() { …; Assert.Equal(["community-pkg", "lib-pkg", "sim-pkg"], reader.ReadOrder); }
 [Fact] public void Vanished_package_is_dropped_from_cache_and_result() { … reader.Vanish("b"); … Assert.DoesNotContain(…); Assert.Equal(1, r.Failed); }
+[Fact] public void Target_whose_drive_disappears_mid_scan_keeps_its_old_content() { … reader.ThrowOnMarker("b", new DirectoryNotFoundException()); … Assert.Contains(r.Contents, c => c.Name.Value == "b"); Assert.Contains(cache.LoadAll(), c => c.Name.Value == "b"); }
 [Fact] public void Unreadable_package_keeps_its_old_content() { … reader.ThrowOn("b", new IOException()); … Assert.Contains(old, r.Contents); Assert.Equal(1, r.Failed); }
 [Fact] public void Inaccessible_marker_keeps_the_old_content() { … reader.ThrowOnMarker("b", new UnauthorizedAccessException()); … Assert.Contains(r.Contents, c => c.Name.Value == "b"); }
 [Fact] public void Reused_content_takes_the_targets_current_source()
@@ -1139,7 +1154,7 @@ Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile rep
 
 Mapping to `PackageContent` (Task 22's loader does the reverse): `name`, `path`, `source` → same; `title`, `creator`, `contentType`, `dependencies` (plus `packageVersion`) → `Manifest`; `hasBgl`, `bglSectionTypes`, `airports`, `isAirTraffic`, `airplaneFolders`, `encryptedAirplaneFolders` → same; `unreadableBgl` → `UnreadableBglCount`; `aircraft` → `AircraftConfigs`; `hasThumbnail` → `ThumbnailPath` = `"<path>\ContentInfo\<name>\Thumbnail.jpg"` when true, else `null`; `Marker` is a constant.
 
-Excluded Packages (C4) export their records as `"codes": ["…", …]`, one compact string array on a single line, instead of `airports` — this is the committed list of generic codes from ANALYS decision "Collision report", roughly 0.6 MB in all. Codes linked by reason PackageName keep their full record in `airports` (the encrypted official airports need name and position). Everything else is exported in full. `ContentFixtureLoader` (Task 22) turns `codes` back into records without name or position.
+Excluded Packages (C4) export their records as `"codes": ["…", …]`, one compact string array on a single line, instead of `airports` — this is the committed list of generic codes from ANALYS decision "Collision report", roughly 0.6 MB in all. Codes that any Package links to (any reason) keep their full record in `airports`, so linked Airports keep the name and position plans 3 and 5 show (encrypted official airports and Token-linked ones get theirs from the generic record). Everything else is exported in full. `ContentFixtureLoader` (Task 22) turns `codes` back into records without name or position.
 
 - [ ] **Step 1: Implement** `ScanCommand` and `ExportContentCommand`; exit code 1 with a message when no install is found or user data is corrupt (as `status`).
 - [ ] **Step 2: Smoke-test on the dev machine** — `dotnet run --project src/AddonManager.Cli -- scan`. Expected: "No MSFS 2020 install found …", exit code 1. (The real run is Task 21.)

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AddonManager.Cli/AddonManager.Cli.csproj" />
+    <Project Path="src/AddonManager.Core/AddonManager.Core.csproj" />
+    <Project Path="src/AddonManager.Infrastructure/AddonManager.Infrastructure.csproj" />
+    <Project Path="src/AddonManager.Sim2020/AddonManager.Sim2020.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AddonManager.Core.Tests/AddonManager.Core.Tests.csproj" />
+    <Project Path="tests/AddonManager.Infrastructure.Tests/AddonManager.Infrastructure.Tests.csproj" />
+    <Project Path="tests/AddonManager.Sim2020.Tests/AddonManager.Sim2020.Tests.csproj" />
+  </Folder>
+</Solution>

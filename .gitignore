@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Source folders named Packages (domain namespace), not NuGet packages
+!**/[Pp]ackages/*.cs

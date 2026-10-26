@@ -4,9 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Planning stage — **no code, solution or build yet**. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date). Next step per the analysis: brainstorming → spec → plan before writing code.
+Plan 1 (link engine) in progress — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
 
-Once a .NET solution exists, add the build/test/run commands to this file.
+## Commands
+
+- Build: `dotnet build ModernMsfsAddonManager.slnx`
+- Test all: `dotnet test ModernMsfsAddonManager.slnx`
+- Test subset: `dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~<Name>`
+- Read-only status against the real machine: `dotnet run --project src/AddonManager.Cli -- status`
 
 ## What we're building
 
@@ -18,11 +23,11 @@ Priority of addon types: 1) **Scenery** (airports, map, GSX profiles), 2) **Airc
 
 - **.NET 10** minimum; keep it easy to move to .NET 11.
 - **License: MIT.** Dave's GSX Profile Manager (GPL-3.0) may be read as reference only — never copy or translate its code into C#. Ideas, file formats and paths are fine to reuse.
-- **Never move the user's files implicitly.** Addons stay where the user keeps them (e.g. `C:\Spel\Addons\…`); enable/disable = create/remove a **directory junction** in Community (no admin needed, unlike symlinks). Uninstalling or switching tools must never leave Community broken.
+- **Never move the user's files implicitly.** Addons stay where the user keeps them (e.g. `C:\Sim\Addons\…`); enable/disable = create/remove a **directory junction** in Community (no admin needed, unlike symlinks). Uninstalling or switching tools must never leave Community broken.
 - Community will contain a mix the app must classify and respect: our junctions, foreign junctions (Addons Linker, Orbx, FSDT, Neofly), symlinks (SayIntentions), real folders, broken links, stray files. Existing Addons Linker junctions must migrate painlessly.
 - MSFS reads Community only at startup: detect a running sim, show "takes effect on next start", and don't remove links while it runs.
 - Keep sim-specific parts (paths, content formats, built-in airports) behind replaceable abstractions so MSFS 2024 can be added later.
-- A Package belongs to an Airport via an **airport record in its BGL files**, the Airport code as a separate token in its name/title, or a manual link — never from loose name heuristics. See the design decisions in `ANALYS.md`. Scan GSX profiles both in `%APPDATA%\Virtuali\GSX\MSFS\*.ini` (ICAO = filename prefix before first `-`, case-insensitive) and inside scenery folders.
+- A Package belongs to an Airport via an **airport record in its BGL files**, the Airport code as a separate token in its name/title, or a manual link — never from loose name heuristics. See the design decisions in `ANALYS.md`. Scan GSX profiles both in `%APPDATA%\Virtuali\GSX\MSFS\*.ini` (Airport code = leading 3–4 letters/digits followed by `-`, `_`, `.` or end of name, case-insensitive; see spec section 8) and inside scenery folders.
 - Map tiles must work without an API key. Finding uninstalled scenery = deep links to flightsim.to/SimMarket (no download APIs exist; no scraping).
 
 ## Tech (decided, see `docs/adr/0003-wpf-with-webview2-leaflet-map.md`)

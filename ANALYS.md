@@ -37,21 +37,21 @@ Rickard använder idag **MSFS Addons Linker** (bad2000, gratis, flightsim.to/add
 ## Nuläge på Rickards maskin (inventerat 2026-10-25)
 
 - Community: `C:\Users\ricka\AppData\Roaming\Microsoft Flight Simulator\Packages\Community` (Steam-installation av MSFS 2020).
-- Addon-lager: `C:\Spel\Addons\{AIG, Aircraft, fsltl, Scenery\{Australia, Europe, North America, Objects}, Tools}`.
+- Addon-lager: `C:\Sim\Addons\<kategorimappar>`.
 
 Innehåll i Community (118 poster):
 
 | Typ | Antal | Kommentar |
 |---|---|---|
-| **Junction** | 95 | Addons Linker använder junctions. Flertalet pekar in i `C:\Spel\Addons\…` |
-| Junction utanför `C:\Spel\Addons` | 19 av de 95 | Orbx Library (`C:\Spel\Orbx Library\msfs\…\Community\…`), FSDT Addon Manager (GSX), Neofly |
+| **Junction** | 95 | Addons Linker använder junctions. Flertalet pekar in i `C:\Sim\Addons\…` |
+| Junction utanför `C:\Sim\Addons` | 19 av de 95 | Orbx Library (`C:\Sim\Orbx Library\msfs\…\Community\…`), FSDT Addon Manager (GSX), Neofly |
 | **SymbolicLink** | 3 | SayIntentions (skapade av SayIntentions egen installer). En är **trasig**: `SayIntentions-VR-Toolbar-Plugin` |
 | Riktiga mappar | 19 | Navigraph, FlyByWire installer, FSUIPC/MobiFlight-moduler, Carenado m.fl. – installerade direkt av respektive installer |
 | Fil | 1 | `UNINSTALL_CARENADO_PA28R_181_MSFS2020.exe` (skräp i Community) |
 
 Observationer:
 - **Svaret på frågan: det är junctions**, inte symlinks (förutom SayIntentions tre).
-- Neofly-paket och `bagolu-c152-neoflybannertow` finns **dubbelt**: både i `C:\Spel\Addons\{Tools,Aircraft}` och i `C:\Spel\Neofly\addons`, och Community pekar på Neofly-kopian.
+- Neofly-paket och `bagolu-c152-neoflybannertow` finns **dubbelt**: både i `C:\Sim\Addons\{Tools,Aircraft}` och i `C:\Sim\Neofly\addons`, och Community pekar på Neofly-kopian.
 - Appen måste alltså hantera en blandning: egna junctions, junctions skapade av andra verktyg (Orbx, FSDT), symlinks, riktiga mappar och trasiga länkar. Jämför BOB:s färgkodning: *Made outside Bob / Broken link / Bob's link / Always on / Plain folder*.
 - GSX Pro-profiler: `%APPDATA%\Virtuali\GSX\MSFS\*.ini` – 33 st, namngivna `<icao>-<författare>.ini` (t.ex. `eddf-virtualFRA_GSX_VDGS.ini`, `EFHK-Epixeri.ini`). ICAO = prefix före första `-`, skiftlägesokänsligt.
 
@@ -110,23 +110,30 @@ flightsim.to/addon/105454 (DaveGaming, v1.0.4, gratis, källkod på GitHub, bety
 
 Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 
-**Modell**
-- **Package** är det sim:en laddar. **Addon** är en namngiven samling av ett eller flera Packages och den enhet användaren slår av och på. All av/på sker på Addon-nivå.
-- Ett Package kan tillhöra flera Addons, till exempel ett Asset pack i `Scenery\Objects`. Det är på så länge minst en påslagen Addon innehåller det. När en Addon slås av tas bara de Packages bort som ingen annan påslagen Addon behöver.
-- Addons bildas genom att appen föreslår och användaren godkänner. Förslagen bygger på `creator`, namnprefix och `dependencies`. Utan godkännande blir varje Package en egen Addon.
-- **Partial**: en Addon där bara vissa Packages är på. Ett klick på en Partial-Addon slår på alla dess Packages.
+**Reviderad modell (2026-10-25, efter andra Fable-granskningen och förtydligande av Rickard):**
+- **Package** är det sim:en laddar och det enda som har ett eget av/på-läge (användarens val, sparat).
+- **Addon** är ett eller flera paket som hör ihop, t.ex. "EHAM Schiphol" med tre paket. Varje paket tillhör **exakt en** Addon. Addon är lövet i trädet, och paketen är egenskaper på Addonen, inte noder.
+- **Catalog** är användarens egen gruppering i appen, t.ex. "Europe", och kan ligga i flera nivåer. Vid första starten speglar den Library-mapparna, men sedan är den fri från disken. Mappar med flera paket (t.ex. `SKIATHOS V1.2`) blir Catalogs.
+- Av/på går på alla nivåer: Catalog (allt under), Addon (alla dess paket) och enskilt paket. Addons och Catalogs visar På, Av eller **Mixed**, uträknat från paketen. Begreppen "egen Addon", "grupperad Addon" och Partial är strukna.
+- Från början blir paket som hör till samma flygplats **en Addon per flygplats**. Flygplan blir en Addon per flygplan, och allt annat ett paket per Addon. Användaren kan sedan slå ihop, dela upp och flytta fritt.
+- **Uses:** en Addon kan använda en annan utan att innehålla den, t.ex. en flygplats som använder `library1v14-cbj`. Det används visas nedtonat och går inte att slå av eller på därifrån. Relationen hittas via `dependencies` eller sätts manuellt. Appen varnar när en Addon är på men något den använder är av.
+- **Struktur:** Scenery (flikarna Airports, Landscapes och Other för Asset packs), Aircraft och Other. Varje flik har sitt eget katalogträd. Vyerna "Mappar/Flygplatser" är ersatta av detta.
+- **Managed elsewhere** är en flagga per paket (kan sättas för ett helt Library) och skyddar länken mot alla ändringar. Vid första starten föreslås FSDT-, Orbx- och Neofly-Libraries, men inte förvalt.
+- Vad ett klick gör var bestäms när gränssnittet designas, inte i specen.
+- **Tröskel**: ett paket med airport-poster för fler än 10 flygplatser räknas inte som Airport scenery som standard (t.ex. World of Jetways med 897 och Nordics POI med 87), plus en undantagslista (2026-10-25).
+- **Undersökningspunkt:** läser GSX Pro profiler som följer med scenery-paket? Tills vidare visas de som "medföljer scenery, ej installerad", och bara GSX-mappen räknas för Two profiles.
 - Category härleds från `content_type` i manifestet och kan åsidosättas manuellt: **Scenery**, **Aircraft** eller **Other**.
-- Scenery delas i **Airport scenery** och **Landscape**. Airport scenery visas under sin **Airport** i hierarkin.
+- Scenery delas i flikarna **Airports**, **Landscapes** och **Other** (Asset packs), se ovan.
 - Ett Package hör till en Airport om (1) en BGL-fil innehåller en airport-post för koden, (2) namnet eller titeln innehåller koden som ett eget ord, eller (3) användaren har kopplat det manuellt. Automatiska kopplingar kan tas bort. Ett paket kan höra till flera Airports. Geografisk närhet kan komma senare.
   - Exempel: `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam` och `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting` hamnar alla under EHAM. Det är tre lager som kompletterar varandra, inte konkurrerar.
-- Airport-noden visar sina Addons med var sin toggle, plus en toggle för alla.
+- Flygplats-Addonen innehåller alla paket som hör till flygplatsen (t.ex. EHAM:s tre lager).
 - En Airport identifieras med sin ICAO-kod, eller med sin lokala ident när ICAO saknas (`OG20`, `U60`, `MA33`).
-- **Liveries** visas under sitt flygplan via `base_container` i `aircraft.cfg`, men är egna Addons. Appen varnar när en livery är på men flygplanet är av.
+- **Aircraft:** en Addon per flygplan. Flygplanspaketet, dess liveries och mods ingår, och de kan slås av och på ett och ett i Addonens egenskaper. Appen varnar när en livery är på men flygplanet (ett Library-paket) är av.
 
 **Libraries och Community**
 - Ett **Library** är en rotmapp som användaren registrerar. Den skannas rekursivt, appen flyttar aldrig filer och mappstrukturen påverkar inte logiken.
-- Varje post i Community klassas som Managed, External, Fixed, Broken eller Stray.
-- Sim-managed packages (Official och Packages-roten) läses men ändras aldrig. Bara scenery från dem visas, inga flygplan.
+- Varje post i Community klassas som Managed, External, Fixed, Ignored, Broken eller Stray.
+- Sim-managed packages (i `Official`) läses men ändras aldrig. **Rättelse 2026-10-25:** mapparna direkt i Packages-roten är inga paket utan simmens WASM-cache (bara `work` och kompilerade filer, inget `manifest.json`), och de ignoreras. Från Sim-managed packages visas scenery. Flygplan därifrån går aldrig att slå av eller på, men visas som låst bas för liveries och mods.
 - Av/på görs med directory junctions, som inte kräver admin.
 - **Första starten:** appen hittar Community via `InstalledPackagesPath` i `UserCfg.opt` (både Steam och Store), analyserar vart befintliga junctions pekar och föreslår Libraries utifrån det. Användaren bekräftar och kan lägga till fler efter den första skanningen.
 - **Duplicate copy**: samma Package i flera Libraries. Appen varnar och låter användaren välja vilken kopia som länkas. Förvalt är den som Community redan pekar på.
@@ -136,7 +143,7 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - Användardata (Libraries, Addons, kopplingar, dolda objekt, åsidosatta kategorier) sparas som JSON i `%APPDATA%`. Skanningscachen (paket, flygplatser, thumbnails) sparas i SQLite i `%LOCALAPPDATA%`.
 
 **Varningar**
-- Bara **Duplicate package** varnas, alltså samma paket på flera ställen som sim:en laddar från (t.ex. ESGG/ESSA i Packages-roten och via Community). Plus Duplicate copy och livery utan flygplan, enligt ovan.
+- Bara **Duplicate package** varnas, alltså samma paket både i Community och i `Official`. (ESGG/ESSA i Packages-roten var ett felaktigt exempel, se rättelsen ovan.) Plus Duplicate copy och livery utan flygplan, enligt ovan.
 - Flera paket som hör till samma Airport visas neutralt ("3 paket"). Ett paket som ersätter eller patchar officiell scenery visas som "ersätter inbyggd", utan varning. Det känns igen på `dependencies` eller på filöverlapp i `layout.json`.
 
 **Prestanda och bakgrundsarbete**

@@ -1,0 +1,2682 @@
+{
+  "exported": "2026-10-25",
+  "community": [
+    {
+      "name": "005builds-lszrsceneryv11",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\005builds-lszrsceneryv11",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "a-puf-we-love-vfr-region1",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\a-puf-we-love-vfr-region1",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "aerosoft-crj",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\aerosoft-crj",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "aig-aitraffic-effects",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-effects",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "aig-aitraffic-oci",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-oci",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "apronlife-jetway-helper",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "AS_CRJ_900_SAS_New_EIGEH",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\AS_CRJ_900_SAS_New_EIGEH",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ase05-airport-ldsp",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ase05-airport-ldsp",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "asfs",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "avioteksoftwarevce-airport-eddf-frankfurt-main",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\EDDF Frankfurt Main International Airport\\Community\\avioteksoftwarevce-airport-eddf-frankfurt-main",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-airport-esgf-falkenberg",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-airport-esgf-falkenberg",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-esav-scenery",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esav-scenery",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-esgascenery",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgascenery",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-esgr-airport",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgr-airport",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-esgt-simple",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgt-simple",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-estf-scenery",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-estf-scenery",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-sceneryesge",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesge",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "ba-sceneryesgi",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesgi",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "bagolu-c152-neoflybannertow",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Neofly\\addons\\bagolu-c152-neoflybannertow",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "beyondatc-toolbar",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 13\\beyondatc-toolbar",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "bksq-aircraft-bonanzapro",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\bksq-aircraft-bonanzapro",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "bmw-lfbz-biarritz",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\bmw-lfbz-biarritz",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "brickbybrickdesign-airport-eham-amsterdam",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\brickbybrickdesign-airport-eham-amsterdam",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "burningbluedesign-airport-ma44-tradewind",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\MA44 Trade Wind Airfield\\Community\\burningbluedesign-airport-ma44-tradewind",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "carenado-aircraft-pa28-archer-ii",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "carenado-aircraft-pa28-archer-ii_CVT_",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": false
+    },
+    {
+      "name": "drzewieckidesign-epgd",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\EPGD Gdańsk Lech Wałęsa Airport\\Community\\drzewieckidesign-epgd",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "duijffmedia-airport-eham-amsterdam",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-airport-eham-amsterdam",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "eddh-hamburg",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\eddh-hamburg",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "efhk-helsinki",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\efhk-helsinki",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "egcc-manchester",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\egcc-manchester",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "epwa",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\epwa",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "esd-modellib-eolib",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\esd-modellib-eolib",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "esgu-airport",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\esgu-airport",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "esnu-airport-esnu-umea-airport",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\esnu-airport-esnu-umea-airport",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "euroscene-airport-lepa-palma-de-mallorca",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\euroscene-airport-lepa-palma-de-mallorca",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "FBW_A320neo_ROX",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\FBW_A320neo_ROX",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "finland-airport-eftp-pirkkala",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\finland-airport-eftp-pirkkala",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "flybywire_A320Neo_Cabin",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\flybywire_A320Neo_Cabin",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "flybywire-aircraft-a320-neo",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\flybywire-aircraft-a320-neo",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "flybywire-current-install-0",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": false
+    },
+    {
+      "name": "flybywire-externaltools-simbridge",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 13\\flybywire-externaltools-simbridge",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fragtality-commbus-module",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "FS20_DA40-NGX",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\FS20_DA40-NGX",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "FS20_DA62X",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\FS20_DA62X",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsdreamteam-gsx-efb",
+      "kind": "Junction",
+      "target": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-efb",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsdreamteam-gsx-pro",
+      "kind": "Junction",
+      "target": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-pro",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsdreamteam-gsx-world-of-jetways",
+      "kind": "Junction",
+      "target": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-world-of-jetways",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsdreamteam-gsx-world-of-jetways-2020",
+      "kind": "Junction",
+      "target": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-world-of-jetways-2020",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsltl-traffic-base",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 05\\fsltl-traffic-base",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "fsltl-traffic-injector",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "fsuipc-lvar-module",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "gatwick",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\gatwick",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "grancanaria",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\grancanaria",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "hdw-externaltools-simlink",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": false
+    },
+    {
+      "name": "headwindsim-aircraft-a330-900",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\headwindsim-aircraft-a330-900",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "human-library-animated",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\human-library-animated",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "HWD-A339_SAS",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\HWD-A339_SAS",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "jdot029-airport-lgsa-chania",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\jdot029-airport-lgsa-chania",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "leal-alicante",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\leal-alicante",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lennarts-halmstadv2-esmt",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-halmstadv2-esmt",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lennarts-jonkoping-esgj",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-jonkoping-esgj",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lennarts-varberg-esgv",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-varberg-esgv",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lfpg2025-msfs2020",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\lfpg2025-msfs2020",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "LGSK--V1.1",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\LGSK--V1.1",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lgsk-lgsk",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgsk-lgsk",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lgskv1",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgskv1",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "library1v14-cbj",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\library1v14-cbj",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "library2v14-cbj",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\library2v14-cbj",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "lpma-madeira",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\lpma-madeira",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "mge-asobo-aircraft-c152",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c152",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "mge-asobo-aircraft-c172sp-as1000",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c172sp-as1000",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "mikeaat-assetpack",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\mikeaat-assetpack",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "mobiflight-event-module",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-academy-2020",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-avionics-g1000",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-avionics-g3000-g5000",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-avionics-g3x",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-navdata",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "navigraph-navdata-base",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "neofly-neofly-cargo",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Neofly\\addons\\neofly-neofly-cargo",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "neofly-neofly-objects",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Neofly\\addons\\neofly-neofly-objects",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "neofly-neofly-smokes",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Neofly\\addons\\neofly-neofly-smokes",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "noolaero-module-vdgs",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\noolaero-module-vdgs",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-airport-engm-oslo",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\ENGM Oslo Gardermoen Airport\\Community\\orbx-airport-engm-oslo",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-airport-esgg-gothenburg",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\ESGG Gothenburg Landvetter Airport\\Community\\orbx-airport-esgg-gothenburg",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-airport-essa-stockholm-arlanda",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\ESSA Stockholm Arlanda Airport\\Community\\orbx-airport-essa-stockholm-arlanda",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-airport-lowi-innsbruck",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\LOWI Innsbruck Airport\\Community\\orbx-airport-lowi-innsbruck",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-airport-og20-fairways",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\OG20 Fairways Airport\\Community\\orbx-airport-og20-fairways",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-mesh-iceland",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\Iceland Mesh\\Community\\orbx-mesh-iceland",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-volanta-aerocaches",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "orbx-volanta-aerocaches-jw",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "papadelta-epkk",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\EPKK Kraków John Paul II International Airport\\Community\\papadelta-epkk",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "pgcompany-airport-epwa-warsaw",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\pgcompany-airport-epwa-warsaw",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "pms50-instrument-gtn750-pro",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 02\\pms50-instrument-gtn750-pro",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "propairflight-klrg",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Orbx Library\\msfs\\KLRG Lincoln Regional Airport\\Community\\propairflight-klrg",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "reeledwh-airport-esib-satenas",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\reeledwh-airport-esib-satenas",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "sayintentions-fly-in-library",
+      "kind": "Symlink",
+      "target": "%USERPROFILE%\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\fly-in-objects\\sayintentions-fly-in-library",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "SayIntentions-SimObjects-Optional",
+      "kind": "Symlink",
+      "target": "%USERPROFILE%\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\simobjects\\SayIntentions-SimObjects-Optional",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "SayIntentions-VR-Toolbar-Plugin",
+      "kind": "Symlink",
+      "target": "%USERPROFILE%\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\toolbar\\SayIntentions-VR-Toolbar-Plugin",
+      "targetExists": false,
+      "hasManifest": false
+    },
+    {
+      "name": "simnord-copenhagen",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\simnord-copenhagen",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "skylinesimulations-airport-essv-visby",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-airport-essv-visby",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "skylinesimulations-esks-scandinavianmountains",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-esks-scandinavianmountains",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "skytry-esgp",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\skytry-esgp",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "Sundbro",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\Sundbro",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "Tree fix ESGJ",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\Tree fix ESGJ",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "tsr-windy-things",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\tsr-windy-things",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "uddevallabron",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\uddevallabron",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "us-firedeptpack",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 09\\us-firedeptpack",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "vidandesign-bornholm",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\vidandesign-bornholm",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "virtualfra-eddf",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\virtualfra-eddf",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "vt-airport-lgrp",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\vt-airport-lgrp",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "wombiiactual-airport-enbr-fleslandfix",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\wombiiactual-airport-enbr-fleslandfix",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "z-genix-ldsp-ase05",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\z-genix-ldsp-ase05",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "zzz-glassout-hook",
+      "kind": "Directory",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": true
+    },
+    {
+      "name": "zzzpmg-airport-lfmn",
+      "kind": "Junction",
+      "target": "C:\\Sim\\Addons\\Group 11\\Group 04\\zzzpmg-airport-lfmn",
+      "targetExists": true,
+      "hasManifest": true
+    },
+    {
+      "name": "UNINSTALL_CARENADO_PA28R_181_MSFS2020.exe",
+      "kind": "File",
+      "target": "",
+      "targetExists": false,
+      "hasManifest": false
+    }
+  ],
+  "packages": [
+    {
+      "path": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-effects",
+      "root": "C:\\Sim\\Addons",
+      "title": "Effect Library",
+      "creator": "Alpha India Group",
+      "contentType": "MISC"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-oci",
+      "root": "C:\\Sim\\Addons",
+      "title": "AIGAIM AI Traffic",
+      "creator": "AIGTech",
+      "contentType": "MISC"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\aerosoft-crj",
+      "root": "C:\\Sim\\Addons",
+      "title": "CRJ",
+      "creator": "Aerosoft",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\AS_CRJ_900_SAS_New_EIGEH",
+      "root": "C:\\Sim\\Addons",
+      "title": "CRJ 900 Scandinavian Airlines EI-GEH",
+      "creator": "AAgun",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\bagolu-c152-neoflybannertow",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna 152 Neofly banner tow",
+      "creator": "bagolu",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\bksq-aircraft-bonanzapro",
+      "root": "C:\\Sim\\Addons",
+      "title": "Bonanza Professional",
+      "creator": "Black Square",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\FBW_A320neo_ROX",
+      "root": "C:\\Sim\\Addons",
+      "title": "FlyByWire SAS SE-ROX",
+      "creator": "S. Dikilitas",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\flybywire_A320Neo_Cabin",
+      "root": "C:\\Sim\\Addons",
+      "title": "Flybywire A320Neo Cabin",
+      "creator": "TheRedFox",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\flybywire-aircraft-a320-neo",
+      "root": "C:\\Sim\\Addons",
+      "title": "A32NX (branch fs2020-master)",
+      "creator": "FlyByWire Simulations",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\FS20_DA40-NGX",
+      "root": "C:\\Sim\\Addons",
+      "title": "DA40NGX",
+      "creator": "modded by MrTommymxr",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\FS20_DA62X",
+      "root": "C:\\Sim\\Addons",
+      "title": "DA62X",
+      "creator": "MrTommymxr",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\headwindsim-aircraft-a330-900",
+      "root": "C:\\Sim\\Addons",
+      "title": "A339X (branch HEAD)",
+      "creator": "Headwind Simulations",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\HWD-A339_SAS",
+      "root": "C:\\Sim\\Addons",
+      "title": "Airbus A330-900 SAS - Scandinavian Airlines",
+      "creator": "Headwind, F/O WhatzIt2Ya",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\iniBuilds-a350-900-SAS_SE-RSA",
+      "root": "C:\\Sim\\Addons",
+      "title": "iniBuilds A350-900 Scandinavian Airlines SE-RSA",
+      "creator": "iniBuilds",
+      "contentType": "LIVERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\inibuilds-aircraft-a350",
+      "root": "C:\\Sim\\Addons",
+      "title": "A350 Airliner",
+      "creator": "iniBuilds",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c152",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna 152",
+      "creator": "MG_Enterprises",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c172sp-as1000",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna 172 Skyhawk (G1000)",
+      "creator": "MG_Enterprises",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\pms50-instrument-gtn750-pro",
+      "root": "C:\\Sim\\Addons",
+      "title": "GTN750 Avionics",
+      "creator": "PMS50",
+      "contentType": "INSTRUMENTS"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\sal1800-cessna-170b-backcountry",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna 170B Backcountry",
+      "creator": "Sal1800",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\sal1800-cessna-super-170b-OPTIONAL",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna Super 170B Backcountry",
+      "creator": "Sal1800",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 02\\simflight-C152-interior-navtablet",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cessna 152",
+      "creator": "SimFlight",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 05\\fsltl-traffic-base",
+      "root": "C:\\Sim\\Addons",
+      "title": "FSLTL Traffic Base",
+      "creator": "FSLTL",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\a-puf-we-love-vfr-region3",
+      "root": "C:\\Sim\\Addons",
+      "title": "We Love VFR - Region 3",
+      "creator": "Puffin Flight",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\tsr-windy-things-AUS",
+      "root": "C:\\Sim\\Addons",
+      "title": "Windy Things Library",
+      "creator": "tsr",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yara-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YARA Ararat",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yara-cj-aerial",
+      "root": "C:\\Sim\\Addons",
+      "title": "yara ground tile",
+      "creator": "colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ybir-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "Birchip vic Aus",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ydod-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "ydod Donald",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhpn-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YHPN-cj",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "Horsham vic Aus",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-txt-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "My Company Aerial",
+      "creator": "Asobo Studio",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-txt-e-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "My Company Aerial",
+      "creator": "Asobo Studio",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yker-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YKER Kerang",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ymbu-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMBU Maryborough",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ynhl-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "Nhill vic aust",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypfa-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YPFA Port Fairy Vic Aus",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypod-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "Simple Scenery",
+      "creator": "My Company",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypoo-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YPOO Pootnoura SA Aus",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yslk-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YSLK Sea Lake vic Aust",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ysta-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YSTA St Arnaud Victoria Australia",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yswh-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YSWH Swan Hill",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yswl-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YSWL Stawell",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywbl-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "Warrnambool vic aus",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywbl-cj-aerial",
+      "root": "C:\\Sim\\Addons",
+      "title": "Warrnambool aerial image",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywkb-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YWKB Warracknabeal",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywyf-cj",
+      "root": "C:\\Sim\\Addons",
+      "title": "YWYF Wycheproof",
+      "creator": "Colin Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yalr-aileron",
+      "root": "C:\\Sim\\Addons",
+      "title": "YALR Aileron",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yanl-anthony-lagoon",
+      "root": "C:\\Sim\\Addons",
+      "title": "YANL Anthony Lagoon",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yarp-arapunya",
+      "root": "C:\\Sim\\Addons",
+      "title": "YARP Arapunya",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybes-beswick",
+      "root": "C:\\Sim\\Addons",
+      "title": "YBES Beswick",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybig-bing-bong",
+      "root": "C:\\Sim\\Addons",
+      "title": "YBIG Bing Bong",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybit-bullita",
+      "root": "C:\\Sim\\Addons",
+      "title": "YBIT Bullita",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yccr-coomalie-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YCCR Coomalie Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ycnp-channel-point",
+      "root": "C:\\Sim\\Addons",
+      "title": "YCNP Channel Point",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ycns-coniston-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YCNS-Coniston-Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydld-delmore-downs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YDLD Delmore Downs",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydpr-dneiper",
+      "root": "C:\\Sim\\Addons",
+      "title": "YDPR Dneiper",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydry-drysdale-island",
+      "root": "C:\\Sim\\Addons",
+      "title": "YDRY Drysdale Island",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydsv-dorisvale",
+      "root": "C:\\Sim\\Addons",
+      "title": "YDSV Dorisvale",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yelz-elizabeth-downs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YELZ Elizabeth Downs",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yfsr-fisher",
+      "root": "C:\\Sim\\Addons",
+      "title": "YFSR Fisher",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ygor-gorrie-wwii",
+      "root": "C:\\Sim\\Addons",
+      "title": "YGOR Gorrie",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ygtc-gemtree-roadhouse",
+      "root": "C:\\Sim\\Addons",
+      "title": "YGTC Gemtree Roadhouse",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhac-hayes-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YHAC Hayes Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhbp-homebush-park",
+      "root": "C:\\Sim\\Addons",
+      "title": "YHBP Homebush Park",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhov-hodgson-river",
+      "root": "C:\\Sim\\Addons",
+      "title": "YHOV Hodgson River",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhsb-horseshoe-bend",
+      "root": "C:\\Sim\\Addons",
+      "title": "YHSB Horseshoe Bend",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ykab-king-ash-bay",
+      "root": "C:\\Sim\\Addons",
+      "title": "YKAB King Ash Bay",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ykoh-koolpinyah",
+      "root": "C:\\Sim\\Addons",
+      "title": "YKOH Koolpinyah",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ylae-labelle-downs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YLAE Labelle Downs",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ylit-litchfield-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YLIT Litchfield Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymax-manbulloo-wwii",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMAX Manbulloo",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymee-merlin-mine",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMEE Merlin Mine",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymji-murranji",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMJI Murranji",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymkc-mistake-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMKC Mistake Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymyp-mayawunpirri",
+      "root": "C:\\Sim\\Addons",
+      "title": "YMYP Mayawunpirri",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yncw-newcastle-waters",
+      "root": "C:\\Sim\\Addons",
+      "title": "YNCW Newcastle Waters",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ywnr-woolner",
+      "root": "C:\\Sim\\Addons",
+      "title": "YWNR Woolner",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ywou-wombungi",
+      "root": "C:\\Sim\\Addons",
+      "title": "YWOU Wombungi",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx01-dundee-beach",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX01 Dundee Beach",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx02-crab-claw-island",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX02 Crab Claw Island",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx04-kuwuma",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX04 Kuwuma",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx05-mary-river-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX05 Mary River Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx06-swim-creek-plains",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX06 Swim Creek Plains",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx07-cape-wessel",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX07 Cape Wessel",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx08-marrakai-road",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX08 Marrakai Road",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx09-adelaide-river-outstation",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX09 Adelaide River OS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx12-colson-track",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX12 Colson Track",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx13-jinka-homestead",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX13 Jinka Homestead",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx14-redgum-store",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX14 Redgum Store",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx16-ilpurla",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX16 Ilpurla",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx17-mount-zeil-wp",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX17 Mount Zeil WP",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx18-milton-park-homestead",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX18 Milton Park Homestead",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx19-hamilton-downs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX19 Hamilton Downs",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx21-dunmarra",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX21 Dunmarra",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx22-indiana-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX22 Indiana Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx23-beetaloo-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX23 Beetaloo",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx26-spirit-hills",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX26 Spirit Hills",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx27-yambah-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX27 Yambah Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx28-melaleuca-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX28 Melaleuca Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx29-fish-river-hs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX29 Fish River HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx30-finnis-river-hs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX30 Finnis River HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx31-warloch-ponds",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX31 Warloch Ponds",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx32-dundee-beach-pvt",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX32 Dundee Beach Pvt",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx33-atula-homestead",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX33 Atula HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx34-phillip-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX34 Phillip Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx35-dry-river-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX35 Dry River Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx36-deleye",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX36 Deleye",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx37-scott-creek-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX37 Scott Creek Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx38-fenton",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX38 Fenton",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx40-baroalba-hs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX40 Baroalba HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx41-munmarlary-hs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX41 Munmarlary HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx42-nourlangie-hs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX42 Nourlangie HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx44-burrumburru",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX44 Burrumburru",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx45-redbank-wollogorang",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX45 Redbank Wollogorang",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx46-finnis-outstation",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX46 Finnis Outstation",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx47-vermelha",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX47 Vermelha",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx48-rombola-family-farms",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX48 Rombola Family Farms",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx49-mount-bundy-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX49 Mount Bundy Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx50-manbulloo",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX50 Manbulloo",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx51-emungalan",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX51 Emungalan",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx52-timber-creek-racetrack",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX52 Timber Creek Racetrack",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx53-cockatoo-lagoon",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX53 Cockatoo Lagoon",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx54-west-island",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX54 West Island",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx55-kalala-homestead",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX55 Kalala HS",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx56-western-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX56 Western Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx57-old-delamere",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX57 Old Delamere",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx58-broadmere",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX58 Broadmere",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx59-hughes",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX59 Hughes",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx60-macdonald",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX60 MacDonald",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx61-livingstone-wwii",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX61 Livingstone WWII",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx62-strauss-wwii",
+      "root": "C:\\Sim\\Addons",
+      "title": "YX62 Strauss",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ybwl-bramwell-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YBWL Bramwell Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ycdw-cardwell-dallachy",
+      "root": "C:\\Sim\\Addons",
+      "title": "YCDW Cardwell-Dallachy",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ycyt-crystalbrook-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YCYT Crystalbrook Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ylrs-new-laura",
+      "root": "C:\\Sim\\Addons",
+      "title": "YLRS New Laura",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq01-cannibal-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ01 Cannibal Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq02-wonga-beach",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ02 Wonga Beach",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq03-bustard-downs",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ03 Bustard Downs",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq04-mount-dickson",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ04 Mount Dickson",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq05-mount-mulligan",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ05 Mount Mulligan",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq06-cabana-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ06 Cabana Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq07-knox-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ07 Knox Creek",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq08-koah-private",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ08 Koah Private",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq09-port-stewart",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ09 Port Stewart",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq10-hurricane-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ10 Hurricane Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq11-bathurst-head-outstation",
+      "root": "C:\\Sim\\Addons",
+      "title": "YQ11 Bathurst Head Outstation",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yrlh-riversleigh",
+      "root": "C:\\Sim\\Addons",
+      "title": "YRLH Riversleigh",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ywsn-woodstock-station",
+      "root": "C:\\Sim\\Addons",
+      "title": "YWSN Woodstock Station",
+      "creator": "Gunther",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\tag21-airport-ybas-alice-springs",
+      "root": "C:\\Sim\\Addons",
+      "title": "Alice Springs",
+      "creator": "Tag21",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ybma-mountisa",
+      "root": "C:\\Sim\\Addons",
+      "title": "Simple Scenery",
+      "creator": "ybma-MountIsa",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ybra-benambra-airport",
+      "root": "C:\\Sim\\Addons",
+      "title": "benambra airstrip",
+      "creator": "redbaron",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\yccy-cloncurry",
+      "root": "C:\\Sim\\Addons",
+      "title": "Simple Scenery",
+      "creator": "yccy-Cloncurry",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ycva-clare-valley-aerodrome",
+      "root": "C:\\Sim\\Addons",
+      "title": "clare",
+      "creator": "RDL",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ytnk-tennant-creek",
+      "root": "C:\\Sim\\Addons",
+      "title": "tennant creek",
+      "creator": "rdl",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\005builds-lszrsceneryv11",
+      "root": "C:\\Sim\\Addons",
+      "title": "LSZRsceneryV11",
+      "creator": "Marc Strobl",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\a-puf-we-love-vfr-region1",
+      "root": "C:\\Sim\\Addons",
+      "title": "We Love VFR - Region 1",
+      "creator": "Puffin Flight",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ase05-airport-ldsp",
+      "root": "C:\\Sim\\Addons",
+      "title": "LDSP Split scenery",
+      "creator": "Atte",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-airport-esgf-falkenberg",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESGF-Falkenberg",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esav-scenery",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESAV",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgascenery",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESGA-scenery",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgr-airport",
+      "root": "C:\\Sim\\Addons",
+      "title": "esgr-airport",
+      "creator": "ba",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgt-simple",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESGT",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-estf-scenery",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESTF-airport",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesge",
+      "root": "C:\\Sim\\Addons",
+      "title": "esge",
+      "creator": "ba",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesgi",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESGI",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\bmw-lfbz-biarritz",
+      "root": "C:\\Sim\\Addons",
+      "title": "Biarritz",
+      "creator": "Alex",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\brickbybrickdesign-airport-eham-amsterdam",
+      "root": "C:\\Sim\\Addons",
+      "title": "EHAM-Enhanced",
+      "creator": "Noobbricks",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-airport-eham-amsterdam",
+      "root": "C:\\Sim\\Addons",
+      "title": "Schiphol",
+      "creator": "Sven Duijff",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
+      "root": "C:\\Sim\\Addons",
+      "title": "Schiphol Amsterdam Mega Enhancement Lighting",
+      "creator": "Sven Duijff",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\eddh-hamburg",
+      "root": "C:\\Sim\\Addons",
+      "title": "EDDH-upgrade",
+      "creator": "cs",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\efhk-helsinki",
+      "root": "C:\\Sim\\Addons",
+      "title": "Helsinki Airport ",
+      "creator": "epixeri",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\egcc-manchester",
+      "root": "C:\\Sim\\Addons",
+      "title": "Manchester_Intl",
+      "creator": "nsajid",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\epwa",
+      "root": "C:\\Sim\\Addons",
+      "title": "",
+      "creator": "Sebol1990",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\esgu-airport",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESGU",
+      "creator": "BA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\esnu-airport-esnu-umea-airport",
+      "root": "C:\\Sim\\Addons",
+      "title": "Umeå Airport",
+      "creator": "freddeliv",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\euroscene-airport-lepa-palma-de-mallorca",
+      "root": "C:\\Sim\\Addons",
+      "title": "LEPA Palma de Mallorca",
+      "creator": "EuroScene",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\finland-airport-eftp-pirkkala",
+      "root": "C:\\Sim\\Addons",
+      "title": "Tampere-Pirkkala Airport",
+      "creator": "WildLynxPilot, kuriiridesign",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\gatwick",
+      "root": "C:\\Sim\\Addons",
+      "title": "Gatwick EGKK",
+      "creator": "mkvy",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\grancanaria",
+      "root": "C:\\Sim\\Addons",
+      "title": "",
+      "creator": "",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\jdot029-airport-lgsa-chania",
+      "root": "C:\\Sim\\Addons",
+      "title": "Chania Airport Ioannis Daskalogiannis",
+      "creator": "scenery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\leal-alicante",
+      "root": "C:\\Sim\\Addons",
+      "title": "leal-alicante",
+      "creator": "hergi1234",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-halmstadv2-esmt",
+      "root": "C:\\Sim\\Addons",
+      "title": "Halmstad ESMT",
+      "creator": "Lennart",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-jonkoping-esgj",
+      "root": "C:\\Sim\\Addons",
+      "title": "",
+      "creator": "",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-varberg-esgv",
+      "root": "C:\\Sim\\Addons",
+      "title": "",
+      "creator": "",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lfpg2025-msfs2020",
+      "root": "C:\\Sim\\Addons",
+      "title": "lfpg2025",
+      "creator": "XAVIOS",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lpma-madeira",
+      "root": "C:\\Sim\\Addons",
+      "title": "LPMA-upgrade",
+      "creator": "Chack",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\pgcompany-airport-epwa-warsaw",
+      "root": "C:\\Sim\\Addons",
+      "title": "EPWA Warsaw Chopin Airport",
+      "creator": "piotr",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\reeledwh-airport-esib-satenas",
+      "root": "C:\\Sim\\Addons",
+      "title": "Satenas-airbase-esib",
+      "creator": "Reeledwh",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\simnord-copenhagen",
+      "root": "C:\\Sim\\Addons",
+      "title": "EKCH Copenhagen Airport",
+      "creator": "SimNord",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\LGSK--V1.1",
+      "root": "C:\\Sim\\Addons",
+      "title": "Simple Scenery",
+      "creator": "My Company",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgsk-lgsk",
+      "root": "C:\\Sim\\Addons",
+      "title": "Simple Scenery",
+      "creator": "My Company",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgskv1",
+      "root": "C:\\Sim\\Addons",
+      "title": "Skiathos Airport",
+      "creator": "Mick Hoffmann",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-airport-essv-visby",
+      "root": "C:\\Sim\\Addons",
+      "title": "Visby",
+      "creator": "SkylineSimulations",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-esks-scandinavianmountains",
+      "root": "C:\\Sim\\Addons",
+      "title": "ESKS Scandinavian",
+      "creator": "Skyline Simulations",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skytry-esgp",
+      "root": "C:\\Sim\\Addons",
+      "title": "Save Flygplats",
+      "creator": "Daniel Martinsson",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Sundbro",
+      "root": "C:\\Sim\\Addons",
+      "title": "Sundbro airfield",
+      "creator": "szcsongor",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Tree fix ESGJ",
+      "root": "C:\\Sim\\Addons",
+      "title": "Tree fix ESGJ",
+      "creator": "Pilot05",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\uddevallabron",
+      "root": "C:\\Sim\\Addons",
+      "title": "",
+      "creator": "",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\vidandesign-bornholm",
+      "root": "C:\\Sim\\Addons",
+      "title": "EKRN Bornholm Airport",
+      "creator": "SimNord",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\virtualfra-eddf",
+      "root": "C:\\Sim\\Addons",
+      "title": "virtualFRA-EDDF",
+      "creator": "virtualFRA",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\vt-airport-lgrp",
+      "root": "C:\\Sim\\Addons",
+      "title": "LGRP-Diagoras",
+      "creator": "Paolo Vittorini",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\wombiiactual-airport-enbr-fleslandfix",
+      "root": "C:\\Sim\\Addons",
+      "title": "Flesland",
+      "creator": "WombiiActual",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\z-genix-ldsp-ase05",
+      "root": "C:\\Sim\\Addons",
+      "title": "z-geniX-ldsp-ase05",
+      "creator": "geniX",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\zzzpmg-airport-lfmn",
+      "root": "C:\\Sim\\Addons",
+      "title": "LFMN - Nice-Cote d'Azur Int Airport",
+      "creator": "JoeDiss",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\a-puf-we-love-vfr-region2",
+      "root": "C:\\Sim\\Addons",
+      "title": "We Love VFR - Region 2",
+      "creator": "Puffin Flight",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\baddweapon-airport-3u2-johnsoncreekairport-v1-1",
+      "root": "C:\\Sim\\Addons",
+      "title": "Johnson Creek Airport v1.1",
+      "creator": "baddweapon",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\BGGH - Nuuk Airport",
+      "root": "C:\\Sim\\Addons",
+      "title": "Nuuk Airport",
+      "creator": "declinous",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\cottagecreations-airport-u70-cascade",
+      "root": "C:\\Sim\\Addons",
+      "title": "Cascade",
+      "creator": "Steve",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\kewr-newark-liberty-intl",
+      "root": "C:\\Sim\\Addons",
+      "title": "KEWR-upgrade",
+      "creator": "cs",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\San Francisco",
+      "root": "C:\\Sim\\Addons",
+      "title": "San Francisco International Airport",
+      "creator": "Snoopy7412",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\u60-u60",
+      "root": "C:\\Sim\\Addons",
+      "title": "U60 Big Creek ID",
+      "creator": "Milosanx",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\z-bggh-nuuk",
+      "root": "C:\\Sim\\Addons",
+      "title": "z-bggh-nuuk",
+      "creator": "genix",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\esd-modellib-eolib",
+      "root": "C:\\Sim\\Addons",
+      "title": "Emerald Object Library",
+      "creator": "Emerald Scenery Design",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\human-library-animated",
+      "root": "C:\\Sim\\Addons",
+      "title": "human library animated",
+      "creator": "Superspud",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\library1v14-cbj",
+      "root": "C:\\Sim\\Addons",
+      "title": "library1v14-cbj",
+      "creator": "cbj",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\library2v14-cbj",
+      "root": "C:\\Sim\\Addons",
+      "title": "library2v14-cbj",
+      "creator": "Colin-Jeffery",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\mikeaat-assetpack",
+      "root": "C:\\Sim\\Addons",
+      "title": "Mikeaat Asset Pack",
+      "creator": "Mikeaat",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\noolaero-module-vdgs",
+      "root": "C:\\Sim\\Addons",
+      "title": "Visual Docking Guidance System",
+      "creator": "Nool Aerosystems",
+      "contentType": "MISC"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\tsr-windy-things",
+      "root": "C:\\Sim\\Addons",
+      "title": "Windy Things Library",
+      "creator": "tsr",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\us-firedeptpack",
+      "root": "C:\\Sim\\Addons",
+      "title": "Fire Dept Pack USA",
+      "creator": "68ponygt",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\beyondatc-toolbar",
+      "root": "C:\\Sim\\Addons",
+      "title": "BeyondATC",
+      "creator": "Skirmish Mode Games, Inc",
+      "contentType": "MISC"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\flybywire-externaltools-simbridge",
+      "root": "C:\\Sim\\Addons",
+      "title": "SimBridge",
+      "creator": "FlyByWire Simulations",
+      "contentType": "TOOL"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\ingamepanels-sky4sim-ng",
+      "root": "C:\\Sim\\Addons",
+      "title": "ingamepanels-sky4sim-ng",
+      "creator": "Sbeuh",
+      "contentType": "UNKNOWN"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-cargo",
+      "root": "C:\\Sim\\Addons",
+      "title": "Neofly cargo",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-objects",
+      "root": "C:\\Sim\\Addons",
+      "title": "Neofly Objects",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-smokes",
+      "root": "C:\\Sim\\Addons",
+      "title": "Neofly Smokes",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Addons\\Group 13\\sky4sim-os",
+      "root": "C:\\Sim\\Addons",
+      "title": "Sky4Sim-OS",
+      "creator": "sbeuh",
+      "contentType": "INSTRUMENTS"
+    },
+    {
+      "path": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-efb",
+      "root": "C:\\Sim\\FSDT Addon Manager\\MSFS",
+      "title": "GSX EFB",
+      "creator": "FSDreamTeam",
+      "contentType": "MISC"
+    },
+    {
+      "path": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-pro",
+      "root": "C:\\Sim\\FSDT Addon Manager\\MSFS",
+      "title": "GSX Pro",
+      "creator": "Fsdreamteam",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-world-of-jetways",
+      "root": "C:\\Sim\\FSDT Addon Manager\\MSFS",
+      "title": "GSX World",
+      "creator": "Fsdreamteam",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\FSDT Addon Manager\\MSFS\\fsdreamteam-gsx-world-of-jetways-2020",
+      "root": "C:\\Sim\\FSDT Addon Manager\\MSFS",
+      "title": "GSX World 2020",
+      "creator": "Fsdreamteam",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Neofly\\addons\\bagolu-c152-neoflybannertow",
+      "root": "C:\\Sim\\Neofly\\addons",
+      "title": "Cessna 152 Neofly banner tow",
+      "creator": "bagolu",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Neofly\\addons\\bagolu-neoflybannertow",
+      "root": "C:\\Sim\\Neofly\\addons",
+      "title": "Cessna 152 Neofly banner tow",
+      "creator": "bagolu",
+      "contentType": "AIRCRAFT"
+    },
+    {
+      "path": "C:\\Sim\\Neofly\\addons\\neofly-neofly-cargo",
+      "root": "C:\\Sim\\Neofly\\addons",
+      "title": "Neofly cargo",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Neofly\\addons\\neofly-neofly-objects",
+      "root": "C:\\Sim\\Neofly\\addons",
+      "title": "Neofly Objects",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Neofly\\addons\\neofly-neofly-smokes",
+      "root": "C:\\Sim\\Neofly\\addons",
+      "title": "Neofly Smokes",
+      "creator": "Neofly",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\ASF Humanitarian Wings Demo\\Community\\asf-mission-demo",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "Humanitarian wings - Aviation Sans Frontieres Demo",
+      "creator": "SimWorks Studios",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\EDDF Frankfurt Main International Airport\\Community\\avioteksoftwarevce-airport-eddf-frankfurt-main",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "avioteksoftware-frankfurt",
+      "creator": "avioteksoftware",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\ENGM Oslo Gardermoen Airport\\Community\\orbx-airport-engm-oslo",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "ORBX OSLO",
+      "creator": "Finn Hansen",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\EPGD Gdańsk Lech Wałęsa Airport\\Community\\drzewieckidesign-epgd",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "EPGD Gdansk Airport",
+      "creator": "Drzewiecki Design",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\EPKK Kraków John Paul II International Airport\\Community\\papadelta-epkk",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "EPKK",
+      "creator": "Papa Delta Studio",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\ESGG Gothenburg Landvetter Airport\\Community\\orbx-airport-esgg-gothenburg",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "ESGG Gothenburg Landvetter",
+      "creator": "ORBX",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\ESSA Stockholm Arlanda Airport\\Community\\orbx-airport-essa-stockholm-arlanda",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "ESSA Stockholm-Arlanda Airport",
+      "creator": "Marcus Nyberg",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\Iceland Mesh\\Community\\orbx-mesh-iceland",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "Iceland Mesh",
+      "creator": "Orbx",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\KLRG Lincoln Regional Airport\\Community\\propairflight-klrg",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "KLRG Lincoln Regional Airport",
+      "creator": "PropairFlight",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\LOWI Innsbruck Airport\\Community\\orbx-airport-lowi-innsbruck",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "LOWI Innsbruck Airport",
+      "creator": "Orbx",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\MA44 Trade Wind Airfield\\Community\\burningbluedesign-airport-ma44-tradewind",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "MA44 Trade Wind Airfield",
+      "creator": "Burning Blue Design",
+      "contentType": "SCENERY"
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library\\msfs\\OG20 Fairways Airport\\Community\\orbx-airport-og20-fairways",
+      "root": "C:\\Sim\\Orbx Library\\msfs",
+      "title": "OG20 Fairways Airport",
+      "creator": "Orbx",
+      "contentType": "SCENERY"
+    }
+  ],
+  "folders": [
+    {
+      "path": "C:\\Sim\\Addons",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Tool 01",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 02",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 03",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 04",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 05",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 06",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 07",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 08",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 09",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\FSDT Addon Manager",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Tool 10",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 11",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 12",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 13",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Neofly",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Orbx Library",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Tool 14",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 15",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Tool 16",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 17",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 18",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "C:\\Sim\\Tool 19",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "C:\\Sim\\Tool 20",
+      "hasPackageBeneath": false
+    },
+    {
+      "path": "%USERPROFILE%\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\fly-in-objects\\sayintentions-fly-in-library",
+      "hasPackageBeneath": true
+    },
+    {
+      "path": "%USERPROFILE%\\AppData\\Roaming\\SayIntentionsAI\\SayIntentionsAI\\simobjects\\SayIntentions-SimObjects-Optional",
+      "hasPackageBeneath": true
+    }
+  ]
+}

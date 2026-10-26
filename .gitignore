@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Source folders named Packages (domain namespace), not NuGet packages
 !**/[Pp]ackages/*.cs
+
+# Claude Code local state (worktrees, review summaries)
+.claude/

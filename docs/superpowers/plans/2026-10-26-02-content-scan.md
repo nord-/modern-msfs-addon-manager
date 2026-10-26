@@ -50,7 +50,7 @@ These apply across Tasks 1–22. Each task restates the ones it implements.
 - **C2 Readers never throw for bad content.** Unreadable content (a corrupt BGL, an invalid `aircraft.cfg` or `layout.json`) yields an "unreadable" or empty result. Two things propagate: cancellation, and an `IOException` or `UnauthorizedAccessException` when the Package itself can't be accessed (its folder, `manifest.json` or `layout.json`), so the scanner can keep the old content instead of caching an empty one (Tasks 8 and 15).
 - **C3 Airport codes.** An Airport code is 3–5 ASCII letters or digits, stored upper-case. Anything else (empty, too short or long, other characters) is ignored wherever it is read.
 - **C4 Counted records.** A Package's airport records count for rule 1 unless the Package is excluded: more distinct Airport codes than `AirportThreshold` (default 10), or its name matches an exclusion pattern. An opted-in Package is never excluded. Records of a Package excluded **by pattern** are ignored everywhere: they are no known codes and create no Airports (spec 6.5: voloport, neofly and points of interest are not airports). Records of a Package excluded **only by the threshold** (generic airports, navigation data) still supply known codes, names and positions.
-- **C5 Identity.** Content is keyed by normalised path (`PathNormalizer.Normalize`); user data is keyed by `PackageName`, so a setting for a name applies to every content with that name (all Duplicate copies). `OptedIn` and `RemovedAirportLinks` apply to every source, Sim-managed included; `ManualAirportLinks` apply only to non-Sim-managed contents (Sim-managed Packages get their code from records or their name).
+- **C5 Identity.** Content is keyed by normalised path (`PathNormalizer.Normalize`); user data is keyed by `PackageName`, so a setting for a name applies to every content with that name (all Duplicate copies). `OptedIn`, `ManualAirportLinks` and `RemovedAirportLinks` apply to every source, Sim-managed included (spec 6.5: an encrypted Marketplace airport with a non-standard name can only be linked by hand).
 - **C6 Cache facts, derive the rest.** The cache stores what was read from disk. Categories, Airport links, Airports, Built-in replacements and the aircraft index are recomputed in memory on every analysis (spec 11 is updated in Task 14).
 - **C7 Order never decides.** Every rule result is independent of the order Packages were scanned in. Every list a rule returns is sorted by Package name, then path (`OrdinalIgnoreCase`), then Airport code where it has one; a container's display name is its spelling in the first provider (else first Livery or Attached Package) in that order.
 - **C8 Every copy is content.** Inactive Duplicate copies are scanned and analysed like active ones (they get links and aircraft roles); plan 3 shows and switches only the active copy. Tests that count Packages count distinct names.
@@ -83,24 +83,30 @@ src/
     AirportCode.cs, GeoPoint.cs, AirportRecord.cs, AircraftConfig.cs, PackageSource.cs,
     ChangeMarker.cs, PackageContent.cs, ScanTarget.cs, IPackageContentReader.cs, IScanCache.cs,
     Category.cs, CategoryRules.cs, ContentSettings.cs, AirportLinker.cs, AirportCatalog.cs,
-    AircraftIndex.cs, ContentAnalyzer.cs, ContentScanner.cs
+    AircraftIndex.cs, ContentAnalyzer.cs, ContentScanner.cs, ISimManagedPackages.cs
   AddonManager.Core/State/UserState.cs                     # + Content settings
+  AddonManager.Core/Packages/PackageIndex.cs               # + AllCopies
   AddonManager.Sim2020/Bgl/
     BglFile.cs, AirportCodeCodec.cs, AirportRecordReader.cs, BglShape.cs, BglContentReader.cs
   AddonManager.Sim2020/Content/
-    LayoutReader.cs, AircraftCfgReader.cs, PackageContentReader.cs
+    LayoutReader.cs, AircraftCfgReader.cs, PackageContentReader.cs, OfficialPackages.cs
   AddonManager.Infrastructure/
     JsonConverters.cs, ContentJson.cs, SqliteScanCache.cs, ScanTargetCollector.cs,
-    ScanService.cs, ContentWatcher.cs
+    ScanCallbacks.cs, ScanService.cs, ContentWatcher.cs
+    AppPaths.cs, ManifestReader.cs, LibraryScanner.cs, JsonUserStateStore.cs   # modified
   AddonManager.Cli/
     BglDumpCommand.cs, ScanCommand.cs, ExportContentCommand.cs
 tests/
-  AddonManager.Core.Tests/Content/…, Scenarios/ContentScenarioTests.cs, CollisionReportTests.cs,
-    ContentFixtureLoader.cs, Fixtures/rickard-content.json
+  AddonManager.Core.Tests/Content/…Tests.cs, Content/ContentBuilder.cs,
+    Fakes/FakeContentReader.cs, Fakes/InMemoryScanCache.cs,
+    Scenarios/ContentScenarioTests.cs, Scenarios/CollisionReportTests.cs, ContentFixtureLoader.cs,
+    Fixtures/rickard-content.json, Fixtures/reviewed-token-links.tsv
   AddonManager.Sim2020.Tests/Bgl/BglBuilder.cs, Bgl/…Tests.cs, Content/…Tests.cs,
-    Integration/LocalInstallTests.cs, Fixtures/bgl-shapes/*.json
+    Content/OfficialPackagesTests.cs, TempFolder.cs,
+    Integration/SimFactAttribute.cs, Integration/LocalInstallTests.cs, Fixtures/bgl-shapes/*.json
   AddonManager.Infrastructure.Tests/SqliteScanCacheTests.cs, ScanTargetCollectorTests.cs,
-    ScanServiceTests.cs, ContentWatcherTests.cs
+    ScanServiceTests.cs, ContentWatcherTests.cs,
+    Fakes/GatedContentReader.cs, Fakes/InMemoryScanCache.cs
 ```
 
 ---
@@ -109,7 +115,7 @@ tests/
 
 **Files:**
 - Create: `src/AddonManager.Core/Content/AirportCode.cs`, `GeoPoint.cs`, `AirportRecord.cs`, `AircraftConfig.cs`, `PackageSource.cs`, `ChangeMarker.cs`, `PackageContent.cs`, `ScanTarget.cs`, `IPackageContentReader.cs`, `IScanCache.cs`
-- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress"); `ANALYS.md`, section "Beslut för plan 2": add the approved "Calls I made" at the end of this plan, dated with the plan's approval date, in Swedish; spec `docs/superpowers/specs/2026-10-25-mvp-design.md` section 6.5 (rule 2 only for Packages that aren't Sim-managed; manual links only for Packages that aren't Sim-managed; opting in overrides both the threshold and a pattern; the overlapping `layout.json` signal is dropped; pattern-excluded records create no Airports) and 6.6 (encrypted aircraft in any source provide their containers)
+- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress"); `ANALYS.md`, section "Beslut för plan 2": add the approved "Calls I made" at the end of this plan, dated with the plan's approval date, in Swedish; spec `docs/superpowers/specs/2026-10-25-mvp-design.md` section 6.5 (rule 2 only for Packages that aren't Sim-managed; the package-name rule for encrypted official airports links only known codes; opting in overrides both the threshold and a pattern; pattern-excluded records create no Airports and are no known codes for the token rule; real scenery counts links from non-excluded Packages plus any manual link; inactive Duplicate copies are analysed and linked like active ones; the overlapping `layout.json` signal is dropped) and 6.6 (encrypted aircraft in any source provide their containers)
 - Test: `tests/AddonManager.Core.Tests/Content/AirportCodeTests.cs`
 
 **Interfaces:**
@@ -251,7 +257,7 @@ Format (FSDeveloper wiki "BGL File Format"; Task 4 confirms it on real files):
   { "type": "0x65", "subsectionEntrySize": 16, "subsections": [ { "recordCount": 3, "dataSize": 400 } ] } ] }
 ```
 
-`records` is listed only for section type 0x03. Fixed-field offsets in an airport record (documented, confirmed in Task 4): longitude `u32` at 0x0C, latitude `u32` at 0x10, packed code `u32` at 0x28; `longitude = raw * 360.0 / (3 * 0x10000000) - 180.0`, `latitude = 90.0 - raw * 180.0 / (2 * 0x10000000)`. `fixedSize` is found, not assumed (`BglFile.FindAirportFixedSize`): the first of 0x44, 0x38, 0x3C, 0x48, 0x4C (the documented MSFS size first) from which the child records (`u16 id, u32 size`, size ≥ 6) end exactly at the record's end; `null` when none fits. `name` is the `0x0019` child's bytes as a null-trimmed string.
+`records` is listed only for section type 0x03, and only records with id 0x56 get `fixedSize`, `code`, `name`, `latitude`, `longitude` and `children`; other records there have them `null`/empty (and `FromShape` zero-fills them). Fixed-field offsets in an airport record (documented, confirmed in Task 4): longitude `u32` at 0x0C, latitude `u32` at 0x10, packed code `u32` at 0x28; `longitude = raw * 360.0 / (3 * 0x10000000) - 180.0`, `latitude = 90.0 - raw * 180.0 / (2 * 0x10000000)`. `fixedSize` is found, not assumed (`BglFile.FindAirportFixedSize`): the first of 0x44, 0x38, 0x3C, 0x48, 0x4C (the documented MSFS size first) from which the child records (`u16 id, u32 size`, size ≥ 6) end exactly at the record's end; `null` when none fits. `name` is the `0x0019` child's bytes after its 6-byte header, decoded as UTF-8, trailing NULs trimmed (so "Zürich" survives).
 
 `bgl-dump` with a folder argument looks at the `.bgl` files in ordinal path order, recursively. With `--code` it picks the first whose airport records include that code (exit 1 with a message when none does). Without `--code` it picks the first with a 0x03 section, else the first `.bgl` (so a Package without airport records, like `asobo-airport-lfcs-saucats`, still dumps). It always prints the chosen file's path to stderr, and exits 1 only when the folder has no `.bgl`. With a file it dumps that file. It prints the shape to stdout, or writes it with `--out`. Read-only (C1).
 
@@ -298,7 +304,7 @@ public void Unreadable_files_return_null_and_never_throw(string kind)
 
 - [ ] **Step 2: Run to verify failure** → FAIL.
 - [ ] **Step 3: Implement** `BglFile`, `AirportCodeCodec`, `BglShapes` and `BglDumpCommand` (System.Text.Json, camelCase, hex strings for `type`/`id`, indented).
-- [ ] **Step 4: Run to verify pass** → PASS. Also run `dotnet run --project src/AddonManager.Cli -- bgl-dump <a file built by the test>` once by hand; expected: the JSON shape above.
+- [ ] **Step 4: Run to verify pass** → PASS. Also, once by hand, write `new BglBuilder().Section(0x03).Subsection(BglBuilder.Airport("EHAM", …)).Build()` to a temp `.bgl` (a throwaway test or `dotnet script`) and run `dotnet run --project src/AddonManager.Cli -- bgl-dump <that file>`; expected: the JSON shape above.
 - [ ] **Step 5: Commit** — `git commit -m "feat: read BGL structure and add bgl-dump command"`
 
 ---
@@ -504,7 +510,7 @@ Behaviour:
 {
     var pkg = Package("p", ("a.bgl", Bgl("yalr1")));
     var marker = reader.ReadMarker(pkg)!;
-    using (DenyListing(pkg))   // ACL deny on list-folder for the current user, removed on dispose
+    using (DenyRead(pkg))   // inheritable ACL deny on list-folder and read-data for the current user, removed on dispose: opening layout.json throws
         Assert.Throws<UnauthorizedAccessException>(() => reader.Read(Target(pkg), marker));
 }
 
@@ -609,9 +615,9 @@ public void Default_exclusions(string name, bool excluded) => Assert.Equal(exclu
 
 Rules (spec 6.5, C4, C7):
 1. **Record:** each distinct code in the Package's records, when the Package isn't excluded.
-2. **Token:** for a non-Sim-managed Package with no counted record whose `CategoryRules.Provisional(contentType, hasBgl)` is Scenery: split its folder name and its manifest title on every character that isn't an ASCII letter or digit; a token links when it is a known code, isn't a stop word, and is 4–5 characters long anywhere, or 3 characters long as the **first** token of that string. *My call:* Sim-managed Packages don't use rule 2 (they use rule 3 below; their names, such as `asobo-landmarks-*`, aren't Airport names).
+2. **Token:** for a non-Sim-managed Package with no counted record whose `CategoryRules.Provisional(contentType, hasBgl)` is Scenery and that isn't `IsAirTraffic` (Final Other): split its `Name` (the name the sim loads it under; for an External entry the entry name) and its manifest title on every character that isn't an ASCII letter or digit; a token links when it is a known code, isn't a stop word, and is 4–5 characters long anywhere, or 3 characters long as the **first** token of that string. *My call:* Sim-managed Packages don't use rule 2 (they use rule 3 below; their names, such as `asobo-landmarks-*`, aren't Airport names).
 3. **PackageName (encrypted official airports):** a Sim-managed Package with no counted record whose name contains `-airport-<code>-` or ends in `-airport-<code>` links to that code when it is a valid (C3) **known** code; spec 6.5 takes name and position from the generic record, so an unknown code would make a nameless fake Airport.
-4. **Manual:** every code in `ManualAirportLinks[name]` for non-Sim-managed contents with that name (C5).
+4. **Manual:** every code in `ManualAirportLinks[name]` for every content with that name, any source (C5).
 5. Links in `RemovedAirportLinks[name]` are dropped unless they are Manual, for every source (C5).
 
 - [ ] **Step 1: Write the failing tests**
@@ -670,7 +676,7 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
     settings.RemoveLink(eddf.Name, Code("EDDF"));
     Assert.Empty(Link(eddf));
 }
-[Fact] public void Manual_links_ignore_sim_managed_packages() { … settings.LinkManually(simPkg.Name, Code("EHAM")) … Assert.Empty(Link(simPkg)); }
+[Fact] public void Manual_links_apply_to_sim_managed_packages() { var mkt = Scenery("somedev-lowi-innsbruck", hasBgl: true, source: PackageSource.SimManaged); settings.LinkManually(mkt.Name, Code("LOWI")); Assert.Equal([("LOWI", AirportLinkReason.Manual)], Pairs(Link(mkt))); }
 [Fact] public void Result_does_not_depend_on_input_order() { var a = Link(x, y, z); var b = Link(z, y, x); Assert.Equal(Set(a), Set(b)); }
 [Fact] public void Real_cases_without_record_or_token_stay_unlinked()
     => Assert.Empty(Link(Scenery("005builds-lszrsceneryv11", hasBgl: true), Scenery("grancanaria", hasBgl: true)));
@@ -751,7 +757,7 @@ Rules (spec 6.5):
 Rules (spec 6.6, C7) — computed in two passes, providers first, so scan order never decides:
 - Only Packages with `IsAircraftType(contentType)` take part, plus Sim-managed Packages of any type. `IsAirTraffic` → role AirTraffic, nothing else.
 - **Provided containers:** cfg folders without a base container, plus cfg folders whose base container is provided by the same Package, plus `EncryptedAirplaneFolders` for any source (spec 6.6: encrypted aircraft get their container from paths). For **Sim-managed** Packages also every other `AirplaneFolders` entry without a readable cfg (official aircraft whose files aren't `.fsarchive`).
-- **Order (C7):** `Providers`, `LockedBases`, `Liveries` and `Attached` are sorted by Package name, then path; `Container` is spelled as in the first provider in that order (else the first Livery's base container, else the first Attached folder).
+- **Order (C7):** `Providers`, `LockedBases`, `Liveries` and `Attached` are sorted by Package name, then path; `Container` is spelled as in the first Provider in that order, else the first LockedBase, else the first Livery's base container, else the first Attached folder.
 - **Locked bases:** Sim-managed and Community (Fixed/External) Packages that provide a container. Library Packages that provide it are Providers, with role **Mod** when the group has a locked base, else **Provider**.
 - **Livery:** a Package with at least one cfg where every cfg has a non-null `BaseContainer` and none of those base containers is provided by the same Package; it joins the group of each such base container (a group is created even when no provider is installed, so plan 3 can warn "Livery without aircraft").
 - **Attached:** an aircraft-type Package with no cfg **that provides no container**: joins every group whose container is in its `AirplaneFolders`; if none, every group in which a Package named in its manifest `dependencies` is a Provider or LockedBase; otherwise role None (Category Other via Task 13).
@@ -766,6 +772,13 @@ Rules (spec 6.6, C7) — computed in two passes, providers first, so scan order 
     var b = Aircraft("sal1800-cessna-super-170b-OPTIONAL", cfgs: [("cessna-170b-backcountry", null)]);
     var group = AircraftIndex.Build([b, a]).Groups["CESSNA-170B-BACKCOUNTRY"];
     Assert.Equal([a, b], group.Providers); Assert.Equal("Cessna-170B-Backcountry", group.Container);
+}
+
+[Fact] public void Group_with_only_a_locked_base_is_spelled_as_the_locked_base()
+{
+    var official = Aircraft("asobo-aircraft-c152", airplaneFolders: ["Asobo_C152"], source: SimManaged);
+    var livery = Aircraft("c152-livery", cfgs: [("C152_Red", "asobo_c152")]);
+    Assert.Equal("Asobo_C152", AircraftIndex.Build([livery, official]).Groups["ASOBO_C152"].Container);
 }
 
 [Fact] public void Encrypted_library_aircraft_provides_its_container()
@@ -978,7 +991,7 @@ Order and sources (spec 7.3, decision: "Community first" means what the sim load
 
 Duplicates by normalised path are dropped (first wins). Manifests: Library copies reuse `PackageCopy.Manifest`; others are read with `ManifestReader`. Offline, Stale, Broken, Ignored and Stray entries give no target.
 
-- [ ] **Step 1: Write the failing tests** (temp folders: Community with a Fixed folder, an External junction, a Managed junction; a Library; an Official folder)
+- [ ] **Step 1: Write the failing tests** (temp folders: Community with a Fixed folder, an External junction, a Managed junction; a Library; Sim-managed folders through an inline `ISimManagedPackages` fake, since Infrastructure.Tests doesn't reference Sim2020. `OfficialPackagesTests` make their temp root inline, as `InstallLocatorTests` does, and don't create `TempFolder.cs`: that file comes from Task 7 on the BGL track)
 
 ```csharp
 [Fact] public void Orders_community_then_libraries_then_sim_managed() { … Assert.Equal(["fixed-pkg", "external-pkg", "managed-pkg", "unlinked-pkg", "asobo-airport-x"], names); }
@@ -1073,7 +1086,7 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
 - [ ] **Step 1: Write the failing tests** (temp folders, `quietPeriod` 200 ms, waits bounded at 5 s)
 
 ```csharp
-[Fact] public async Task A_burst_of_changes_raises_one_rescan() { for (var i = 0; i < 50; i++) File.WriteAllText(Path.Combine(lib, $"p{i}", "manifest.json"), "{}"); await Task.Delay(1000); Assert.Equal(1, raised); }
+[Fact] public async Task A_burst_of_changes_raises_one_rescan() { /* p0..p49 created before Start(); this test uses quietPeriod 1 s */ for (var i = 0; i < 50; i++) File.WriteAllText(Path.Combine(lib, $"p{i}", "manifest.json"), "{}"); await Task.Delay(3000); Assert.Equal(1, raised); }
 [Fact] public async Task Community_is_watched_non_recursively() { … change inside a real Community subfolder … Assert.Equal(0, raised); … new top-level entry … Assert.Equal(1, raised); }
 [Fact] public async Task Library_changes_at_any_depth_are_seen() { … }
 [Fact] public async Task Community_changed_fires_only_for_community_events() { … library change → RescanNeeded 1, CommunityChanged 0; new Community entry → RescanNeeded 2, CommunityChanged 1 }
@@ -1098,7 +1111,7 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
 **Interfaces:**
 - Consumes: `InstallLocator`, `JsonUserStateStore`, `AppPaths`, `LibraryProposer`, `DiskFolderTree` (as in `StatusCommand`), `PackageContentReader` (8), `OfficialPackages` (16, with `SimPaths.OfficialPath`), `SqliteScanCache` (14), `ScanService` (17).
 - Produces:
-  - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes every Token link as a tab-separated line `<package>`, `<code>`, `<token>`, `?` (four columns) for Rickard's review (Task 21). Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None; Sim-managed Packages with "airport" in their name and no Airport link.
+  - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes the Token links as tab-separated lines `<package>`, `<code>`, `<token>`, `?` (four columns) for Rickard's review (Task 21): one row per distinct (Package name, code), Duplicate copies collapsed; `<token>` is the first matching token, name before title, upper-cased; rows sorted by package, then code. Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None; Sim-managed Packages with Provisional Category Scenery, no Airport link and `!HasBgl || UnreadableBglCount > 0` (likely encrypted airports with a non-standard name).
   - `AddonManager.Cli export-content --out <file>` — runs the same scan, then writes the content fixture (format below). Read-only apart from `--out` and the cache.
 
 Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile replaced with `%USERPROFILE%`):
@@ -1173,7 +1186,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 - [ ] **Step 5: Review the Token links** — in `reviewed-token-links.tsv`, replace every `?` with `ok` (the Package really belongs to that Airport) or `stop` (the token is a common word; Task 22 adds it to the stop-list). Rickard's verdict, not the implementer's: no `?` may remain. A token marked `stop` on one row and `ok` on another is a conflict (stop words are global): decide which wins before committing.
 - [ ] **Step 6: Commit and push** — `git commit -m "test: add content fixture from the real install"`, then `git push`, so the Task 22 agent can fetch the fixture and the TSV (see Handover).
 
-**Stop and report** if the unreadable BGL count is large, if a real case from spec 6.5/6.6 comes out differently from Task 22's expectations, if an aircraft-type Library or Community Package has role None (an aircraft the container rules miss), if `scan` lists a Sim-managed airport Package without a link (an airport that only a manual link could fix, which Sim-managed Packages don't get), or if step 2 is over 2 s.
+**Stop and report** if the unreadable BGL count is large, if a real case from spec 6.5/6.6 comes out differently from Task 22's expectations, if an aircraft-type Library or Community Package has role None (an aircraft the container rules miss), or if step 2 is over 2 s. The Sim-managed Packages `scan` lists as possibly encrypted airports without a link are not a stop: note them in the PR (they get manual links once plan 5 has the UI).
 
 ---
 
@@ -1184,7 +1197,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 - Modify: `src/AddonManager.Core/Content/ContentSettings.cs` (`DefaultStopList` gets the token of every `stop` row in the reviewed TSV)
 
 **Interfaces:**
-- Consumes: the fixture and Rickard's reviewed `reviewed-token-links.tsv` (Task 21) — **stop and report** if either is missing, the TSV still has a `?`, or a `stop` row's token also appears in an `ok` row; `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
+- Consumes: the fixture and Rickard's reviewed `reviewed-token-links.tsv` (Task 21) — **stop and report** if either is missing, the TSV still has a `?`, or a `stop` row's token also appears in an `ok` row (compared `OrdinalIgnoreCase`); `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
 - Produces: `ContentFixtureLoader.Load(string name) → IReadOnlyList<PackageContent>` (expands `%USERPROFILE%` to `C:\Users\user`, like `FixtureLoader`; marker is a constant).
 
 - [ ] **Step 1: Write the scenario tests** (expected values from spec 6.4–6.6; if the fixture disagrees, stop and report — don't change an expectation to make it pass)
@@ -1241,7 +1254,7 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - The `layout.json` overlap signal for Replaces built-in is left out; the dependency signal is kept (Task 11).
 - The generic codes from ANALYS decision "Collision report" live inside the content fixture (as a compact `codes` array per excluded Package), not in a separate file (Task 19).
 - Records of Packages excluded by pattern (voloport, neofly, points of interest) are ignored everywhere: no Airports on the map, no known codes for the token rule. Records excluded only by the threshold still supply codes, names and positions (C4).
-- `OptedIn` and removed links apply to Sim-managed Packages too; manual links don't (C5).
+- `OptedIn`, manual links and removed links apply to Sim-managed Packages too (C5, spec 6.5).
 - Inactive Duplicate copies are analysed like active ones; plan 3 shows only the active copy (C8).
 - An encrypted aircraft (`.fsarchive`, no `aircraft.cfg`) provides its container in any source, not only Sim-managed (Task 12, spec 6.6).
 - The exclusion list and stop-list are stored as the user's additions and removals on top of the built-in defaults, so new defaults in a later release still reach existing users (Task 9).
@@ -1255,7 +1268,7 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - The package-name rule for encrypted official airports links only known codes, so a Sim-managed name never creates a nameless Airport (Task 10).
 - Real scenery counts links from Packages that aren't excluded, plus manual links (Task 11, spec 6.5).
 - Cached results at startup come from the scan run itself (`ScanCallbacks.OnCached`, before discovery), so the cache is read once per run and by one caller (Task 17).
-- Sim-managed Packages get no manual links; `scan` lists Sim-managed airport Packages left without a link, so Task 21 checks this call against real data.
+- `scan` lists Sim-managed Scenery Packages left without a link that have no BGL or an unreadable one (encrypted airports the package-name rule missed); Task 21 notes them in the PR so they can be linked by hand once plan 5 has the UI.
 - Liveries whose aircraft isn't installed still get a group, so plan 3 can warn "Livery without aircraft" (Task 12).
 - A Package that provides several containers is in every group; plan 3 picks the alphabetically first (spec 6.6).
 - Plan 3 owns the Asset pack test; plan 2 provides `BglSectionTypes` (ANALYS decision "Asset pack-testet").

@@ -1,2 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using AddonManager.Cli;
+
+if (args is ["status"])
+    return StatusCommand.Run(Console.Out);
+
+Console.Error.WriteLine("Usage: AddonManager.Cli status");
+return 2;

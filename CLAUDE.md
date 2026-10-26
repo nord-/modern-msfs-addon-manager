@@ -22,12 +22,12 @@ Priority of addon types: 1) **Scenery** (airports, map, GSX profiles), 2) **Airc
 - Community will contain a mix the app must classify and respect: our junctions, foreign junctions (Addons Linker, Orbx, FSDT, Neofly), symlinks (SayIntentions), real folders, broken links, stray files. Existing Addons Linker junctions must migrate painlessly.
 - MSFS reads Community only at startup: detect a running sim, show "takes effect on next start", and don't remove links while it runs.
 - Keep sim-specific parts (paths, content formats, built-in airports) behind replaceable abstractions so MSFS 2024 can be added later.
-- Classify airports from **airport records in BGL files**, not package names. Scan GSX profiles both in `%APPDATA%\Virtuali\GSX\MSFS\*.ini` (ICAO = filename prefix before first `-`, case-insensitive) and inside scenery folders.
+- A Package belongs to an Airport via an **airport record in its BGL files**, the Airport code as a separate token in its name/title, or a manual link — never from loose name heuristics. See the design decisions in `ANALYS.md`. Scan GSX profiles both in `%APPDATA%\Virtuali\GSX\MSFS\*.ini` (ICAO = filename prefix before first `-`, case-insensitive) and inside scenery folders.
 - Map tiles must work without an API key. Finding uninstalled scenery = deep links to flightsim.to/SimMarket (no download APIs exist; no scraping).
 
-## Proposed tech (not final)
+## Tech (decided, see `docs/adr/0003-wpf-with-webview2-leaflet-map.md`)
 
-C# / WPF + WPF-UI (Fluent, dark theme); alternatives WinUI 3 or Avalonia. Map via WebView2 + Leaflet with OSM/CartoDB Dark Matter tiles. SimConnect managed wrapper when needed. Rejected: Electron, Tauri.
+C# / WPF + WPF-UI. Map via WebView2 + Leaflet with tiles that need no API key. SimConnect managed wrapper when needed. Dark theme only, English UI only (no localization). Shipped as a framework-dependent single-file exe on GitHub Releases.
 
 ## Repo conventions
 

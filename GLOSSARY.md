@@ -79,6 +79,13 @@ The top-level kind of an Addon: Scenery, Aircraft or Other.
 A single airfield, identified by its ICAO code, or by its local ident when it has none (such as `OG20`). Several Packages can relate to the same Airport at once, including Sim-managed packages.
 _Avoid_: Airfield, ICAO (as a name for the airport itself)
 
+**Airport code**:
+The 3–5 character code that identifies an Airport: its ICAO code, or its local ident when it has none.
+_Avoid_: Ident, ICAO
+
+**Generic airport**:
+An Airport known only from the sim's generic airport or navigation data, with no Package providing scenery for it.
+
 **Airport scenery**:
 A Scenery Addon whose Packages belong to an Airport.
 
@@ -91,6 +98,9 @@ The identity of an aircraft in the sim: the folder name under `SimObjects\Airpla
 
 **Livery**:
 An Aircraft Package that repaints an aircraft provided by another Package.
+
+**Mod**:
+A Library Package that provides a Container that a Sim-managed package, a Fixed entry or an External entry also provides.
 
 **Duplicate package**:
 The same Package name both in Community and in the sim's Official folder.

@@ -47,12 +47,13 @@
 These apply across Tasks 1–22. Each task restates the ones it implements.
 
 - **C1 Read-only.** See Global Constraints.
-- **C2 Readers never throw for bad content.** Unreadable input yields an "unreadable" or empty result. Only cancellation propagates.
+- **C2 Readers never throw for bad content.** Unreadable content (a corrupt BGL, an invalid `aircraft.cfg` or `layout.json`) yields an "unreadable" or empty result. Two things propagate: cancellation, and an `IOException` or `UnauthorizedAccessException` when the Package itself can't be accessed (its folder, `manifest.json` or `layout.json`), so the scanner can keep the old content instead of caching an empty one (Tasks 8 and 15).
 - **C3 Airport codes.** An Airport code is 3–5 ASCII letters or digits, stored upper-case. Anything else (empty, too short or long, other characters) is ignored wherever it is read.
-- **C4 Counted records.** A Package's airport records count for rule 1 unless the Package is excluded: more distinct Airport codes than `AirportThreshold` (default 10), or its name matches an exclusion pattern. An opted-in Package is never excluded.
-- **C5 Identity.** Content is keyed by normalised path (`PathNormalizer.Normalize`); user data is keyed by `PackageName`. A user setting for a name applies to every non-Sim-managed content with that name.
+- **C4 Counted records.** A Package's airport records count for rule 1 unless the Package is excluded: more distinct Airport codes than `AirportThreshold` (default 10), or its name matches an exclusion pattern. An opted-in Package is never excluded. Records of a Package excluded **by pattern** are ignored everywhere: they are no known codes and create no Airports (spec 6.5: voloport, neofly and points of interest are not airports). Records of a Package excluded **only by the threshold** (generic airports, navigation data) still supply known codes, names and positions.
+- **C5 Identity.** Content is keyed by normalised path (`PathNormalizer.Normalize`); user data is keyed by `PackageName`, so a setting for a name applies to every content with that name (all Duplicate copies). `OptedIn` and `RemovedAirportLinks` apply to every source, Sim-managed included; `ManualAirportLinks` apply only to non-Sim-managed contents (Sim-managed Packages get their code from records or their name).
 - **C6 Cache facts, derive the rest.** The cache stores what was read from disk. Categories, Airport links, Airports, Built-in replacements and the aircraft index are recomputed in memory on every analysis (spec 11 is updated in Task 14).
-- **C7 Order never decides.** Every rule result is independent of the order Packages were scanned in.
+- **C7 Order never decides.** Every rule result is independent of the order Packages were scanned in. Every list a rule returns is sorted by Package name, then path (`OrdinalIgnoreCase`), then Airport code where it has one; a container's display name is its spelling in the first provider (else first Livery or Attached Package) in that order.
+- **C8 Every copy is content.** Inactive Duplicate copies are scanned and analysed like active ones (they get links and aircraft roles); plan 3 shows and switches only the active copy. Tests that count Packages count distinct names.
 
 ## Tracks
 
@@ -60,12 +61,12 @@ Independent chains run as parallel tracks (side tracks reset onto the main-track
 
 | Track | Tasks | Consumes |
 |---|---|---|
-| Main | 1 → 2 → 9 → 10 → 11 → 12 → 13 → 15 → 16 → 17 → 18 → 19 | — |
-| BGL (side) | 3 → **4 (Rickard)** → 5 → 6 → 7 → 8 | Task 1 for 6–8 (start 3 right after 1) |
+| Main | 1 → 2 → 9 → 10 → 11 → 12 → 13 → 15 → 16 → 17 → 18 | — |
+| BGL (side) | 3 → 7 → **4 (Rickard)** → 5 → 6 → 8 | Task 1 (start right after 1) |
 | Cache (side) | 14 | Task 1 |
-| Finish | 20 → **21 (Rickard)** → 22 | all tracks merged |
+| Finish | merge BGL and Cache tracks → 19 → 20 → **21 (Rickard)** → 22 | all tracks |
 
-Start Task 3 early: Task 4 needs Rickard at the sim machine and should not block the main track.
+Start the BGL track right after Task 1: Task 7 doesn't need the dumps, so it runs while Task 4 waits for Rickard at the sim machine. Task 4 gates Tasks 5, 6 and 8, and so the Finish track (Task 19 consumes `PackageContentReader` from Task 8 and `SqliteScanCache` from Task 14). The main track never waits for Task 4.
 
 ---
 
@@ -103,7 +104,7 @@ tests/
 
 **Files:**
 - Create: `src/AddonManager.Core/Content/AirportCode.cs`, `GeoPoint.cs`, `AirportRecord.cs`, `AircraftConfig.cs`, `PackageSource.cs`, `ChangeMarker.cs`, `PackageContent.cs`, `ScanTarget.cs`, `IPackageContentReader.cs`, `IScanCache.cs`
-- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress")
+- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress"); `ANALYS.md`, section "Beslut för plan 2": add the approved "Calls I made" at the end of this plan, dated with the plan's approval date, in Swedish; spec `docs/superpowers/specs/2026-10-25-mvp-design.md` section 6.5 (rule 2 only for Packages that aren't Sim-managed; the overlapping `layout.json` signal is dropped; pattern-excluded records create no Airports) and 6.6 (encrypted aircraft in any source provide their containers)
 - Test: `tests/AddonManager.Core.Tests/Content/AirportCodeTests.cs`
 
 **Interfaces:**
@@ -116,8 +117,8 @@ tests/
   - `public enum PackageSource { Library, Community, SimManaged }` — `Community` means a Fixed or External entry.
   - `public sealed record ChangeMarker(long ManifestTicks, long ManifestSize, long? LayoutTicks, long? LayoutSize);`
   - `public sealed record ScanTarget(PackageName Name, string Path, PackageSource Source, Manifest Manifest);`
-  - `public sealed record PackageContent(PackageName Name, string Path, PackageSource Source, ChangeMarker Marker, Manifest Manifest, bool HasBgl, IReadOnlyList<uint> BglSectionTypes, int UnreadableBglCount, IReadOnlyList<AirportRecord> Airports, bool IsAirTraffic, IReadOnlyList<AircraftConfig> AircraftConfigs, IReadOnlyList<string> AirplaneFolders, string? ThumbnailPath);` — `Path` is normalised (C5); `BglSectionTypes` sorted and distinct; `AirplaneFolders` are the folder names under `SimObjects\Airplanes` seen in the Package.
-  - `public interface IPackageContentReader { ChangeMarker? ReadMarker(string packagePath); bool? HasBgl(string packagePath); PackageContent? Read(ScanTarget target, ChangeMarker marker); }` — `ReadMarker` is `null` when `manifest.json` is gone; `HasBgl` is `null` without a `layout.json`; `Read` is `null` when the folder vanished.
+  - `public sealed record PackageContent(PackageName Name, string Path, PackageSource Source, ChangeMarker Marker, Manifest Manifest, bool HasBgl, IReadOnlyList<uint> BglSectionTypes, int UnreadableBglCount, IReadOnlyList<AirportRecord> Airports, bool IsAirTraffic, IReadOnlyList<AircraftConfig> AircraftConfigs, IReadOnlyList<string> AirplaneFolders, IReadOnlyList<string> EncryptedAirplaneFolders, string? ThumbnailPath);` — `Path` is normalised (C5); `BglSectionTypes` sorted and distinct; `AirplaneFolders` are the folder names under `SimObjects\Airplanes` seen in the Package; `EncryptedAirplaneFolders` is the subset that holds a `.fsarchive` file and no `aircraft.cfg` (encrypted aircraft, spec 6.6).
+  - `public interface IPackageContentReader { ChangeMarker? ReadMarker(string packagePath); bool? HasBgl(string packagePath); PackageContent? Read(ScanTarget target, ChangeMarker marker); }` — `ReadMarker` is `null` when `manifest.json` is gone; `HasBgl` is `null` without a `layout.json`; `Read` is `null` when the folder vanished. `ReadMarker` and `Read` throw `IOException`/`UnauthorizedAccessException` when the Package can't be accessed (C2).
   - `public interface IScanCache { IReadOnlyList<PackageContent> LoadAll(); void Upsert(IReadOnlyList<PackageContent> contents); void Remove(IReadOnlyCollection<string> paths); }`
 
 - [ ] **Step 1: Write the failing tests**
@@ -143,7 +144,7 @@ public void Rejects_invalid_codes(string? text) => Assert.False(AirportCode.TryP
 ```
 
 - [ ] **Step 2: Run to verify failure** — `dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~AirportCodeTests` → FAIL (type missing).
-- [ ] **Step 3: Implement** the types above; records only, no logic beyond `AirportCode`.
+- [ ] **Step 3: Implement** the types above; records only, no logic beyond `AirportCode`. Make the `CLAUDE.md`, `ANALYS.md` and spec edits listed under Files.
 - [ ] **Step 4: Run to verify pass** → PASS.
 - [ ] **Step 5: Commit** — `git commit -m "feat: add content model and airport codes"`
 
@@ -213,6 +214,7 @@ public void Final(string type, bool hasBgl, bool airTraffic, bool member, Catego
     - `IReadOnlyList<BglSection>? ReadSections(Stream stream)` — `null` when unreadable (C2).
     - `IEnumerable<BglRecord> Records(ReadOnlyMemory<byte> data)` — walks `u16 id, u32 size` records; stops (yields nothing more) at a size below 6 or past the end; `BglFile.IsConsistent(data)` returns false in that case.
     - `const uint AirportSectionType = 0x03; const ushort AirportRecordId = 0x0056; const ushort NameRecordId = 0x0019;`
+    - `int? FindAirportFixedSize(ReadOnlySpan<byte> record)` — the fixed-size detection below; `BglShapes` (this task) and `AirportRecordReader` (Task 6) both use it.
   - `public static class AirportCodeCodec { string Decode(uint packed); uint Encode(string code); }` — `packed >> 5`, base 38: 0 = end, 2–11 = `0`–`9`, 12–37 = `A`–`Z`.
   - The JSON-serialisable structure below, used by `bgl-dump` and by Task 5:
     - `public sealed record BglShape(IReadOnlyList<BglSectionShape> Sections)` with `int AirportRecordCount()` (records with id 0x56 across all 0x03 sections);
@@ -243,7 +245,7 @@ Format (FSDeveloper wiki "BGL File Format"; Task 4 confirms it on real files):
   { "type": "0x65", "subsectionEntrySize": 16, "subsections": [ { "recordCount": 3, "dataSize": 400 } ] } ] }
 ```
 
-`records` is listed only for section type 0x03. Fixed-field offsets in an airport record (documented, confirmed in Task 4): longitude `u32` at 0x0C, latitude `u32` at 0x10, packed code `u32` at 0x28; `longitude = raw * 360.0 / (3 * 0x10000000) - 180.0`, `latitude = 90.0 - raw * 180.0 / (2 * 0x10000000)`. `fixedSize` is found, not assumed: the first of 0x38, 0x3C, 0x44, 0x48, 0x4C from which the child records (`u16 id, u32 size`, size ≥ 6) end exactly at the record's end; `null` when none fits. `name` is the `0x0019` child's bytes as a null-trimmed string.
+`records` is listed only for section type 0x03. Fixed-field offsets in an airport record (documented, confirmed in Task 4): longitude `u32` at 0x0C, latitude `u32` at 0x10, packed code `u32` at 0x28; `longitude = raw * 360.0 / (3 * 0x10000000) - 180.0`, `latitude = 90.0 - raw * 180.0 / (2 * 0x10000000)`. `fixedSize` is found, not assumed (`BglFile.FindAirportFixedSize`): the first of 0x44, 0x38, 0x3C, 0x48, 0x4C (the documented MSFS size first) from which the child records (`u16 id, u32 size`, size ≥ 6) end exactly at the record's end; `null` when none fits. `name` is the `0x0019` child's bytes as a null-trimmed string.
 
 `bgl-dump` with a folder argument picks the first `.bgl` (ordinal path order, recursive) that has an airport section, or with `--code` the first whose airport records include that code; with a file it dumps that file. It prints the shape to stdout, or writes it with `--out`. Read-only (C1).
 
@@ -364,7 +366,7 @@ public void Built_file_has_the_same_structure_as_the_real_one(string name)
 - Produces:
   - `public sealed record BglScan(bool Readable, IReadOnlyList<uint> SectionTypes, IReadOnlyList<AirportRecord> Airports);`
   - `public static class BglContentReader { BglScan Read(string bglPath); BglScan Read(Stream stream); }` — reads only the header, tables and the data of 0x03 subsections; never throws for bad content (C2); records with an invalid code are skipped (C3).
-  - `AirportRecordReader.FixedSize` — the value confirmed by the dumps (expected 0x44); the reader walks children from there to find the `0x0019` name.
+  - `AirportRecordReader` finds each record's fixed size with `BglFile.FindAirportFixedSize` (Task 3) and walks the children from there to find the `0x0019` name; when no size fits, the record keeps its code and position with a `null` name.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -405,7 +407,7 @@ public void Broken_files_are_unreadable(string kind) => Assert.False(BglContentR
 ### Task 7: `layout.json` and `aircraft.cfg` (BGL track)
 
 **Files:**
-- Create: `src/AddonManager.Sim2020/Content/LayoutReader.cs`, `AircraftCfgReader.cs`
+- Create: `src/AddonManager.Sim2020/Content/LayoutReader.cs`, `AircraftCfgReader.cs`, `tests/AddonManager.Sim2020.Tests/TempFolder.cs` (a copy of the one in Infrastructure.Tests; Tasks 8 and 20 reuse it)
 - Test: `tests/AddonManager.Sim2020.Tests/Content/LayoutReaderTests.cs`, `AircraftCfgReaderTests.cs`
 
 **Interfaces:**
@@ -457,7 +459,8 @@ public void Reads_cfg_facts(string text, string? baseContainer, bool airTraffic)
 Behaviour:
 - `ReadMarker`: `LastWriteTimeUtc.Ticks` and `Length` of `manifest.json` and (when present) `layout.json`; `null` when `manifest.json` is gone.
 - `HasBgl`: any `.bgl` in `LayoutReader.Read`; `null` without a layout.
-- `Read`: files from `LayoutReader.ListFiles`. `HasBgl` = any `.bgl`. Every `.bgl` goes through `BglContentReader`; unreadable ones increase `UnreadableBglCount`; section types and airport records are merged. `AirplaneFolders` = distinct `SimObjects\Airplanes\<folder>` names. Each `SimObjects\Airplanes\<folder>\aircraft.cfg` is read in path order; the first one with `IsAirTraffic` stops cfg reading and sets `IsAirTraffic = true` with an empty `AircraftConfigs` (spec 6.4: not parsed for Liveries). `ThumbnailPath` = the absolute path of the first `ContentInfo\<any>\Thumbnail.jpg`. Returns `null` when the folder no longer exists. Paths normalised (C5).
+- `Read`: files from `LayoutReader.ListFiles`. `HasBgl` = any `.bgl`. Every `.bgl` goes through `BglContentReader`; unreadable ones increase `UnreadableBglCount`; section types and airport records are merged. `AirplaneFolders` = distinct `SimObjects\Airplanes\<folder>` names; `EncryptedAirplaneFolders` = those with a `.fsarchive` file and no `aircraft.cfg`. Each `SimObjects\Airplanes\<folder>\aircraft.cfg` is read in path order; the first one with `IsAirTraffic` stops cfg reading and sets `IsAirTraffic = true` with an empty `AircraftConfigs` (spec 6.4: not parsed for Liveries). `ThumbnailPath` = the absolute path of the first `ContentInfo\<any>\Thumbnail.jpg`. Returns `null` when the folder no longer exists. Paths normalised (C5).
+- Access (C2): `ReadMarker` and `Read` let `IOException` and `UnauthorizedAccessException` propagate when the Package folder, `manifest.json` or `layout.json` can't be opened or listed, including the fallback walk failing at the Package root. Problems with single files inside the Package (a BGL or `aircraft.cfg` that can't be opened) don't throw: a BGL counts in `UnreadableBglCount`, a cfg is skipped.
 
 - [ ] **Step 1: Write the failing tests** (a temp Package per test, BGLs from `BglBuilder.FromShape`)
 
@@ -485,6 +488,15 @@ Behaviour:
     var c = Read(pkg);
     Assert.Equal([new AircraftConfig("Asobo_C152", null)], c.AircraftConfigs);
     Assert.Equal(["Asobo_C152", "Enc"], c.AirplaneFolders.Order());
+    Assert.Equal(["Enc"], c.EncryptedAirplaneFolders);
+}
+
+[Fact] public void Inaccessible_package_folder_throws_instead_of_reading_empty()
+{
+    var pkg = Package("p", ("a.bgl", Bgl("yalr1")));
+    var marker = reader.ReadMarker(pkg)!;
+    using (DenyListing(pkg))   // ACL deny on list-folder for the current user, removed on dispose
+        Assert.Throws<UnauthorizedAccessException>(() => reader.Read(Target(pkg), marker));
 }
 
 [Fact] public void Marker_changes_with_layout_and_is_null_without_manifest() { … }
@@ -503,23 +515,27 @@ Behaviour:
 
 **Files:**
 - Create: `src/AddonManager.Core/Content/ContentSettings.cs`, `src/AddonManager.Infrastructure/JsonConverters.cs`
-- Modify: `src/AddonManager.Core/State/UserState.cs` (add `ContentSettings Content { get; set; } = new();`), `src/AddonManager.Infrastructure/JsonUserStateStore.cs` (move `PackageNameConverter` to `JsonConverters.cs`, add `AirportCodeConverter`, also as dictionary key)
+- Modify: `src/AddonManager.Core/State/UserState.cs` (add `ContentSettings Content { get; set; } = new();`), `src/AddonManager.Infrastructure/JsonUserStateStore.cs` (move `PackageNameConverter` to `JsonConverters.cs`, add `AirportCodeConverter`, also as dictionary key), `tests/AddonManager.Core.Tests/Fakes/InMemoryUserStateStore.cs` (`Copy` deep-copies `Content` with `ContentSettings.Clone()`)
 - Test: `tests/AddonManager.Core.Tests/Content/ContentSettingsTests.cs`, extend `tests/AddonManager.Infrastructure.Tests/JsonUserStateStoreTests.cs`
 
 **Interfaces:**
 - Consumes: `PackageName`, `AirportCode`.
 - Produces:
   - `public sealed class ContentSettings` with
+    - `static readonly IReadOnlyList<string> DefaultExclusionPatterns = ["navigraph-navdata*", "*-point-of-interest", "fsdreamteam-gsx-world-of-jetways*", "microsoft-airport-voloport", "neofly-*"];`
+    - `static readonly IReadOnlyList<string> DefaultStopList = ["PACK", "SAVE", "SWIM", "SANS"];` (extended in Task 22)
     - `int AirportThreshold { get; set; } = 10;`
-    - `List<string> ExclusionPatterns { get; set; } = ["navigraph-navdata*", "*-point-of-interest", "fsdreamteam-gsx-world-of-jetways*", "microsoft-airport-voloport", "neofly-*"];`
-    - `List<string> StopList { get; set; } = ["PACK", "SAVE", "SWIM", "SANS"];` (extended in Task 22)
+    - Persisted user changes to the two lists: `HashSet<string> AddedExclusionPatterns`, `RemovedExclusionPatterns`, `AddedStopWords`, `RemovedStopWords` (case-insensitive, all `{ get; set; } = new(StringComparer.OrdinalIgnoreCase)`).
+    - `IReadOnlyList<string> ExclusionPatterns` and `IReadOnlyList<string> StopList` (not persisted): defaults plus added, minus removed, sorted. So defaults added in a later release reach existing users, and a default the user removed stays removed.
+    - `void AddExclusionPattern(string)`, `void RemoveExclusionPattern(string)`, `void AddStopWord(string)`, `void RemoveStopWord(string)` — adding a removed default un-removes it; removing an added entry un-adds it.
     - `HashSet<PackageName> OptedIn { get; set; } = [];`
     - `Dictionary<PackageName, HashSet<AirportCode>> ManualAirportLinks { get; set; } = [];`
     - `Dictionary<PackageName, HashSet<AirportCode>> RemovedAirportLinks { get; set; } = [];`
     - `bool MatchesExclusion(PackageName name)` — `*` wildcard only, whole name, case-insensitive.
     - `bool IsStopWord(string token)` — case-insensitive.
     - `void LinkManually(PackageName, AirportCode)` (also removes it from `RemovedAirportLinks`) and `void RemoveLink(PackageName, AirportCode)` (also removes it from `ManualAirportLinks`).
-  - `internal static class JsonConverters` in Infrastructure: `PackageNameConverter`, `AirportCodeConverter` (Task 14 reuses them).
+    - `ContentSettings Clone()` — a deep copy (Task 17 snapshots with it).
+  - `internal static class JsonConverters` in Infrastructure: `PackageNameConverter`, `AirportCodeConverter` (Task 14 reuses them). Invalid Airport codes in user data are dropped on load, never an error (C3): an invalid code in a set is skipped, an entry whose set ends up empty is dropped.
 
 Decision Q7: Package-level inputs to Airport linking are stored here (plan 2); Category override per Addon is plan 3.
 
@@ -537,12 +553,18 @@ public void Default_exclusions(string name, bool excluded) => Assert.Equal(exclu
 
 // JsonUserStateStoreTests
 [Fact] public void Plan1_user_data_without_content_loads_defaults() { File.WriteAllText(file, """{"schemaVersion":1,"libraries":[],"packages":{}}"""); Assert.Equal(10, store.Load().Content.AirportThreshold); }
-[Fact] public void Edited_lists_replace_the_defaults_instead_of_adding_to_them()
+[Fact] public void Stop_list_changes_round_trip_on_top_of_the_defaults()
 {
-    var s = new UserState(); s.Content.StopList = ["ONLY"]; store.Save(s);
-    Assert.Equal(["ONLY"], store.Load().Content.StopList);
+    var s = new UserState(); s.Content.AddStopWord("EXTRA"); s.Content.RemoveStopWord("pack"); store.Save(s);
+    var list = store.Load().Content.StopList;
+    Assert.Contains("EXTRA", list); Assert.DoesNotContain("PACK", list); Assert.Contains("SAVE", list);
+    Assert.DoesNotContain("stopList", File.ReadAllText(file));   // only the changes are stored
 }
 [Fact] public void Airport_links_round_trip_case_insensitively() { … Assert.Contains(code("eham"), loaded.Content.ManualAirportLinks[new("PKG")]); }
+[Fact] public void Invalid_codes_in_user_data_are_dropped() { … "manualAirportLinks":{"pkg":["EHAM","x"]} … Assert.Equal([code("EHAM")], loaded.Content.ManualAirportLinks[new("pkg")]); }
+
+// InMemoryUserStateStore
+[Fact] public void Fake_store_keeps_content_settings() { var s = new UserState(); s.Content.OptedIn.Add(new("x")); fake.Save(s); s.Content.OptedIn.Clear(); Assert.Single(fake.Load().Content.OptedIn); }
 ```
 
 - [ ] **Step 2: Run to verify failure** → FAIL.
@@ -564,16 +586,17 @@ public void Default_exclusions(string name, bool excluded) => Assert.Equal(exclu
   - `public enum AirportLinkReason { Record, Token, PackageName, Manual }`
   - `public sealed record AirportLink(PackageContent Package, AirportCode Code, AirportLinkReason Reason);`
   - `public static class AirportLinker`
-    - `IReadOnlyList<AirportLink> Link(IReadOnlyList<PackageContent> contents, ContentSettings settings)` — one link per (Package, code), the first reason in the order Manual, Record, PackageName, Token.
+    - `IReadOnlyList<AirportLink> Link(IReadOnlyList<PackageContent> contents, ContentSettings settings)` — one link per (Package, code), the first reason in the order Manual, Record, PackageName, Token; sorted as in C7.
     - `bool IsExcluded(PackageContent content, ContentSettings settings)` — C4.
-    - `IReadOnlySet<AirportCode> KnownCodes(IReadOnlyList<PackageContent> contents)` — every code in any record, counted or not.
+    - `bool IsExcludedByPattern(PackageContent content, ContentSettings settings)` — matches an exclusion pattern and isn't opted in.
+    - `IReadOnlySet<AirportCode> KnownCodes(IReadOnlyList<PackageContent> contents, ContentSettings settings)` — every code in any record, counted or not, except records of Packages excluded by pattern (C4).
 
 Rules (spec 6.5, C4, C7):
 1. **Record:** each distinct code in the Package's records, when the Package isn't excluded.
 2. **Token:** for a non-Sim-managed Package with no counted record whose `CategoryRules.Provisional(contentType, hasBgl)` is Scenery: split its folder name and its manifest title on every character that isn't an ASCII letter or digit; a token links when it is a known code, isn't a stop word, and is 4–5 characters long anywhere, or 3 characters long as the **first** token of that string. *My call:* Sim-managed Packages don't use rule 2 (they use rule 3 below; their names, such as `asobo-landmarks-*`, aren't Airport names).
 3. **PackageName (encrypted official airports):** a Sim-managed Package with no counted record whose name contains `-airport-<code>-` or ends in `-airport-<code>` links to that code (C3).
-4. **Manual:** every code in `ManualAirportLinks[name]` for non-Sim-managed contents with that name.
-5. Links in `RemovedAirportLinks[name]` are dropped unless they are Manual.
+4. **Manual:** every code in `ManualAirportLinks[name]` for non-Sim-managed contents with that name (C5).
+5. Links in `RemovedAirportLinks[name]` are dropped unless they are Manual, for every source (C5).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -615,7 +638,21 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
     Assert.Equal([("EDDF", AirportLinkReason.PackageName), ("LFCS", AirportLinkReason.PackageName)], Pairs(Link(eddf, lfcs)));
 }
 
+[Fact] public void Pattern_excluded_records_are_not_known_codes()
+{
+    var volo = Scenery("microsoft-airport-voloport", records: ["VOLC1"], source: PackageSource.SimManaged);
+    Assert.DoesNotContain(Code("VOLC1"), AirportLinker.KnownCodes([volo], settings));
+    Assert.Empty(Link(volo, Scenery("volc1-vertiport", hasBgl: true)));   // no Token link to a non-airport
+}
+
 [Fact] public void Manual_links_win_over_removal_and_removal_drops_automatic_links() { … }
+[Fact] public void Removal_applies_to_sim_managed_packages()
+{
+    var eddf = Scenery("asobo-airport-eddf-frankfurt", hasBgl: false, source: PackageSource.SimManaged);
+    settings.RemoveLink(eddf.Name, Code("EDDF"));
+    Assert.Empty(Link(eddf));
+}
+[Fact] public void Manual_links_ignore_sim_managed_packages() { … settings.LinkManually(simPkg.Name, Code("EHAM")) … Assert.Empty(Link(simPkg)); }
 [Fact] public void Result_does_not_depend_on_input_order() { var a = Link(x, y, z); var b = Link(z, y, x); Assert.Equal(Set(a), Set(b)); }
 [Fact] public void Real_cases_without_record_or_token_stay_unlinked()
     => Assert.Empty(Link(Scenery("005builds-lszrsceneryv11", hasBgl: true), Scenery("grancanaria", hasBgl: true)));
@@ -635,16 +672,16 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
 - Test: `tests/AddonManager.Core.Tests/Content/AirportCatalogTests.cs`
 
 **Interfaces:**
-- Consumes: `AirportLink`, `AirportLinker` (Task 10), `PackageContent`, `GeoPoint`.
+- Consumes: `AirportLink`, `AirportLinker` (Task 10), `ContentSettings` (Task 9), `PackageContent`, `GeoPoint`.
 - Produces:
   - `public sealed record Airport(AirportCode Code, string? Name, GeoPoint? Position, bool HasRealScenery, bool HasBuiltIn);`
   - `public sealed record BuiltInReplacement(PackageContent Package, AirportCode Code);`
   - `public static class AirportCatalog`
-    - `IReadOnlyDictionary<AirportCode, Airport> Build(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links)` — every known code plus every linked code.
+    - `IReadOnlyDictionary<AirportCode, Airport> Build(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links, ContentSettings settings)` — every known code (`AirportLinker.KnownCodes`) plus every linked code; records of Packages excluded by pattern are never used (C4).
     - `IReadOnlyList<BuiltInReplacement> ReplacesBuiltIn(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links)`
 
 Rules (spec 6.5):
-- **Name and position:** taken from the first record for the code with a non-empty name (position likewise, independently), searching first the linked Packages' records (Sim-managed first, then by Package name), then all other records (Sim-managed first, then by Package name). Encrypted official airports therefore get name and position from the generic record.
+- **Name and position:** taken from the first record for the code with a non-empty name (position likewise, independently), searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record.
 - `HasRealScenery`: at least one link (any reason). `HasBuiltIn`: at least one link from a Sim-managed Package.
 - **Replaces built-in:** a link from a non-Sim-managed Package to an Airport with `HasBuiltIn`; also, as the extra signal, a non-Sim-managed Package whose manifest `dependencies` name a Sim-managed Package linked to that Airport. *My call:* the second extra signal in spec 6.5, overlapping `layout.json` paths, is left out: it would mean caching every file path of every Sim-managed airport Package, and the dependency signal plus own links cover the real cases. It's information, not a warning.
 
@@ -661,6 +698,8 @@ Rules (spec 6.5):
 }
 
 [Fact] public void Generic_only_airport_has_no_real_scenery() => Assert.False(Build(generic)[Code("EDDF")].HasRealScenery);
+[Fact] public void Pattern_excluded_records_create_no_airports()
+    => Assert.False(Build(Scenery("microsoft-airport-voloport", records: ["VOLC1"], source: SimManaged)).ContainsKey(Code("VOLC1")));
 [Fact] public void Linked_record_name_wins_over_generic() { … }
 [Fact] public void World_update_partner_airport_is_built_in_because_it_is_sim_managed()
     => Assert.True(Build(Scenery("microsoft-airport-edny-friedrichshafen", records: ["EDNY"], creator: "Partner", source: SimManaged))[Code("EDNY")].HasBuiltIn);
@@ -692,7 +731,8 @@ Rules (spec 6.5):
 
 Rules (spec 6.6, C7) — computed in two passes, providers first, so scan order never decides:
 - Only Packages with `IsAircraftType(contentType)` take part, plus Sim-managed Packages of any type. `IsAirTraffic` → role AirTraffic, nothing else.
-- **Provided containers:** cfg folders without a base container, plus cfg folders whose base container is provided by the same Package. For **Sim-managed** Packages also every `AirplaneFolders` entry without a readable cfg (encrypted official and Marketplace aircraft).
+- **Provided containers:** cfg folders without a base container, plus cfg folders whose base container is provided by the same Package, plus `EncryptedAirplaneFolders` for any source (spec 6.6: encrypted aircraft get their container from paths). For **Sim-managed** Packages also every other `AirplaneFolders` entry without a readable cfg (official aircraft whose files aren't `.fsarchive`).
+- **Order (C7):** `Providers`, `LockedBases`, `Liveries` and `Attached` are sorted by Package name, then path; `Container` is spelled as in the first provider in that order (else the first Livery's base container, else the first Attached folder).
 - **Locked bases:** Sim-managed and Community (Fixed/External) Packages that provide a container. Library Packages that provide it are Providers, with role **Mod** when the group has a locked base, else **Provider**.
 - **Livery:** a Package with at least one cfg where every cfg's base container isn't provided by the same Package; it joins the group of each such base container (a group is created even when no provider is installed, so plan 3 can warn "Livery without aircraft").
 - **Attached:** an aircraft-type Package with no cfg: joins every group whose container is in its `AirplaneFolders`; if none, every group of a Package named in its manifest `dependencies`; otherwise role None (Category Other via Task 13).
@@ -704,7 +744,14 @@ Rules (spec 6.6, C7) — computed in two passes, providers first, so scan order 
 {
     var a = Aircraft("sal1800-cessna-170b-backcountry", cfgs: [("Cessna-170B-Backcountry", null)]);
     var b = Aircraft("sal1800-cessna-super-170b-OPTIONAL", cfgs: [("cessna-170b-backcountry", null)]);
-    Assert.Equal(2, AircraftIndex.Build([a, b]).Groups["CESSNA-170B-BACKCOUNTRY"].Providers.Count);
+    var group = AircraftIndex.Build([b, a]).Groups["CESSNA-170B-BACKCOUNTRY"];
+    Assert.Equal([a, b], group.Providers); Assert.Equal("Cessna-170B-Backcountry", group.Container);
+}
+
+[Fact] public void Encrypted_library_aircraft_provides_its_container()
+{
+    var enc = Aircraft("thirdparty-aircraft-x", encryptedFolders: ["TP_X"]);   // .fsarchive, no cfg
+    Assert.Equal(AircraftRole.Provider, AircraftIndex.Build([enc]).RoleOf(enc));
 }
 
 [Fact] public void Library_package_providing_an_official_container_is_a_mod()
@@ -777,13 +824,13 @@ This is the single entry point plans 3–6 consume. `Categories[path] = Category
 
 **Files:**
 - Create: `src/AddonManager.Infrastructure/ContentJson.cs`, `SqliteScanCache.cs`
-- Modify: `src/AddonManager.Infrastructure/AddonManager.Infrastructure.csproj` (add `Microsoft.Data.Sqlite`, latest 10.0.x, exact version pinned), `docs/superpowers/specs/2026-10-25-mvp-design.md` section 11 (scan cache line → "SQLite, disposable: per Package the change marker and the facts read from its files (manifest data, airport records, BGL section types, aircraft.cfg facts, airplane folders, thumbnail path). Links, Airports and aircraft groups are recomputed from these on every analysis.")
+- Modify: `src/AddonManager.Infrastructure/AddonManager.Infrastructure.csproj` (add `Microsoft.Data.Sqlite`, latest 10.0.x, exact version pinned), `docs/superpowers/specs/2026-10-25-mvp-design.md` section 11 (scan cache line → "SQLite, disposable: per Package the change marker and the facts read from its files (manifest data, airport records, BGL section types, aircraft.cfg facts, airplane folders, thumbnail path), and GSX profiles (plan 4). Links, Airports and aircraft groups are recomputed from these on every analysis.")
 - Test: `tests/AddonManager.Infrastructure.Tests/SqliteScanCacheTests.cs`
 
 **Interfaces:**
 - Consumes: `IScanCache`, `PackageContent` (Task 1), `JsonConverters` (Task 9 — if the Cache track runs before Task 9 merges, create `JsonConverters.cs` here and let Task 9 reuse it; resolve at cherry-pick).
 - Produces:
-  - `public sealed class SqliteScanCache(string filePath) : IScanCache, IDisposable`
+  - `public sealed class SqliteScanCache(string filePath) : IScanCache, IDisposable` with `bool IsFallback { get; }`
   - `internal static class ContentJson { JsonSerializerOptions Options { get; } }`
   - `AppPaths.ScanCacheFile` = `Path.Combine(CacheDirectory, "scan-cache.db")`.
 
@@ -796,7 +843,7 @@ CREATE TABLE package (
 );
 ```
 
-Behaviour (decision Q1, C6): raw ADO.NET; the connection opens lazily on first use, creating folder and file then (constructing never touches disk). `Upsert` and `Remove` run in one transaction each. A `user_version` other than 1, or a `SqliteException` that says the file isn't a database, deletes `scan-cache.db`, `-wal` and `-shm` and recreates it. A busy or locked database (`SQLITE_BUSY`/`SQLITE_LOCKED`, e.g. a second app instance) switches this instance to an in-memory fallback for the rest of its life, with `IsFallback = true`; it never throws for that.
+Behaviour (decision Q1, C6): raw ADO.NET; connection string with `Pooling=False` (so a corrupt file can be deleted) and `Default Timeout=1` (a second instance falls back after about a second, not 30); default rollback journal (no WAL). The connection opens lazily on first use, creating folder and file then (constructing never touches disk). `Upsert` and `Remove` run in one transaction each. A `user_version` other than 1, or a `SqliteException` that says the file isn't a database, closes the connection, deletes `scan-cache.db` and `scan-cache.db-journal` and recreates it. A busy or locked database (`SQLITE_BUSY`/`SQLITE_LOCKED`, e.g. a second app instance) switches this instance to an in-memory fallback for the rest of its life, with `IsFallback = true`; the fallback starts with the rows this instance already loaded (empty if the first load hit the lock); it never throws for that.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -805,7 +852,7 @@ Behaviour (decision Q1, C6): raw ADO.NET; the connection opens lazily on first u
 [Fact] public void Upsert_replaces_by_path_case_insensitively() { … Assert.Single(cache.LoadAll()); }
 [Fact] public void Remove_deletes_rows() { … }
 [Fact] public void Constructing_creates_nothing() { _ = new SqliteScanCache(Path.Combine(dir, "sub", "c.db")); Assert.False(Directory.Exists(Path.Combine(dir, "sub"))); }
-[Fact] public void Garbage_file_is_replaced_by_an_empty_cache() { File.WriteAllText(file, "not a database"); Assert.Empty(new SqliteScanCache(file).LoadAll()); }
+[Fact] public void Garbage_file_is_replaced_by_an_empty_cache() { File.WriteAllText(file, "not a database"); using var c = new SqliteScanCache(file); Assert.Empty(c.LoadAll()); c.Upsert([Sample()]); Assert.Single(c.LoadAll()); Assert.False(c.IsFallback); }
 [Fact] public void Other_schema_version_is_rebuilt() { … PRAGMA user_version = 99 … Assert.Empty(…LoadAll()); }
 [Fact] public void Locked_file_falls_back_to_memory_without_throwing()
 {
@@ -840,7 +887,7 @@ Load speed with the real 40,000 generic records is measured in Task 20, not here
 
 Behaviour (spec 7.3):
 - Targets are processed in the order given (the caller orders them Community → Libraries → Sim-managed).
-- Per target: `ReadMarker`; `null` → the Package vanished: not returned, `Failed++`. If `!full` and the cache holds the same path with an equal marker → reuse (`Reused++`). Otherwise `Read`; `null` → vanished as above; an `IOException` or `UnauthorizedAccessException` → `Failed++` and the old cached content (if any) is returned unchanged.
+- Per target: `ReadMarker`; `null` → the Package vanished: not returned, `Failed++`. If `!full` and the cache holds the same path with an equal marker → reuse (`Reused++`) as `cached with { Name = target.Name, Source = target.Source, Manifest = target.Manifest }`: the source changes without the marker when a Library is registered or removed. Otherwise `Read`; `null` → vanished as above. An `IOException` or `UnauthorizedAccessException` from `ReadMarker` or `Read` (C2) → `Failed++`, the cache row is left as it is, and the old cached content (if any) is returned with the target's `Source`, `Name` and `Manifest` as above.
 - Fresh reads are upserted in batches of 50 and at the end. On cancellation the batch read so far is upserted, then `OperationCanceledException` propagates.
 - Cache rows whose path is neither a target nor under a `keepUnder` root (the unreachable Libraries) are removed; rows under `keepUnder` are kept **and returned**, so offline content keeps its links (Review Focus 2).
 - Progress is reported after each target.
@@ -859,7 +906,14 @@ Behaviour (spec 7.3):
 [Fact] public void Full_rescan_rereads_everything() { … Assert.Equal(targets.Count, r.Read); }
 [Fact] public void Reads_in_the_given_order() { …; Assert.Equal(["community-pkg", "lib-pkg", "sim-pkg"], reader.ReadOrder); }
 [Fact] public void Vanished_package_is_dropped_from_cache_and_result() { … reader.Vanish("b"); … Assert.DoesNotContain(…); Assert.Equal(1, r.Failed); }
-[Fact] public void Unreadable_package_keeps_its_old_content() { … reader.ThrowOn("b", new IOException()); … Assert.Contains(old, r.Contents); }
+[Fact] public void Unreadable_package_keeps_its_old_content() { … reader.ThrowOn("b", new IOException()); … Assert.Contains(old, r.Contents); Assert.Equal(1, r.Failed); }
+[Fact] public void Inaccessible_marker_keeps_the_old_content() { … reader.ThrowOnMarker("b", new UnauthorizedAccessException()); … Assert.Contains(r.Contents, c => c.Name.Value == "b"); }
+[Fact] public void Reused_content_takes_the_targets_current_source()
+{
+    scanner.Scan([T("x", PackageSource.Community)], [], false, null, default);
+    var r = scanner.Scan([T("x", PackageSource.Library)], [], false, null, default);   // same path and marker, Library now registered
+    Assert.Equal(1, r.Reused); Assert.Equal(PackageSource.Library, r.Contents.Single().Source);
+}
 [Fact] public void Content_under_an_unreachable_library_is_kept_and_returned()
 {
     scanner.Scan([T(@"E:\Addons\x"), T(@"C:\Spel\Addons\y")], [], false, null, default);
@@ -890,7 +944,7 @@ Behaviour (spec 7.3):
 
 Order and sources (spec 7.3, decision: "Community first" means what the sim loads from Community):
 1. **Community:** Fixed entries (`<communityPath>\<name>`, source Community), External entries whose target exists and has a manifest (the target, source Community), and the copies Managed entries point to (source Library), in Community name order.
-2. **Libraries:** every other copy in `index` (all copies, including inactive Duplicate copies), in index order.
+2. **Libraries:** every other copy in `index` (all copies, including inactive Duplicate copies, C8), in index order.
 3. **Sim-managed:** each direct subfolder of `officialPath` with a `manifest.json`, by name (source SimManaged). None when `officialPath` is `null` or missing.
 
 Duplicates by normalised path are dropped (first wins). Manifests: Library copies reuse `PackageCopy.Manifest`; others are read with `ManifestReader`. Offline, Stale, Broken, Ignored and Stray entries give no target.
@@ -914,19 +968,20 @@ Duplicates by normalised path are dropped (first wins). Manifests: Library copie
 ### Task 17: Scan service
 
 **Files:**
-- Create: `src/AddonManager.Infrastructure/ScanService.cs`
-- Test: `tests/AddonManager.Infrastructure.Tests/ScanServiceTests.cs` (temp folders, a fake `IPackageContentReader`, an in-memory `IScanCache`)
+- Create: `src/AddonManager.Infrastructure/ScanService.cs`, `tests/AddonManager.Infrastructure.Tests/Fakes/GatedContentReader.cs` (an `IPackageContentReader` over temp folders with a `SemaphoreSlim? Gate` awaited in `ReadMarker`, `HasBglResult`, counters `MarkerCalls`/`ReadCalls` and `HasBglCallsFor(path)`), `tests/AddonManager.Infrastructure.Tests/Fakes/InMemoryScanCache.cs` (Infrastructure.Tests can't see Core.Tests' fakes)
+- Test: `tests/AddonManager.Infrastructure.Tests/ScanServiceTests.cs` (temp folders)
 
 **Interfaces:**
 - Consumes: `LibraryScanner.Discover`, `CommunityReader`, `CommunityClassifier`, `PackageIndex`, `ScanTargetCollector` (16), `ContentScanner` (15), `ContentAnalyzer` (13), `CategoryRules.Provisional` (2), `UserState` (+ `Content`, Task 9).
 - Produces:
   - `public sealed record DiscoveryOutcome(PackageIndex Index, IReadOnlyList<ClassifiedEntry> Community, IReadOnlyList<ScanTarget> Targets, IReadOnlyDictionary<string, Category> ProvisionalCategories);`
   - `public sealed record ScanOutcome(DiscoveryOutcome Discovery, ContentScanResult Content, ContentAnalysis Analysis, TimeSpan Elapsed);`
-  - `public sealed class ScanService(IPackageContentReader reader, IScanCache cache, string communityPath, string? officialPath)` with `Task<ScanOutcome> RunAsync(UserState state, bool full, Action<DiscoveryOutcome>? onDiscovered, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)`.
+  - `public sealed class ScanService(IPackageContentReader reader, IScanCache cache, string communityPath, string? officialPath) : IDisposable` with `Task<ScanOutcome> RunAsync(UserState state, bool full, Action<DiscoveryOutcome>? onDiscovered, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)`. `Dispose` cancels the run in progress and drops the queued one (their tasks end cancelled).
 
 Behaviour (spec 7.2–7.3, decision Q6):
-- Runs on the thread pool. Pass 1: discover the Libraries in `state.Libraries`, read and classify Community, collect targets, compute provisional Categories (`HasBgl` from the cached content when present, else `reader.HasBgl`), call `onDiscovered`. Pass 2: `ContentScanner.Scan` with `keepUnder` = the unreachable Libraries, then `ContentAnalyzer.Analyze` with `state.Content`.
-- **Single-flight** (Review Focus 5): while a run is in progress, further calls share one queued follow-up run (with `full` if any caller asked for it) and get its task; at most one run and one queued.
+- Runs on the thread pool. A run starts by snapshotting its input on the calling thread: a copy of `state.Libraries` and `state.Content.Clone()` (Task 9), so the UI can change `state` while it runs. Pass 1: discover those Libraries, read and classify Community, collect targets, compute provisional Categories for Library and Community targets only (`HasBgl` from the cached content when present, else `reader.HasBgl`; Sim-managed Packages are never switched, so they aren't needed for on/off), call `onDiscovered`. Pass 2: `ContentScanner.Scan` with `keepUnder` = the unreachable Libraries, then `ContentAnalyzer.Analyze` with the snapshot settings.
+- **Single-flight** (Review Focus 5): while a run is in progress, further calls share one queued follow-up run and get its task; at most one run and one queued. The queued run uses `full` if any of its callers asked for it, and the `state`, `onDiscovered` and `progress` of its **last** caller (the newest state wins); its snapshot is taken when it starts.
+- **Cancellation:** a caller's token cancels only that caller's wait (`task.WaitAsync(token)`); it never cancels a run other callers share. A run is cancelled only by `Dispose`.
 - Never saves `UserState` and never touches Community (C1).
 
 - [ ] **Step 1: Write the failing tests**
@@ -942,8 +997,14 @@ Behaviour (spec 7.2–7.3, decision Q6):
     var third = service.RunAsync(state, true, null, null, default);
     reader.Gate.Release(int.MaxValue);
     await Task.WhenAll(first, second, third);
-    Assert.Same(second, third); Assert.Equal(2, reader.Runs); Assert.True(reader.LastRunWasFull);
+    Assert.Same(second, third);
+    Assert.Equal(2 * targetCount, reader.MarkerCalls);   // two runs
+    Assert.Equal(2 * targetCount, reader.ReadCalls);     // empty cache, then a full follow-up: nothing reused
 }
+[Fact] public async Task Follow_up_run_uses_the_last_callers_state() { … second call with state A, third with state B (an extra Library) … Assert.Contains(B's package, (await third).Content.Contents.Select(c => c.Name)); }
+[Fact] public async Task Cancelling_one_caller_does_not_cancel_the_shared_run() { … cancel second's token … await Assert.ThrowsAnyAsync<OperationCanceledException>(() => second2); Assert.NotNull(await third); }
+[Fact] public async Task Changing_state_during_a_run_does_not_affect_it() { … while gated: state.Content.AddStopWord("X"); state.Libraries.Clear(); … release; the run still saw the original Library }
+[Fact] public async Task Provisional_categories_skip_sim_managed_targets() { … Assert.Equal(0, reader.HasBglCallsFor(simPkg)); Assert.False(d.ProvisionalCategories.ContainsKey(simPath)); }
 [Fact] public async Task Unreachable_library_content_is_kept() { … }
 [Fact] public async Task User_state_is_not_saved_and_community_is_unchanged() { … }
 ```
@@ -974,7 +1035,7 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
 [Fact] public async Task A_burst_of_changes_raises_one_rescan() { for (var i = 0; i < 50; i++) File.WriteAllText(Path.Combine(lib, $"p{i}", "manifest.json"), "{}"); await Task.Delay(1000); Assert.Equal(1, raised); }
 [Fact] public async Task Community_is_watched_non_recursively() { … change inside a real Community subfolder … Assert.Equal(0, raised); … new top-level entry … Assert.Equal(1, raised); }
 [Fact] public async Task Library_changes_at_any_depth_are_seen() { … }
-[Fact] public void Overflow_raises_a_rescan() { watcher.SimulateError(new InternalBufferOverflowException()); … Assert.Equal(1, raised); } // internal test hook
+[Fact] public async Task Overflow_raises_a_rescan() { watcher.SimulateError(new InternalBufferOverflowException()); await WaitUntil(() => raised == 1, TimeSpan.FromSeconds(5)); } // internal test hook; fires after the quiet period
 [Fact] public void Missing_library_is_skipped_without_throwing() { … }
 [Fact] public async Task No_event_after_dispose() { … }
 ```
@@ -995,7 +1056,7 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
 **Interfaces:**
 - Consumes: `InstallLocator`, `JsonUserStateStore`, `AppPaths`, `LibraryProposer`, `DiskFolderTree` (as in `StatusCommand`), `PackageContentReader` (8), `SqliteScanCache` (14), `ScanService` (17).
 - Produces:
-  - `AddonManager.Cli scan [--full]` — runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None.
+  - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes every Token link as a tab-separated line `<package>`, `<code>`, `<token>`, `?` (four columns) for Rickard's review (Task 21). Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None.
   - `AddonManager.Cli export-content --out <file>` — runs the same scan, then writes the content fixture (format below). Read-only apart from `--out` and the cache.
 
 Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile replaced with `%USERPROFILE%`):
@@ -1010,7 +1071,7 @@ Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile rep
       "isAirTraffic": false, "aircraft": [], "airplaneFolders": [], "hasThumbnail": true } ] }
 ```
 
-Excluded Packages (C4) export their records as `{ "code": "…" }` only — this is the committed list of generic codes from decision Q4 — except for codes linked by reason PackageName, which keep name and position (the encrypted official airports need them). Everything else is exported in full.
+Excluded Packages (C4) export their records as `"codes": ["…", …]`, one compact string array on a single line, instead of `airports` — this is the committed list of generic codes from decision Q4, roughly 0.6 MB in all. Codes linked by reason PackageName keep their full record in `airports` (the encrypted official airports need name and position). Everything else is exported in full. `ContentFixtureLoader` (Task 22) turns `codes` back into records without name or position.
 
 - [ ] **Step 1: Implement** `ScanCommand` and `ExportContentCommand`; exit code 1 with a message when no install is found or user data is corrupt (as `status`).
 - [ ] **Step 2: Smoke-test on the dev machine** — `dotnet run --project src/AddonManager.Cli -- scan`. Expected: "No MSFS 2020 install found …", exit code 1. (The real run is Task 21.)
@@ -1025,7 +1086,7 @@ Excluded Packages (C4) export their records as `{ "code": "…" }` only — this
 - Modify: `tests/AddonManager.Sim2020.Tests/AddonManager.Sim2020.Tests.csproj` (reference `AddonManager.Infrastructure`)
 
 **Interfaces:**
-- Consumes: `InstallLocator`, `PackageContentReader`, `SqliteScanCache`, `ScanService`, `JsonUserStateStore`, `LibraryProposer`.
+- Consumes: `InstallLocator`, `PackageContentReader`, `SqliteScanCache`, `ScanService`, `JsonUserStateStore`, `LibraryProposer`, `TempFolder` in Sim2020.Tests (Task 7).
 - Produces: `[SimFact]` — a `FactAttribute` that sets `Skip` unless the environment variable `MMAM_SIM_TESTS` is `1`. CI never sets it.
 
 - [ ] **Step 1: Write the tests**
@@ -1055,16 +1116,16 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 **Owner:** Rickard, on the sim machine, from this branch, with all tracks merged. About 5 minutes plus scan time.
 
 **Files:**
-- Create: `tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`
+- Create: `tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`, `tests/AddonManager.Core.Tests/Fixtures/reviewed-token-links.tsv`
 
-- [ ] **Step 1: Full scan** — `dotnet run --project src/AddonManager.Cli -- scan --full`. Keep the output for the PR.
+- [ ] **Step 1: Full scan** — `dotnet run --project src/AddonManager.Cli -- scan --full --token-links tests/AddonManager.Core.Tests/Fixtures/reviewed-token-links.tsv`. Keep the output for the PR.
 - [ ] **Step 2: Incremental scan** — run `scan` again. Expected: elapsed under 2 s, almost everything reused.
 - [ ] **Step 3: Opt-in tests** — `$env:MMAM_SIM_TESTS = '1'; dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~LocalInstallTests` → PASS.
 - [ ] **Step 4: Export** — `dotnet run --project src/AddonManager.Cli -- export-content --out tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`.
-- [ ] **Step 5: Review the Token links** in the `scan` output: every wrong one is a stop-list candidate for Task 22. Note them in the PR.
+- [ ] **Step 5: Review the Token links** — in `reviewed-token-links.tsv`, replace every `?` with `ok` (the Package really belongs to that Airport) or `stop` (the token is a common word; Task 22 adds it to the stop-list). Rickard's verdict, not the implementer's: no `?` may remain.
 - [ ] **Step 6: Commit** — `git commit -m "test: add content fixture from the real install"`
 
-**Stop and report** if the unreadable BGL count is large, if a real case from spec 6.5/6.6 comes out differently from Task 22's expectations, or if step 2 is over 2 s.
+**Stop and report** if the unreadable BGL count is large, if a real case from spec 6.5/6.6 comes out differently from Task 22's expectations, if an aircraft-type Library or Community Package has role None (an aircraft the container rules miss), or if step 2 is over 2 s.
 
 ---
 
@@ -1072,10 +1133,10 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 
 **Files:**
 - Create: `tests/AddonManager.Core.Tests/ContentFixtureLoader.cs`, `Scenarios/ContentScenarioTests.cs`, `Scenarios/CollisionReportTests.cs`
-- Modify: `src/AddonManager.Core/Content/ContentSettings.cs` (stop-list defaults from the report, if any)
+- Modify: `src/AddonManager.Core/Content/ContentSettings.cs` (`DefaultStopList` gets the token of every `stop` row in the reviewed TSV)
 
 **Interfaces:**
-- Consumes: the fixture (Task 21), `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
+- Consumes: the fixture and Rickard's reviewed `reviewed-token-links.tsv` (Task 21) — **stop and report** if either is missing or the TSV still has a `?`; `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
 - Produces: `ContentFixtureLoader.Load(string name) → IReadOnlyList<PackageContent>` (expands `%USERPROFILE%` to `C:\Users\user`, like `FixtureLoader`; marker is a constant).
 
 - [ ] **Step 1: Write the scenario tests** (expected values from spec 6.4–6.6; if the fixture disagrees, stop and report — don't change an expectation to make it pass)
@@ -1083,12 +1144,16 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 ```csharp
 [Fact] public void Eham_has_its_three_library_packages()
     => Assert.Equal(["brickbybrickdesign-airport-eham-amsterdam", "duijffmedia-airport-eham-amsterdam", "duijffmedia-schiphol-amsterdam-mega-enhancement-lighting"],
-        LinkedNames("EHAM", PackageSource.Library));
+        LinkedNames("EHAM", PackageSource.Library));   // distinct names, sorted (C8)
 
 [Fact] public void Lszr_and_gran_canaria_have_no_airport() { Assert.Empty(LinksOf("005builds-lszrsceneryv11")); Assert.Empty(LinksOf("grancanaria")); }
-[Fact] public void Voloport_and_neofly_are_kept_out() { Assert.DoesNotContain(a.AirportLinks, l => l.Code.Value.StartsWith("VOLC") || l.Code.Value == "NEOF2"); }
+[Fact] public void Voloport_and_neofly_are_kept_out()
+{
+    Assert.DoesNotContain(a.AirportLinks, l => l.Code.Value.StartsWith("VOLC") || l.Code.Value == "NEOF2");
+    Assert.DoesNotContain(a.Airports.Keys, c => c.Value.StartsWith("VOLC") || c.Value == "NEOF2");
+}
 [Fact] public void Verified_large_packages_are_excluded()
-    => Assert.Superset(Names(a.Excluded), new[] { "fs-base-genericairports", "fs-base-nav", "navigraph-navdata", "fsdreamteam-gsx-world-of-jetways-2020", "microsoft-nordics2-point-of-interest" }.ToHashSet());
+    => Assert.Superset(new[] { "fs-base-genericairports", "fs-base-nav", "navigraph-navdata", "fsdreamteam-gsx-world-of-jetways-2020", "microsoft-nordics2-point-of-interest" }.ToHashSet(), Names(a.Excluded));
 [Theory]
 [InlineData("asobo-airport-eddf-frankfurt", "EDDF")] [InlineData("asobo-airport-egll-heathrow", "EGLL")] [InlineData("asobo-airport-kden-denver", "KDEN")]
 [InlineData("asobo-airport-lemd-adolfo-suarez", "LEMD")] [InlineData("asobo-airport-omdb-dubai-intl", "OMDB")] [InlineData("asobo-airport-heca-cairo", "HECA")]
@@ -1097,7 +1162,7 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 { Assert.Contains(code, LinkedCodes(package)); Assert.NotNull(a.Airports[Code(code)].Name); Assert.NotNull(a.Airports[Code(code)].Position); }
 [Fact] public void Five_character_codes_link_by_record() { Assert.Contains(a.AirportLinks, l => l.Code.Value == "YALR1" && l.Reason == AirportLinkReason.Record); }
 [Fact] public void Other_category_cases() { Assert.Equal(Category.Other, Cat("fsdreamteam-gsx-pro")); Assert.Equal(Category.Other, Cat("neofly-neofly-smokes")); Assert.Equal(Category.Other, Cat("fsltl-traffic-base")); }
-[Fact] public void Sal1800_packages_share_one_group() => Assert.Equal(2, a.Aircraft.Groups["Cessna-170B-Backcountry"].Providers.Count);
+[Fact] public void Sal1800_packages_share_one_group() => Assert.Equal(2, a.Aircraft.Groups["Cessna-170B-Backcountry"].Providers.Select(p => p.Name).Distinct().Count());   // C8: count names, not copies
 [Fact] public void Mge_c152_is_a_mod_of_the_official_c152() => Assert.Equal(AircraftRole.Mod, Role("mge-asobo-aircraft-c152"));
 [Fact] public void Packages_without_cfg_attach_to_their_aircraft() { Assert.Equal(AircraftRole.Attached, Role("flybywire_A320Neo_Cabin")); Assert.Equal(AircraftRole.Attached, Role("simflight-C152-interior-navtablet")); }
 ```
@@ -1105,18 +1170,16 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - [ ] **Step 2: Write the collision report** — decisions Q4 and spec 13:
 
 ```csharp
-// The reviewed list of Token links on Rickard's install. A change here is a decision, not a fix.
-private static readonly (string Package, string Code)[] ExpectedTokenLinks = [ /* from Task 21 step 5, reviewed by Rickard */ ];
-
+// Rickard's reviewed Token links (Task 21): the `ok` rows of reviewed-token-links.tsv. A change in that file is a decision, not a fix.
 [Fact] public void Token_links_match_the_reviewed_list()
 {
-    var links = a.AirportLinks.Where(l => l.Reason == AirportLinkReason.Token).Select(l => (l.Package.Name.Value, l.Code.Value));
+    var links = a.AirportLinks.Where(l => l.Reason == AirportLinkReason.Token).Select(l => (l.Package.Name.Value, l.Code.Value)).Distinct();
     foreach (var row in Report()) output.WriteLine(row);   // every name/title token that is a known code, with its rule outcome
-    Assert.Equal(ExpectedTokenLinks.Order(), links.Order());
+    Assert.Equal(ReviewedTokenLinks("ok").Order(), links.Order());
 }
 ```
 
-`Report()` lists, for every Library and Community Package, each name or title token that is a known code (`AirportLinker.KnownCodes`), with whether it linked, and why not (stop word, not leading, counted record present, not Scenery). A wrong Token link is fixed by adding its token to the default `StopList`, never by editing the expected list to include it.
+`Report()` lists, for every Library and Community Package, each name or title token that is a known code (`AirportLinker.KnownCodes`), with whether it linked, and why not (stop word, not leading, counted record present, not Scenery). Every `stop` row's token is added to `ContentSettings.DefaultStopList` in this task; the test then passes only if those links are gone. The TSV is never edited to make the test pass.
 
 - [ ] **Step 3: Run to verify** → PASS (after stop-list additions, if any). If an expectation in Step 1 fails, stop and report to Rickard.
 - [ ] **Step 4: Commit** — `git commit -m "test: add content scenarios and collision report"`
@@ -1128,7 +1191,13 @@ private static readonly (string Package, string Code)[] ExpectedTokenLinks = [ /
 - Derived results (links, Airports, aircraft groups, record counts) are recomputed from cached facts, not cached (C6; spec 11 updated in Task 14).
 - Rule 2 (name/title tokens) applies only to non-Sim-managed Packages; Sim-managed Packages without records use the package-name rule (Task 10).
 - The `layout.json` overlap signal for Replaces built-in is left out; the dependency signal is kept (Task 11).
-- The generic codes from decision Q4 live inside the content fixture (as code-only records of excluded Packages), not in a separate file (Task 19).
+- The generic codes from decision Q4 live inside the content fixture (as a compact `codes` array per excluded Package), not in a separate file (Task 19).
+- Records of Packages excluded by pattern (voloport, neofly, points of interest) are ignored everywhere: no Airports on the map, no known codes for the token rule. Records excluded only by the threshold still supply codes, names and positions (C4).
+- `OptedIn` and removed links apply to Sim-managed Packages too; manual links don't (C5).
+- Inactive Duplicate copies are analysed like active ones; plan 3 shows only the active copy (C8).
+- An encrypted aircraft (`.fsarchive`, no `aircraft.cfg`) provides its container in any source, not only Sim-managed (Task 12, spec 6.6).
+- The exclusion list and stop-list are stored as the user's additions and removals on top of the built-in defaults, so new defaults in a later release still reach existing users (Task 9).
+- A caller's cancellation only stops its own wait; a shared scan run is cancelled only when the service is disposed (Task 17).
 - A Library on an unreachable drive keeps its cached content, so its Airport links don't disappear while it is offline (Task 15).
 - A locked cache (second instance) falls back to memory for that run instead of failing (Task 14).
 - Liveries whose aircraft isn't installed still get a group, so plan 3 can warn "Livery without aircraft" (Task 12).

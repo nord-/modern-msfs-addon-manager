@@ -73,7 +73,8 @@ Every entry in Community is classified on each reconcile:
 
 | Entry | Rule | App may |
 |---|---|---|
-| Managed | Junction or symlink whose target is a Package in a registered Library | Remove; the app only ever creates junctions |
+| Managed | Junction or symlink whose target is a Package in a registered Library, and whose name is that Package's name (a link to a Library Package under another name is External) | Remove; the app only ever creates junctions |
+| Offline | Link whose target lies under an unreachable Library | Shown as offline, never offered for removal |
 | External | Junction or symlink pointing outside every registered Library | Show only |
 | Fixed | Real folder with `manifest.json` | Show only |
 | Ignored | Real folder without `manifest.json` (for example `flybywire-current-install-0`), or a link whose target isn't a Package. The sim ignores it | Show as neutral info |
@@ -93,7 +94,7 @@ Every entry in Community is classified on each reconcile:
   - an **Addon**: all its Packages;
   - a **Catalog**: all Packages of all Addons below it, at any depth.
 - Turning an Addon or Catalog on or off never changes Addons it only **uses**. Used Addons are shown dimmed in the using Addon's properties and can't be switched from there.
-- **Managed elsewhere** is an attribute of a Library, inherited by every Package in it, including Packages that appear there later; it can be overridden per Package. A Package is locked when its active copy lies in such a Library (so a user's own copy of `neofly-neofly-cargo` in `C:\Spel\Addons` isn't locked by marking the Neofly Library). A locked Package's link is never created or removed by the app, by any action at any level; bulk actions skip it and say so. Its Addon shows a lock.
+- **Managed elsewhere** is an attribute of a Library, inherited by every Package in it, including Packages that appear there later; it can be overridden per Package. A Package is locked when its active copy lies in such a Library (so a user's own copy of `neofly-neofly-cargo` in `C:\Sim\Addons` isn't locked by marking the Neofly Library). A locked Package's link is never created or removed by the app, by any action at any level; bulk actions skip it and say so. Its Addon shows a lock.
 - **Name taken** (6.2) rejects a turn-on at apply time; the choice isn't stored.
 - Fixed and External entries appear as read-only Addons with a lock where they belong in the tree.
 
@@ -191,9 +192,9 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 3. **Propose Libraries:**
    0. Only existing junction targets are used. Symlinks (made by other tools' installers, such as SayIntentions' three links into `%APPDATA%\SayIntentionsAI`) and missing targets are not; the user can add such folders by hand.
    1. Link targets under a well-known tool root (`…\Orbx Library\msfs\`, `…\FSDT Addon Manager\MSFS\`, `…\Neofly\addons\`) propose that root directly.
-   2. For the others, start at each target's parent folder and move upward while the next parent is not a drive root or tool root, contains no Package directly, and every one of its subfolders has at least one Package somewhere beneath it. Subfolders don't need to be link targets: unlinked Packages count too. Merge identical results.
+   2. For the others, start at each target's parent folder and move upward while the next parent is not a drive root or tool root, is not itself a Package, and every one of its subfolders is a Package or has one beneath it. Subfolders don't need to be link targets: unlinked Packages count too. Merge identical results.
 
-   On Rickard's machine this gives `C:\Spel\Addons` (it stops there because `C:\Spel` also holds folders without Packages, such as `vPilot`), `C:\Spel\Orbx Library\msfs`, `C:\Spel\FSDT Addon Manager\MSFS` and `C:\Spel\Neofly\addons`. The user can adjust, add and remove roots in the same dialog, and add more Libraries later in Settings.
+   On Rickard's machine this gives `C:\Sim\Addons` (it stops there because `C:\Sim` also holds folders without Packages, such as `Tool`), `C:\Sim\Orbx Library\msfs`, `C:\Sim\FSDT Addon Manager\MSFS` and `C:\Sim\Neofly\addons`. The user can adjust, add and remove roots in the same dialog, and add more Libraries later in Settings.
 4. **Propose Managed elsewhere** for Libraries owned by other tools (FSDT, Orbx, Neofly), unticked by default, with a plain explanation of the trade-off: the app won't switch those Packages, and switching them here would be undone by the tool if it relinks.
 5. Adopt the current Community state: each Package is on if linked, off if not. No sync dialog on first run.
 6. Run discovery, then the content scan (7.3). On/off is available as soon as discovery is done.
@@ -216,7 +217,7 @@ Two passes:
 
 - Order on first scan: Community → Libraries → Sim-managed packages, with visible progress. The generic airports (about 40,000 in almost 5,000 BGL files) are read once and cached.
 - Incremental by default: a Package is re-read only if its path, or the timestamp or size of `manifest.json` or `layout.json`, has changed. F5 forces a full rescan.
-- Community and all Libraries are watched for changes; affected Packages are rescanned in the background. Community is watched non-recursively; changes inside linked Packages are seen through the Library watchers. Watchers overflow during large installs (`C:\Spel\Addons` holds about 123,000 files), so an overflow triggers an incremental rescan.
+- Community and all Libraries are watched for changes; affected Packages are rescanned in the background. Community is watched non-recursively; changes inside linked Packages are seen through the Library watchers. Watchers overflow during large installs (`C:\Sim\Addons` holds about 123,000 files), so an overflow triggers an incremental rescan.
 - From Sim-managed packages, the app reads Scenery and aircraft containers. Their aircraft are never toggleable.
 
 ### 7.4 Reconciliation
@@ -255,7 +256,7 @@ Layout and feel follow BOB Dispatcher: dark, calm, airy, left navigation, clear 
 - **Settings**: Community path (detected, overridable), Libraries (add/remove, Managed elsewhere), search URL templates, airport threshold, exclusion list and token stop-list, version and update notice.
 - **Overlays**: first-run setup, sync dialog, pending changes while the sim runs, scan progress.
 
-Thumbnails come from the Package's own files (`ContentInfo\<any>\Thumbnail.jpg`; the subfolder name differs from the Package name; 198 of 228 Library Packages in `C:\Spel\Addons` have one), with a placeholder per type when none exists.
+Thumbnails come from the Package's own files (`ContentInfo\<any>\Thumbnail.jpg`; the subfolder name differs from the Package name; 198 of 228 Library Packages in `C:\Sim\Addons` have one), with a placeholder per type when none exists.
 
 ## 11. Storage
 

@@ -59,7 +59,13 @@ A real folder in Community that is a Package. It is always on and the app never 
 A folder in Community, or the target of a link, that isn't a Package. The sim ignores it.
 
 **Broken entry**:
-A link in Community whose target no longer exists.
+A link in Community whose target no longer exists, outside any unreachable Library, and whose name matches no Library Package.
+
+**Stale entry**:
+A link in Community whose target is gone, but whose Package was found elsewhere in a registered Library.
+
+**Offline entry**:
+A link in Community into a registered Library that can't be reached right now.
 
 **Stray entry**:
 A loose file in Community that is not a Package.

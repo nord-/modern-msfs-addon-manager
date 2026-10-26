@@ -37,21 +37,21 @@ Rickard använder idag **MSFS Addons Linker** (bad2000, gratis, flightsim.to/add
 ## Nuläge på Rickards maskin (inventerat 2026-10-25)
 
 - Community: `C:\Users\ricka\AppData\Roaming\Microsoft Flight Simulator\Packages\Community` (Steam-installation av MSFS 2020).
-- Addon-lager: `C:\Spel\Addons\{AIG, Aircraft, fsltl, Scenery\{Australia, Europe, North America, Objects}, Tools}`.
+- Addon-lager: `C:\Sim\Addons\<kategorimappar>`.
 
 Innehåll i Community (118 poster):
 
 | Typ | Antal | Kommentar |
 |---|---|---|
-| **Junction** | 95 | Addons Linker använder junctions. Flertalet pekar in i `C:\Spel\Addons\…` |
-| Junction utanför `C:\Spel\Addons` | 19 av de 95 | Orbx Library (`C:\Spel\Orbx Library\msfs\…\Community\…`), FSDT Addon Manager (GSX), Neofly |
+| **Junction** | 95 | Addons Linker använder junctions. Flertalet pekar in i `C:\Sim\Addons\…` |
+| Junction utanför `C:\Sim\Addons` | 19 av de 95 | Orbx Library (`C:\Sim\Orbx Library\msfs\…\Community\…`), FSDT Addon Manager (GSX), Neofly |
 | **SymbolicLink** | 3 | SayIntentions (skapade av SayIntentions egen installer). En är **trasig**: `SayIntentions-VR-Toolbar-Plugin` |
 | Riktiga mappar | 19 | Navigraph, FlyByWire installer, FSUIPC/MobiFlight-moduler, Carenado m.fl. – installerade direkt av respektive installer |
 | Fil | 1 | `UNINSTALL_CARENADO_PA28R_181_MSFS2020.exe` (skräp i Community) |
 
 Observationer:
 - **Svaret på frågan: det är junctions**, inte symlinks (förutom SayIntentions tre).
-- Neofly-paket och `bagolu-c152-neoflybannertow` finns **dubbelt**: både i `C:\Spel\Addons\{Tools,Aircraft}` och i `C:\Spel\Neofly\addons`, och Community pekar på Neofly-kopian.
+- Neofly-paket och `bagolu-c152-neoflybannertow` finns **dubbelt**: både i `C:\Sim\Addons\{Tools,Aircraft}` och i `C:\Sim\Neofly\addons`, och Community pekar på Neofly-kopian.
 - Appen måste alltså hantera en blandning: egna junctions, junctions skapade av andra verktyg (Orbx, FSDT), symlinks, riktiga mappar och trasiga länkar. Jämför BOB:s färgkodning: *Made outside Bob / Broken link / Bob's link / Always on / Plain folder*.
 - GSX Pro-profiler: `%APPDATA%\Virtuali\GSX\MSFS\*.ini` – 33 st, namngivna `<icao>-<författare>.ini` (t.ex. `eddf-virtualFRA_GSX_VDGS.ini`, `EFHK-Epixeri.ini`). ICAO = prefix före första `-`, skiftlägesokänsligt.
 

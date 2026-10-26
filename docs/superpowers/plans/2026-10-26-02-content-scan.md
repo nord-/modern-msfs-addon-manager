@@ -115,7 +115,7 @@ tests/
 
 **Files:**
 - Create: `src/AddonManager.Core/Content/AirportCode.cs`, `GeoPoint.cs`, `AirportRecord.cs`, `AircraftConfig.cs`, `PackageSource.cs`, `ChangeMarker.cs`, `PackageContent.cs`, `ScanTarget.cs`, `IPackageContentReader.cs`, `IScanCache.cs`
-- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress"); `ANALYS.md`, section "Beslut för plan 2": add the approved "Calls I made" at the end of this plan, dated with the plan's approval date, in Swedish; spec `docs/superpowers/specs/2026-10-25-mvp-design.md` section 6.5 (rule 2 only for Packages that aren't Sim-managed; the package-name rule for encrypted official airports links only known codes; opting in overrides both the threshold and a pattern; pattern-excluded records create no Airports and are no known codes for the token rule; real scenery counts links from non-excluded Packages plus any manual link; inactive Duplicate copies are analysed and linked like active ones; the overlapping `layout.json` signal is dropped) and 6.6 (encrypted aircraft in any source provide their containers)
+- Modify: `CLAUDE.md` (status "Plan 1 (link engine) in progress" → "Plan 2 (content scan) in progress"); `ANALYS.md`, section "Beslut för plan 2": add the approved "Calls I made" at the end of this plan, dated with the plan's approval date, in Swedish; spec `docs/superpowers/specs/2026-10-25-mvp-design.md` section 6.5 (rule 2 only for Packages that aren't Sim-managed; the package-name rule for encrypted official airports links only known codes; opting in overrides both the threshold and a pattern; pattern-excluded records create no Airports and are no known codes for the token rule; real scenery counts links from non-excluded Packages plus any manual link; an airport name that is a `TT:` localisation key counts as no name; inactive Duplicate copies are analysed and linked like active ones; the overlapping `layout.json` signal is dropped) and 6.6 (encrypted aircraft in any source provide their containers)
 - Test: `tests/AddonManager.Core.Tests/Content/AirportCodeTests.cs`
 
 **Interfaces:**
@@ -332,7 +332,7 @@ dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\asobo-airport-lfcs-sau
 
 (Adjust the EHAM and sltcreations paths to where the Packages really are; `status` and the plan-1 fixture list them.)
 
-- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), any `name` starts with `TT:` (a localisation key, not a display name), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
+- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), any `name` starts with `TT:` (a localisation key, not a display name; per Rickard's decision of 2026-10-26 the plan then gets an extra task before Task 6 that resolves keys through the sim's `en-US.locPak`, written and approved before the BGL track goes on), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
 - [ ] **Step 4: Commit and push** — `git commit -m "test: add BGL structure dumps from real files"`, then `git push` (to `plan-2/bgl-track`, see Handover).
 
 ---
@@ -706,7 +706,7 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
     - `IReadOnlyList<BuiltInReplacement> ReplacesBuiltIn(IReadOnlyList<PackageContent> contents, IReadOnlyList<AirportLink> links)`
 
 Rules (spec 6.5):
-- **Name and position:** taken from the first record for the code with a non-empty name (position likewise, independently), searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record.
+- **Name and position:** taken from the first record for the code with a usable name (position likewise, independently), where a name that is empty or starts with `TT:` (a localisation key such as `TT:AIRPORTEU.EDDF.name`) is not usable, searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record.
 - `HasRealScenery`: at least one link from a Package that isn't excluded (C4, spec 6.5 "non-excluded"), or any Manual link (the user said so). `HasBuiltIn`: at least one such link from a Sim-managed Package.
 - **Replaces built-in:** a link from a non-Sim-managed Package that isn't excluded (C4), or a Manual link from one, to an Airport with `HasBuiltIn`; also, as the extra signal, a non-Sim-managed Package whose manifest `dependencies` name a Sim-managed Package linked to that Airport. *My call:* the second extra signal in spec 6.5, overlapping `layout.json` paths, is left out: it would mean caching every file path of every Sim-managed airport Package, and the dependency signal plus own links cover the real cases. It's information, not a warning.
 
@@ -727,6 +727,13 @@ Rules (spec 6.5):
 [Fact] public void Pattern_excluded_records_create_no_airports()
     => Assert.False(Build(Scenery("microsoft-airport-voloport", records: ["VOLC1"], source: SimManaged)).ContainsKey(Code("VOLC1")));
 [Fact] public void Linked_record_name_wins_over_generic() { … }
+[Fact] public void Localisation_key_is_not_a_name()
+{
+    var official = Scenery("asobo-airport-eham", records: [Rec("EHAM", "TT:AIRPORTEU.EHAM.name", 52.31, 4.76)], source: SimManaged);
+    var addon = Scenery("brickbybrickdesign-airport-eham-amsterdam", records: [Rec("EHAM", "Amsterdam Schiphol", 52.31, 4.76)]);
+    Assert.Equal("Amsterdam Schiphol", Build(official, addon)[Code("EHAM")].Name);
+    Assert.Null(Build(official)[Code("EHAM")].Name);   // key only: no name, the map shows the code
+}
 [Fact] public void World_update_partner_airport_is_built_in_because_it_is_sim_managed()
     => Assert.True(Build(Scenery("microsoft-airport-edny-friedrichshafen", records: ["EDNY"], creator: "Partner", source: SimManaged))[Code("EDNY")].HasBuiltIn);
 
@@ -1222,7 +1229,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 [InlineData("asobo-airport-lemd-adolfo-suarez", "LEMD")] [InlineData("asobo-airport-omdb-dubai-intl", "OMDB")] [InlineData("asobo-airport-heca-cairo", "HECA")]
 [InlineData("asobo-airport-fact-cape-town", "FACT")] [InlineData("asobo-airport-lfcs-saucats", "LFCS")]
 public void Encrypted_official_airports_have_code_name_and_position(string package, string code)
-{ Assert.Contains(code, LinkedCodes(package)); Assert.NotNull(a.Airports[Code(code)].Name); Assert.NotNull(a.Airports[Code(code)].Position); }
+{ Assert.Contains(code, LinkedCodes(package)); Assert.NotNull(a.Airports[Code(code)].Name); Assert.DoesNotContain("TT:", a.Airports[Code(code)].Name); Assert.NotNull(a.Airports[Code(code)].Position); }
 [Fact] public void Five_character_codes_link_by_record() { Assert.Contains(a.AirportLinks, l => l.Code.Value == "YALR1" && l.Reason == AirportLinkReason.Record); }
 [Fact] public void Other_category_cases() { Assert.Equal(Category.Other, Cat("fsdreamteam-gsx-pro")); Assert.Equal(Category.Other, Cat("neofly-neofly-smokes")); Assert.Equal(Category.Other, Cat("fsltl-traffic-base")); }
 [Fact] public void Sal1800_packages_share_one_group() => Assert.Equal(2, a.Aircraft.Groups["Cessna-170B-Backcountry"].Providers.Select(p => p.Name).Distinct().Count());   // C8: count names, not copies
@@ -1270,6 +1277,7 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - A Library missing when the watcher starts isn't watched until plan 5 recreates the watcher after the next scan (Task 18).
 - The package-name rule for encrypted official airports links only known codes, so a Sim-managed name never creates a nameless Airport (Task 10).
 - Real scenery counts links from Packages that aren't excluded, plus manual links (Task 11, spec 6.5).
+- Airport names that are localisation keys (`TT:…`) count as no name, so a plain name from another record wins and a key-only Airport shows its code. Decided by Rickard 2026-10-26 (option C): if Task 4's dumps show `TT:` names, an extra task resolves them through `en-US.locPak` before Task 6 (Tasks 4 and 11).
 - Cached results at startup come from the scan run itself (`ScanCallbacks.OnCached`, before discovery), so the cache is read once per run and by one caller (Task 17).
 - `scan` lists Sim-managed Scenery Packages left without a link that have no BGL or an unreadable one (encrypted airports the package-name rule missed); Task 21 notes them in the PR so they can be linked by hand once plan 5 has the UI.
 - Liveries whose aircraft isn't installed still get a group, so plan 3 can warn "Livery without aircraft" (Task 12).

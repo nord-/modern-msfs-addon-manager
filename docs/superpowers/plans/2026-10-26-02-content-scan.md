@@ -324,13 +324,13 @@ $o = '<Official path from step 1>'
 $s = 'tests\AddonManager.Sim2020.Tests\Fixtures\bgl-shapes'
 New-Item -ItemType Directory -Force $s | Out-Null
 dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\fs-base-genericairports" --out "$s\generic.json"
-dotnet run --project src/AddonManager.Cli -- bgl-dump 'C:\Spel\Addons\Scenery\Europe\brickbybrickdesign-airport-eham-amsterdam' --code EHAM --out "$s\eham-bbd.json"
+dotnet run --project src/AddonManager.Cli -- bgl-dump '<brickbybrickdesign-airport-eham-amsterdam package folder>' --code EHAM --out "$s\eham-bbd.json"
 dotnet run --project src/AddonManager.Cli -- bgl-dump '<sltcreations package folder>' --code YALR1 --out "$s\yalr1.json"
 dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\<a readable asobo-airport-* package, e.g. asobo-airport-lowi-innsbruck>" --out "$s\asobo-airport.json"
 dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\asobo-airport-lfcs-saucats" --out "$s\lfcs-saucats.json"
 ```
 
-(Adjust the EHAM and sltcreations paths to where the Packages really are; `status` and the plan-1 fixture list them.)
+(Fill in the EHAM and sltcreations folders from `status`; the plan-1 fixture shows them only anonymised. The dumps hold no paths, so nothing about the disk layout reaches the repo.)
 
 - [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), the record sizes in any 0x03 subsection don't add up to its `dataSize` (Task 6's consistency rule would then reject good files), any `name` starts with `TT:` (a localisation key, not a display name; per Rickard's decision of 2026-10-26 the plan then gets an extra task before Task 6 that resolves keys through the sim's `en-US.locPak`, written and approved before the BGL track goes on), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
 - [ ] **Step 4: Commit and push** — `git commit -m "test: add BGL structure dumps from real files"`, then `git push` (to `plan-2/bgl-track`, see Handover).
@@ -976,8 +976,8 @@ Behaviour (spec 7.3):
 }
 [Fact] public void Content_under_an_unreachable_library_is_kept_and_returned()
 {
-    Scan([T(@"E:\Addons\x"), T(@"C:\Spel\Addons\y")], [], false);
-    var r = Scan([T(@"C:\Spel\Addons\y")], keepUnder: [@"E:\Addons"], full: false);
+    Scan([T(@"E:\Addons\x"), T(@"C:\Sim\Addons\y")], [], false);
+    var r = Scan([T(@"C:\Sim\Addons\y")], keepUnder: [@"E:\Addons"], full: false);
     Assert.Contains(r.Contents, c => c.Name.Value == "x");
 }
 [Fact] public void Removed_package_leaves_the_cache() { … Assert.DoesNotContain(cache.LoadAll(), …); }
@@ -1138,12 +1138,12 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
   - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes the Token links as tab-separated lines `<package>`, `<code>`, `<source>`, `?` (four columns) for Rickard's review (Task 21): one row per distinct (Package name, code), Duplicate copies collapsed; `<source>` is `name` or `title` from `AirportLinker.TokenCandidates` (name first); rows sorted by package, then code. Every Token link printed to stdout also comes from `TokenCandidates`. Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None; Sim-managed Packages with Provisional Category Scenery, no Airport link and `!HasBgl || UnreadableBglCount > 0` (likely encrypted airports with a non-standard name).
   - `AddonManager.Cli export-content --out <file>` — runs the same scan, then writes the content fixture (format below). Read-only apart from `--out` and the cache.
 
-Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile replaced with `%USERPROFILE%`):
+Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile replaced with `%USERPROFILE%`; Task 21 then runs `tools/Anonymise-Fixture.ps1` on it, which rewrites `packages[].path` under the games folder to `C:\Sim\…` with `Tool NN`/`Group NN` folders, as for the plan-1 fixture):
 
 ```json
 { "exported": "2026-10-26",
   "packages": [
-    { "name": "brickbybrickdesign-airport-eham-amsterdam", "path": "C:\\Spel\\Addons\\…", "source": "Library",
+    { "name": "brickbybrickdesign-airport-eham-amsterdam", "path": "C:\\Sim\\Addons\\Group 03\\…", "source": "Library",
       "title": "…", "creator": "…", "contentType": "SCENERY", "dependencies": [],
       "hasBgl": true, "bglSectionTypes": [3, 101], "unreadableBgl": 0,
       "airports": [ { "code": "EHAM", "name": "Amsterdam Schiphol", "lat": 52.3086, "lon": 4.7639 } ],
@@ -1154,7 +1154,7 @@ Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile rep
 
 Mapping to `PackageContent` (Task 22's loader does the reverse): `name`, `path`, `source` → same; `title`, `creator`, `contentType`, `dependencies` (plus `packageVersion`) → `Manifest`; `hasBgl`, `bglSectionTypes`, `airports`, `isAirTraffic`, `airplaneFolders`, `encryptedAirplaneFolders` → same; `unreadableBgl` → `UnreadableBglCount`; `aircraft` → `AircraftConfigs`; `hasThumbnail` → `ThumbnailPath` = `"<path>\ContentInfo\<name>\Thumbnail.jpg"` when true, else `null`; `Marker` is a constant.
 
-Excluded Packages (C4) export their records as `"codes": ["…", …]`, one compact string array on a single line, instead of `airports` — this is the committed list of generic codes from ANALYS decision "Collision report", roughly 0.6 MB in all. Codes that any Package links to (any reason) keep their full record in `airports`, so linked Airports keep the name and position plans 3 and 5 show (encrypted official airports and Token-linked ones get theirs from the generic record). Everything else is exported in full. `ContentFixtureLoader` (Task 22) turns `codes` back into records without name or position.
+Excluded Packages (C4) export their records as `"codes": ["…", …]`, a plain string array, instead of `airports` — this is the committed list of generic codes from ANALYS decision "Collision report". About 78,000 codes; after `Anonymise-Fixture.ps1` re-indents the file (one code per line) that is roughly 1.5 MB, accepted for a text file git compresses well. Codes that any Package links to (any reason) keep their full record in `airports`, so linked Airports keep the name and position plans 3 and 5 show (encrypted official airports and Token-linked ones get theirs from the generic record). Everything else is exported in full. `ContentFixtureLoader` (Task 22) turns `codes` back into records without name or position.
 
 - [ ] **Step 1: Implement** `ScanCommand` and `ExportContentCommand`; exit code 1 with a message when no install is found or user data is corrupt (as `status`).
 - [ ] **Step 2: Smoke-test on the dev machine** — `dotnet run --project src/AddonManager.Cli -- scan`. Expected: "No MSFS 2020 install found …", exit code 1. (The real run is Task 21.)
@@ -1206,7 +1206,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 - [ ] **Step 1: Full scan** — `dotnet run --project src/AddonManager.Cli -- scan --full --token-links tests/AddonManager.Core.Tests/Fixtures/reviewed-token-links.tsv`. Keep the output for the PR.
 - [ ] **Step 2: Incremental scan** — run `scan` again. Expected: elapsed under 2 s, almost everything reused.
 - [ ] **Step 3: Opt-in tests** — `$env:MMAM_SIM_TESTS = '1'; dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~LocalInstallTests` → PASS.
-- [ ] **Step 4: Export** — `dotnet run --project src/AddonManager.Cli -- export-content --out tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`.
+- [ ] **Step 4: Export and anonymise** — `dotnet run --project src/AddonManager.Cli -- export-content --out tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`, then `pwsh tools/Anonymise-Fixture.ps1 -Fixture tests/AddonManager.Core.Tests/Fixtures/rickard-content.json -GamesRoot '<games folder on the sim machine>'`. Check that no path in the file still starts with the real games folder.
 - [ ] **Step 5: Review the Token links** — in `reviewed-token-links.tsv`, replace every `?` with `ok` (the Package really belongs to that Airport), `stop` (the code is a common word that should never link; Task 22 adds it to the stop-list) or `wrong` (this link is wrong, but the code is a real Airport that other Packages may rightly use, so it can't go on the global stop-list; it gets a manual removal once plan 5 has the UI). Rickard's verdict, not the implementer's: no `?` may remain. A code marked `stop` on one row and `ok` or `wrong` on another is a conflict (stop words are global): decide which wins before committing.
 - [ ] **Step 6: Commit and push** — `git commit -m "test: add content fixture from the real install"`, then `git push`, so the Task 22 agent can fetch the fixture and the TSV (see Handover).
 

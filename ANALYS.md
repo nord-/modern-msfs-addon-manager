@@ -175,6 +175,20 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - Geografisk koppling av scenery till Airport.
 - Sök med fler butiker än flightsim.to och SimMarket.
 
+## Beslut för plan 2, Content scan (grilling 2026-10-26)
+
+- **SQLite:** `Microsoft.Data.Sqlite` med rå SQL, utan EF Core eller Dapper. Schemat har ett versionsnummer. Stämmer det inte raderas cachen och allt skannas om. Single-file-verifieringen hör till plan 6.
+- **BGL-fixtures:** syntetiska BGL-filer som byggs i kod (`BglBuilder`), med **riktiga filer som förlaga** (Rickard). Ett CLI-kommando `bgl-dump` skriver ut strukturen hos riktiga filer som JSON, utan råa bytes. Dumparna checkas in, och ett test kontrollerar att byggaren ger samma struktur. Förlagor: en BGL ur `fs-base-genericairports`, `brickbybrickdesign-airport-eham-amsterdam`, sltcreations `YALR1`, en läsbar `asobo-airport-*` och `asobo-airport-lfcs-saucats`. Riktiga filer testas dessutom i ett opt-in-integrationstest.
+- **Asset pack-testet** bestäms i plan 3, eftersom det hänger på Uses. Plan 2 sparar vilka BGL-sektionstyper varje Package har.
+- **Collision report:** en ren lista med generic Airport codes exporteras från Rickards installation och checkas in. Koder är fakta, inga sim-filer, så testet kan köras i CI.
+- **Fixture-utökning:** fakta per Package (airport records, om BGL finns, containers, `base_container`, `isAirTraffic`, `SimObjects`-sökvägar ur `layout.json`) för Library, Community och Sim-managed packages. Exporten görs med CLI-kommandot `export-content`, som använder plan 2:s egna läsare.
+- **Två manuella steg i planen**, eftersom simmen inte finns på utvecklingsdatorn: tidigt `bgl-dump`, sent `export-content` plus listan med generic codes.
+- **Category:** discovery sätter en preliminär Category från `content_type` (BGL-förekomst läses ur `layout.json`). Content-passet ger den slutliga, med `isAirTraffic`.
+- **Användardata:** plan 2 äger det som rör enskilda Packages: manuella och borttagna Airport-länkar, opt-in-paket, tröskel, exclusion list och stop-list. Category-override per Addon hör till plan 3.
+- **Thumbnails:** plan 2 sparar bara sökvägen. GSX-profiler läses i plan 4.
+- **Glossary:** nya termer **Airport code**, **Generic airport** och **Mod**.
+- **Prestanda:** en inkrementell skanning utan ändringar ska ta under 2 sekunder på Rickards maskin, mätt i opt-in-testet. Första fullskanningen har inget mål, bara synlig progress.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

@@ -332,7 +332,7 @@ dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\asobo-airport-lfcs-sau
 
 (Adjust the EHAM and sltcreations paths to where the Packages really are; `status` and the plan-1 fixture list them.)
 
-- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
+- [ ] **Step 3: Check the dumps.** Expected: `eham-bbd.json` has an airport record with `"code": "EHAM"`, a position within 0.05° of 52.31 N, 4.76 E, a non-null `fixedSize` and a `0x19` child; `yalr1.json` has `"code": "YALR1"`; `lfcs-saucats.json` has no 0x03 section (or one without 0x56 records). **Stop and report** if a code decodes wrongly, a position is off, any 0x56 record in any dump has a null `fixedSize` (Task 5 couldn't rebuild it), any `name` starts with `TT:` (a localisation key, not a display name), or airport records use an id other than `0x56` — the plan's offsets or spec 6.5 would then need changing before Task 5.
 - [ ] **Step 4: Commit and push** — `git commit -m "test: add BGL structure dumps from real files"`, then `git push` (to `plan-2/bgl-track`, see Handover).
 
 ---
@@ -345,7 +345,7 @@ dotnet run --project src/AddonManager.Cli -- bgl-dump "$o\asobo-airport-lfcs-sau
 
 **Interfaces:**
 - Consumes: `BglShape`, `BglShapes.Describe` (Task 3), the dumps (Task 4).
-- Produces: `static byte[] BglBuilder.FromShape(BglShape shape)` and `static BglShape BglBuilder.LoadShape(string name)` (reads `Fixtures/bgl-shapes/<name>.json`). `FromShape` rebuilds every section, subsection and record with the dumped ids and sizes, writes code, position and name at the confirmed offsets and fills every other byte with zero.
+- Produces: `static byte[] BglBuilder.FromShape(BglShape shape)` and `static BglShape BglBuilder.LoadShape(string name)` (reads `Fixtures/bgl-shapes/<name>.json`). `FromShape` rebuilds every section, subsection and record with the dumped ids and sizes, writes code, position and name at the confirmed offsets and fills every other byte with zero. Positions go back to raw `u32` with `Math.Round` before the cast (a plain cast truncates and can be off by one), and `bgl-dump` writes doubles at full round-trip precision, so the strict comparison holds.
 
 ANALYS decision "BGL-fixtures": the synthetic files are modelled on real files, and this task proves it.
 
@@ -612,6 +612,7 @@ public void Default_exclusions(string name, bool excluded) => Assert.Equal(exclu
     - `bool IsExcluded(PackageContent content, ContentSettings settings)` — C4.
     - `bool IsExcludedByPattern(PackageContent content, ContentSettings settings)` — matches an exclusion pattern and isn't opted in.
     - `IReadOnlySet<AirportCode> KnownCodes(IReadOnlyList<PackageContent> contents, ContentSettings settings)` — every code in any record, counted or not, except records of Packages excluded by pattern (C4).
+    - `public sealed record TokenCandidate(string Source, AirportCode Code, bool Linked, string? Reason);` and `IReadOnlyList<TokenCandidate> TokenCandidates(PackageContent content, ContentSettings settings, IReadOnlySet<AirportCode> known)` — every name or title token that is a known code (`Source` is `"name"` or `"title"`), with whether rule 2 links it and why not (`"stop word"`, `"not leading"`, `"counted record"`, `"not scenery"`, `"sim-managed"`, `"air traffic"`). `Link` uses it for rule 2, and Tasks 19 and 22 report from it, so the reports can't disagree with the linker.
 
 Rules (spec 6.5, C4, C7):
 1. **Record:** each distinct code in the Package's records, when the Package isn't excluded.
@@ -707,7 +708,7 @@ public void Tokens_link_only_known_codes(string name, string? title, string? exp
 Rules (spec 6.5):
 - **Name and position:** taken from the first record for the code with a non-empty name (position likewise, independently), searching first the linked Packages' records (Sim-managed first, then by Package name, then path), then all other usable records (same order). Encrypted official airports therefore get name and position from the generic record.
 - `HasRealScenery`: at least one link from a Package that isn't excluded (C4, spec 6.5 "non-excluded"), or any Manual link (the user said so). `HasBuiltIn`: at least one such link from a Sim-managed Package.
-- **Replaces built-in:** a link from a non-Sim-managed Package to an Airport with `HasBuiltIn`; also, as the extra signal, a non-Sim-managed Package whose manifest `dependencies` name a Sim-managed Package linked to that Airport. *My call:* the second extra signal in spec 6.5, overlapping `layout.json` paths, is left out: it would mean caching every file path of every Sim-managed airport Package, and the dependency signal plus own links cover the real cases. It's information, not a warning.
+- **Replaces built-in:** a link from a non-Sim-managed Package that isn't excluded (C4), or a Manual link from one, to an Airport with `HasBuiltIn`; also, as the extra signal, a non-Sim-managed Package whose manifest `dependencies` name a Sim-managed Package linked to that Airport. *My call:* the second extra signal in spec 6.5, overlapping `layout.json` paths, is left out: it would mean caching every file path of every Sim-managed airport Package, and the dependency signal plus own links cover the real cases. It's information, not a warning.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -731,6 +732,7 @@ Rules (spec 6.5):
 
 [Fact] public void Library_package_at_a_built_in_airport_replaces_built_in() { … Assert.Equal([("lib-eddf", "EDDF")], Pairs(ReplacesBuiltIn(...))); }
 [Fact] public void Dependency_on_the_official_package_is_an_extra_signal() { var patch = Scenery("eddf-fix", hasBgl: true, dependencies: ["asobo-airport-eddf-frankfurt"]); … Assert.Contains(("eddf-fix", "EDDF"), …); }
+[Fact] public void Excluded_library_package_replaces_nothing() { … library package over the threshold with a Token link to built-in EDDF … Assert.Empty(ReplacesBuiltIn(...)); }
 [Fact] public void Two_library_packages_without_official_scenery_replace_nothing() { … Assert.Empty(…); } // EHAM ×3 stays neutral (ADR 0002)
 ```
 
@@ -752,7 +754,7 @@ Rules (spec 6.5):
 - Produces:
   - `public enum AircraftRole { None, Provider, Mod, Livery, Attached, AirTraffic, LockedBase }`
   - `public sealed record ContainerGroup(string Container, IReadOnlyList<PackageContent> Providers, IReadOnlyList<PackageContent> LockedBases, IReadOnlyList<PackageContent> Liveries, IReadOnlyList<PackageContent> Attached);` — `Providers` are Library Packages (Mods when `LockedBases` isn't empty).
-  - `public sealed class AircraftIndex` with `static AircraftIndex Build(IReadOnlyList<PackageContent> contents)`, `IReadOnlyDictionary<string, ContainerGroup> Groups` (case-insensitive keys), `AircraftRole RoleOf(PackageContent content)`, `IReadOnlyList<string> ContainersOf(PackageContent content)` (sorted; plan 3 takes the alphabetically first).
+  - `public sealed class AircraftIndex` with `static AircraftIndex Build(IReadOnlyList<PackageContent> contents)`, `IReadOnlyDictionary<string, ContainerGroup> Groups` (case-insensitive keys), `AircraftRole RoleOf(PackageContent content)`, `IReadOnlyList<string> ContainersOf(PackageContent content)` — the `Container` of every group the Package is in (as provider, LockedBase, Livery or Attached), sorted `OrdinalIgnoreCase`; plan 3 takes the first.
 
 Rules (spec 6.6, C7) — computed in two passes, providers first, so scan order never decides:
 - Only Packages with `IsAircraftType(contentType)` take part, plus Sim-managed Packages of any type. `IsAirTraffic` → role AirTraffic, nothing else.
@@ -876,7 +878,7 @@ CREATE TABLE package (
 );
 ```
 
-Behaviour (ANALYS decision "SQLite", C6): raw ADO.NET; connection string with `Pooling=False` (so a corrupt file can be deleted) and `Default Timeout=1` (a second instance falls back after about a second, not 30); default rollback journal (no WAL). The connection opens lazily on first use, creating folder and file then (constructing never touches disk). `Upsert` and `Remove` run in one transaction each. Not thread-safe: one caller at a time (`ScanService` is its only user and runs single-flight). A **corrupt cache** — a `user_version` other than `FormatVersion`, a `SqliteException` with `SQLITE_NOTADB` or `SQLITE_CORRUPT`, or a `JsonException` while deserialising any row in `LoadAll` — closes the connection, deletes `scan-cache.db` and `scan-cache.db-journal` and recreates it (`LoadAll` then returns empty). If the delete fails with an `IOException` (another instance still holds the file), the instance switches to the in-memory fallback below. A busy or locked database (`SQLITE_BUSY`/`SQLITE_LOCKED`, e.g. a second app instance) switches this instance to an in-memory fallback for the rest of its life, with `IsFallback = true`; the fallback starts with the rows this instance already loaded (empty if the first load hit the lock); it never throws for that.
+Behaviour (ANALYS decision "SQLite", C6): raw ADO.NET; connection string with `Pooling=False` (so a corrupt file can be deleted) and `Default Timeout=1` (a second instance falls back after about a second, not 30); default rollback journal (no WAL). The connection opens lazily on first use, creating folder and file then (constructing never touches disk). `Upsert` and `Remove` run in one transaction each. Not thread-safe: one caller at a time (`ScanService` is its only user and runs single-flight). A new file (`user_version` 0 and no `package` table) gets the table and `user_version = FormatVersion`; that is not a rebuild. A **corrupt cache** — any other `user_version` than `FormatVersion`, a `SqliteException` with `SQLITE_NOTADB` or `SQLITE_CORRUPT`, or a `JsonException` while deserialising any row in `LoadAll` — closes the connection, deletes `scan-cache.db` and `scan-cache.db-journal` and recreates it (`LoadAll` then returns empty). If the delete fails with an `IOException` (another instance still holds the file), the instance switches to the in-memory fallback below. A busy or locked database (`SQLITE_BUSY`/`SQLITE_LOCKED`, e.g. a second app instance) switches this instance to an in-memory fallback for the rest of its life, with `IsFallback = true`; the fallback starts with the rows this instance already loaded (empty if the first load hit the lock); it never throws for that.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1111,7 +1113,7 @@ Behaviour (spec 7.3): Community is watched non-recursively (`DirectoryName | Fil
 **Interfaces:**
 - Consumes: `InstallLocator`, `JsonUserStateStore`, `AppPaths`, `LibraryProposer`, `DiskFolderTree` (as in `StatusCommand`), `PackageContentReader` (8), `OfficialPackages` (16, with `SimPaths.OfficialPath`), `SqliteScanCache` (14), `ScanService` (17).
 - Produces:
-  - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes the Token links as tab-separated lines `<package>`, `<code>`, `<token>`, `?` (four columns) for Rickard's review (Task 21): one row per distinct (Package name, code), Duplicate copies collapsed; `<token>` is the first matching token, name before title, upper-cased; rows sorted by package, then code. Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None; Sim-managed Packages with Provisional Category Scenery, no Airport link and `!HasBgl || UnreadableBglCount > 0` (likely encrypted airports with a non-standard name).
+  - `AddonManager.Cli scan [--full] [--token-links <file>]` — `--token-links` also writes the Token links as tab-separated lines `<package>`, `<code>`, `<source>`, `?` (four columns) for Rickard's review (Task 21): one row per distinct (Package name, code), Duplicate copies collapsed; `<source>` is `name` or `title` from `AirportLinker.TokenCandidates` (name first); rows sorted by package, then code. Every Token link printed to stdout also comes from `TokenCandidates`. Runs `ScanService` with the real cache (`AppPaths.ScanCacheFile`). Uses saved Libraries, or the proposal when none are saved (like `status`). Writes only the cache (C1). Prints: elapsed time; targets per source; read/reused/failed; unreadable BGL count; Packages per Category; Airports with real scenery; links per reason; every Token link as `<package>  <code>  "<token>"`; excluded Packages with their code counts; aircraft groups with Mods, Liveries without provider and Attached Packages; Packages with role None; Sim-managed Packages with Provisional Category Scenery, no Airport link and `!HasBgl || UnreadableBglCount > 0` (likely encrypted airports with a non-standard name).
   - `AddonManager.Cli export-content --out <file>` — runs the same scan, then writes the content fixture (format below). Read-only apart from `--out` and the cache.
 
 Content fixture (`rickard-content.json`, UTF-8, CRLF, indented, user profile replaced with `%USERPROFILE%`):
@@ -1183,7 +1185,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 - [ ] **Step 2: Incremental scan** — run `scan` again. Expected: elapsed under 2 s, almost everything reused.
 - [ ] **Step 3: Opt-in tests** — `$env:MMAM_SIM_TESTS = '1'; dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~LocalInstallTests` → PASS.
 - [ ] **Step 4: Export** — `dotnet run --project src/AddonManager.Cli -- export-content --out tests/AddonManager.Core.Tests/Fixtures/rickard-content.json`.
-- [ ] **Step 5: Review the Token links** — in `reviewed-token-links.tsv`, replace every `?` with `ok` (the Package really belongs to that Airport) or `stop` (the token is a common word; Task 22 adds it to the stop-list). Rickard's verdict, not the implementer's: no `?` may remain. A token marked `stop` on one row and `ok` on another is a conflict (stop words are global): decide which wins before committing.
+- [ ] **Step 5: Review the Token links** — in `reviewed-token-links.tsv`, replace every `?` with `ok` (the Package really belongs to that Airport), `stop` (the code is a common word that should never link; Task 22 adds it to the stop-list) or `wrong` (this link is wrong, but the code is a real Airport that other Packages may rightly use, so it can't go on the global stop-list; it gets a manual removal once plan 5 has the UI). Rickard's verdict, not the implementer's: no `?` may remain. A code marked `stop` on one row and `ok` or `wrong` on another is a conflict (stop words are global): decide which wins before committing.
 - [ ] **Step 6: Commit and push** — `git commit -m "test: add content fixture from the real install"`, then `git push`, so the Task 22 agent can fetch the fixture and the TSV (see Handover).
 
 **Stop and report** if the unreadable BGL count is large, if a real case from spec 6.5/6.6 comes out differently from Task 22's expectations, if an aircraft-type Library or Community Package has role None (an aircraft the container rules miss), or if step 2 is over 2 s. The Sim-managed Packages `scan` lists as possibly encrypted airports without a link are not a stop: note them in the PR (they get manual links once plan 5 has the UI).
@@ -1197,7 +1199,7 @@ Uses a temp cache file, never `AppPaths.ScanCacheFile`, and saved Libraries or t
 - Modify: `src/AddonManager.Core/Content/ContentSettings.cs` (`DefaultStopList` gets the token of every `stop` row in the reviewed TSV)
 
 **Interfaces:**
-- Consumes: the fixture and Rickard's reviewed `reviewed-token-links.tsv` (Task 21) — **stop and report** if either is missing, the TSV still has a `?`, or a `stop` row's token also appears in an `ok` row (compared `OrdinalIgnoreCase`); `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
+- Consumes: the fixture and Rickard's reviewed `reviewed-token-links.tsv` (Task 21) — **stop and report** if either is missing, the TSV still has a `?`, or a `stop` row's code also appears in an `ok` or `wrong` row (compared `OrdinalIgnoreCase`); `ContentAnalyzer` (13), `AirportLinker` (10), `ContentSettings` (9).
 - Produces: `ContentFixtureLoader.Load(string name) → IReadOnlyList<PackageContent>` (expands `%USERPROFILE%` to `C:\Users\user`, like `FixtureLoader`; marker is a constant).
 
 - [ ] **Step 1: Write the scenario tests** (expected values from spec 6.4–6.6; if the fixture disagrees, stop and report — don't change an expectation to make it pass)
@@ -1231,16 +1233,17 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - [ ] **Step 2: Write the collision report** — ANALYS decision "Collision report" and spec 13:
 
 ```csharp
-// Rickard's reviewed Token links (Task 21): the `ok` rows of reviewed-token-links.tsv. A change in that file is a decision, not a fix.
+// Rickard's reviewed Token links (Task 21): the `ok` and `wrong` rows of reviewed-token-links.tsv. A change in that file is a decision, not a fix.
 [Fact] public void Token_links_match_the_reviewed_list()
 {
     var links = a.AirportLinks.Where(l => l.Reason == AirportLinkReason.Token).Select(l => (l.Package.Name.Value, l.Code.Value)).Distinct();
     foreach (var row in Report()) output.WriteLine(row);   // every name/title token that is a known code, with its rule outcome
-    Assert.Equal(ReviewedTokenLinks("ok").Order(), links.Order());
+    foreach (var row in ReviewedTokenLinks("wrong")) output.WriteLine($"known false positive: {row}");
+    Assert.Equal(ReviewedTokenLinks("ok", "wrong").Order(), links.Order());
 }
 ```
 
-`Report()` lists, for every Library and Community Package, each name or title token that is a known code (`AirportLinker.KnownCodes`), with whether it linked, and why not (stop word, not leading, counted record present, not Scenery). Every `stop` row's token is added to `ContentSettings.DefaultStopList` in this task; the test then passes only if those links are gone. The TSV is never edited to make the test pass.
+`Report()` lists, for every Library and Community Package, the result of `AirportLinker.TokenCandidates` (Task 10): each name or title token that is a known code, whether it linked, and why not. Every `stop` row's code is added to `ContentSettings.DefaultStopList` in this task; the test then passes only if those links are gone. `wrong` rows stay expected (known false positives, listed in the PR for manual removal later). The TSV is never edited to make the test pass.
 
 - [ ] **Step 3: Run to verify** → PASS (after stop-list additions, if any). If an expectation in Step 1 fails, stop and report to Rickard.
 - [ ] **Step 4: Commit** — `git commit -m "test: add content scenarios and collision report"`
@@ -1254,7 +1257,7 @@ public void Encrypted_official_airports_have_code_name_and_position(string packa
 - The `layout.json` overlap signal for Replaces built-in is left out; the dependency signal is kept (Task 11).
 - The generic codes from ANALYS decision "Collision report" live inside the content fixture (as a compact `codes` array per excluded Package), not in a separate file (Task 19).
 - Records of Packages excluded by pattern (voloport, neofly, points of interest) are ignored everywhere: no Airports on the map, no known codes for the token rule. Records excluded only by the threshold still supply codes, names and positions (C4).
-- `OptedIn`, manual links and removed links apply to Sim-managed Packages too (C5, spec 6.5).
+- `OptedIn`, manual links and removed links apply to Sim-managed Packages too (C5, spec 6.5). Decided by Rickard 2026-10-26: a Marketplace airport whose BGLs are encrypted and whose name lacks `-airport-<code>` can be linked by hand, so the map shows it as built-in and a Library Package at the same Airport is flagged Replaces built-in.
 - Inactive Duplicate copies are analysed like active ones; plan 3 shows only the active copy (C8).
 - An encrypted aircraft (`.fsarchive`, no `aircraft.cfg`) provides its container in any source, not only Sim-managed (Task 12, spec 6.6).
 - The exclusion list and stop-list are stored as the user's additions and removals on top of the built-in defaults, so new defaults in a later release still reach existing users (Task 9).

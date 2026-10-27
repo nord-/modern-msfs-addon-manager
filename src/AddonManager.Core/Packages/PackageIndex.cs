@@ -31,6 +31,13 @@ public sealed class PackageIndex
 
     public IReadOnlyCollection<PackageName> Names => byName.Keys;
 
+    /// <summary>Every copy, ordered by Library registration order, then normalised path.</summary>
+    public IReadOnlyList<PackageCopy> AllCopies => byPath
+        .OrderBy(p => LibraryRank(p.Value.Library))
+        .ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
+        .Select(p => p.Value)
+        .ToList();
+
     /// <summary>The copies of a Package ordered by Library registration order, then path.</summary>
     public IReadOnlyList<PackageCopy> CopiesOf(PackageName name) => byName.GetValueOrDefault(name) ?? [];
 

@@ -8,7 +8,10 @@ public sealed record LibraryProposal(string Path, bool IsToolRoot);
 /// <summary>Proposes Libraries from the targets of existing junctions (spec 7.1 step 3).</summary>
 public static class LibraryProposer
 {
-    private static readonly string[] ToolRoots = [@"\Orbx Library\msfs", @"\FSDT Addon Manager\MSFS", @"\Neofly\addons"];
+    private static readonly string[] ToolRoots = [@"\Orbx Library\msfs", @"\Neofly\addons"];
+
+    // FSDT's Addon Manager creates and owns its Community junctions and keeps a huge backup tree here: never a Library.
+    private const string FsdtRoot = @"\FSDT Addon Manager\MSFS";
 
     public static IReadOnlyList<LibraryProposal> Propose(IReadOnlyList<CommunityEntryInfo> community, IFolderTree tree)
     {
@@ -29,6 +32,9 @@ public static class LibraryProposer
 
     private static LibraryProposal? ProposeFor(string target, IFolderTree tree)
     {
+        if ((target + @"\").Contains(FsdtRoot + @"\", StringComparison.OrdinalIgnoreCase))
+            return null;
+
         // Step 1: a target under a well-known tool root proposes that root.
         foreach (var root in ToolRoots)
         {

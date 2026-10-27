@@ -23,10 +23,10 @@ public class FirstRunScenarioTests
         => f.Community.SingleOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase))?.Target;
 
     [Fact]
-    public void Proposes_the_four_real_library_roots()
+    public void Proposes_the_three_real_library_roots_and_not_the_fsdt_folder()
         => Assert.Equal(
             [
-                new LibraryProposal(@"C:\Sim\Addons", false), new LibraryProposal(@"C:\Sim\FSDT Addon Manager\MSFS", true),
+                new LibraryProposal(@"C:\Sim\Addons", false),
                 new LibraryProposal(@"C:\Sim\Neofly\addons", true), new LibraryProposal(@"C:\Sim\Orbx Library\msfs", true),
             ],
             LibraryProposer.Propose(f.Community, f.Tree));

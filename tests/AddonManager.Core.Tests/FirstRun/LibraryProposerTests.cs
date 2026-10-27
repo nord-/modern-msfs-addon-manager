@@ -33,6 +33,16 @@ public class LibraryProposerTests
     }
 
     [Fact]
+    public void A_junction_into_the_FSDT_folder_proposes_nothing()
+    {
+        // FSDT's Addon Manager owns its own junctions; its folder holds a huge backup tree and is never a Library.
+        const string target = @"C:\Sim\FSDT Addon Manager\MSFS\fsdreamteam-gsx-world-of-jetways-2020\";
+        var tree = Tree(packages: [target, @"C:\Sim\FSDT Addon Manager\MSFS\other"]);
+
+        Assert.Empty(LibraryProposer.Propose([Junction(target)], tree));
+    }
+
+    [Fact]
     public void Symlinks_and_missing_targets_are_not_used()
     {
         var entries = new[]

@@ -71,9 +71,13 @@ function Anonymise([string] $p) {
 }
 
 foreach ($e in $data.community) { if ($e.target) { $e.target = Anonymise $e.target } }
-foreach ($p in $data.packages) { $p.path = Anonymise $p.path; $p.root = Anonymise $p.root }
+foreach ($p in $data.packages) {
+    $p.path = Anonymise $p.path
+    # The link fixture has a root per package; the content fixture does not.
+    if ($p.PSObject.Properties['root']) { $p.root = Anonymise $p.root }
+}
 foreach ($f in $data.folders) { $f.path = Anonymise $f.path }
 
-$json = ($data | ConvertTo-Json -Depth 5) -replace "`r?`n", "`r`n"
+$json = ($data | ConvertTo-Json -Depth 10) -replace "`r?`n", "`r`n"
 [System.IO.File]::WriteAllText($path, $json + "`r`n", [System.Text.UTF8Encoding]::new($false))
 Write-Host "Anonymised $path ($($tools.Count) tool folders, $($groups.Count) groups)."

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Plan 2 (content scan) in progress — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
+Plans 1 (link engine) and 2 (content scan) are done; plan 3 is not written yet — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
 
 ## Commands
 

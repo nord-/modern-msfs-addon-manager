@@ -9,6 +9,8 @@ public static class AppPaths
 
     public static string CacheDirectory { get; } = Path.Combine(Folder(Environment.SpecialFolder.LocalApplicationData), AppFolder);
 
+    public static string ScanCacheFile { get; } = Path.Combine(CacheDirectory, "scan-cache.db");
+
     private static string Folder(Environment.SpecialFolder folder)
         => Environment.GetFolderPath(folder, Environment.SpecialFolderOption.DoNotVerify);
 }

@@ -54,6 +54,29 @@ public sealed class LibraryScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task A_subfolder_that_vanishes_while_scanning_is_skipped()
+    {
+        temp.MakePackage(@"lib\keep");
+        var many = Enumerable.Range(0, 2000).Select(i => Directory.CreateDirectory(Path.Combine(Lib, "sub", $"d{i:D4}")).FullName).ToList();
+        var started = new ManualResetEventSlim();
+
+        // Installers remove folders while a scan runs; deleting from the other end races the walk until it hits a vanished one.
+        var deleter = Task.Run(() =>
+        {
+            started.Wait();
+            foreach (var folder in Enumerable.Reverse(many))
+                Directory.Delete(folder);
+        });
+
+        started.Set();
+        var result = LibraryScanner.Discover([new LibraryRoot(Lib)]);
+        await deleter.WaitAsync(TimeSpan.FromSeconds(30));
+
+        Assert.Equal(["keep"], result.Packages.Select(p => p.Name.Value));
+        Assert.Empty(result.Unreachable);
+    }
+
+    [Fact]
     public void Reparse_points_inside_a_library_are_not_followed()
     {
         var outside = temp.MakePackage(@"elsewhere\pkg");

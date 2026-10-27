@@ -24,5 +24,6 @@ internal sealed class InMemoryUserStateStore : IUserStateStore
         Packages = new(s.Packages),
         Snapshot = s.Snapshot?.ToList(),
         Pending = [.. s.Pending],
+        Content = s.Content.Clone(),
     };
 }

@@ -1,3 +1,4 @@
+using AddonManager.Core.Content;
 using AddonManager.Core.Packages;
 
 namespace AddonManager.Core.State;
@@ -16,6 +17,9 @@ public sealed class UserState
     /// <summary>Packages whose link changes wait for the sim to exit (spec 6.8).</summary>
     public HashSet<PackageName> Pending { get; set; } = [];
 
+    /// <summary>Content-scan settings and Package-level Airport link choices (plan 2).</summary>
+    public ContentSettings Content { get; set; } = new();
+
     public bool IsOn(PackageName name) => Packages.TryGetValue(name, out var s) && s.On;
 
     /// <summary>A per-Package override wins; otherwise the active copy's Library decides (spec 6.3).</summary>
@@ -33,5 +37,6 @@ public sealed class UserState
     {
         Packages.Remove(name);
         Pending.Remove(name);
+        Content.Forget(name);
     }
 }

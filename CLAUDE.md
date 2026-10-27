@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Plan 1 (link engine) in progress — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
+Plan 2 (content scan) in progress — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
 
 ## Commands
 
@@ -12,6 +12,8 @@ Plan 1 (link engine) in progress — see `docs/superpowers/plans/`. Spec: `docs/
 - Test all: `dotnet test ModernMsfsAddonManager.slnx`
 - Test subset: `dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~<Name>`
 - Read-only status against the real machine: `dotnet run --project src/AddonManager.Cli -- status`
+- Content scan against the real machine (writes only the scan cache and `--token-links`): `dotnet run --project src/AddonManager.Cli -- scan [--full] [--token-links <file>]`
+- Export the content fixture (writes only the scan cache and `--out`): `dotnet run --project src/AddonManager.Cli -- export-content --out <file>`
 
 ## What we're building
 

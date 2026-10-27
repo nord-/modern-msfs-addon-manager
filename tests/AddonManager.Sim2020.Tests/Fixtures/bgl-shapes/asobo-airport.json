@@ -1,0 +1,325 @@
+{
+  "sections": [
+    {
+      "type": "0x3",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 26356,
+          "records": [
+            {
+              "id": "0x56",
+              "size": 26356,
+              "fixedSize": 68,
+              "code": "LOWI",
+              "name": "TT:AIRPORTLR.LOWI.name",
+              "latitude": 47.26020701229572,
+              "longitude": 11.343981921672821,
+              "children": [
+                {
+                  "id": "0x33",
+                  "size": 12
+                },
+                {
+                  "id": "0x19",
+                  "size": 28
+                },
+                {
+                  "id": "0xCE",
+                  "size": 296
+                },
+                {
+                  "id": "0x11",
+                  "size": 24
+                },
+                {
+                  "id": "0x11",
+                  "size": 24
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0x1A",
+                  "size": 2384
+                },
+                {
+                  "id": "0xE7",
+                  "size": 1240
+                },
+                {
+                  "id": "0xD4",
+                  "size": 10952
+                },
+                {
+                  "id": "0x1D",
+                  "size": 24
+                },
+                {
+                  "id": "0xD0",
+                  "size": 152
+                },
+                {
+                  "id": "0xD0",
+                  "size": 96
+                },
+                {
+                  "id": "0xD0",
+                  "size": 112
+                },
+                {
+                  "id": "0xD0",
+                  "size": 404
+                },
+                {
+                  "id": "0xD0",
+                  "size": 152
+                },
+                {
+                  "id": "0xD0",
+                  "size": 112
+                },
+                {
+                  "id": "0xD0",
+                  "size": 432
+                },
+                {
+                  "id": "0xD0",
+                  "size": 208
+                },
+                {
+                  "id": "0xD0",
+                  "size": 180
+                },
+                {
+                  "id": "0xD0",
+                  "size": 292
+                },
+                {
+                  "id": "0xD0",
+                  "size": 224
+                },
+                {
+                  "id": "0xD0",
+                  "size": 152
+                },
+                {
+                  "id": "0xD0",
+                  "size": 3304
+                },
+                {
+                  "id": "0xD0",
+                  "size": 124
+                },
+                {
+                  "id": "0xD0",
+                  "size": 264
+                },
+                {
+                  "id": "0xD0",
+                  "size": 196
+                },
+                {
+                  "id": "0xD0",
+                  "size": 112
+                },
+                {
+                  "id": "0xD0",
+                  "size": 224
+                },
+                {
+                  "id": "0xD0",
+                  "size": 124
+                },
+                {
+                  "id": "0xD0",
+                  "size": 96
+                },
+                {
+                  "id": "0xD0",
+                  "size": 224
+                },
+                {
+                  "id": "0xD0",
+                  "size": 448
+                },
+                {
+                  "id": "0xD0",
+                  "size": 208
+                },
+                {
+                  "id": "0xD0",
+                  "size": 112
+                },
+                {
+                  "id": "0xD0",
+                  "size": 180
+                },
+                {
+                  "id": "0xD0",
+                  "size": 264
+                },
+                {
+                  "id": "0xD0",
+                  "size": 264
+                },
+                {
+                  "id": "0xD0",
+                  "size": 140
+                },
+                {
+                  "id": "0xD0",
+                  "size": 124
+                },
+                {
+                  "id": "0xD0",
+                  "size": 432
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 124
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 164
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 212
+                },
+                {
+                  "id": "0xCF",
+                  "size": 76
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 124
+                },
+                {
+                  "id": "0xCF",
+                  "size": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "0x65",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 946
+        }
+      ]
+    },
+    {
+      "type": "0x2C",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 44
+        }
+      ]
+    },
+    {
+      "type": "0x25",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 303,
+          "dataSize": 19386
+        }
+      ]
+    },
+    {
+      "type": "0x27",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 156
+        }
+      ]
+    },
+    {
+      "type": "0x2E",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 2,
+          "dataSize": 40
+        }
+      ]
+    }
+  ]
+}

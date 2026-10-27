@@ -1,0 +1,99 @@
+{
+  "sections": [
+    {
+      "type": "0x3",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 2216,
+          "records": [
+            {
+              "id": "0x56",
+              "size": 2216,
+              "fixedSize": 68,
+              "code": "YALR1",
+              "name": "Aileron",
+              "latitude": -22.653312049806118,
+              "longitude": 133.34737792611122,
+              "children": [
+                {
+                  "id": "0x33",
+                  "size": 12
+                },
+                {
+                  "id": "0x19",
+                  "size": 16
+                },
+                {
+                  "id": "0xCE",
+                  "size": 96
+                },
+                {
+                  "id": "0x11",
+                  "size": 24
+                },
+                {
+                  "id": "0x11",
+                  "size": 24
+                },
+                {
+                  "id": "0xE7",
+                  "size": 64
+                },
+                {
+                  "id": "0xD4",
+                  "size": 8
+                },
+                {
+                  "id": "0xD0",
+                  "size": 1904
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "0x65",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 2150
+        }
+      ]
+    },
+    {
+      "type": "0x2C",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 44
+        }
+      ]
+    },
+    {
+      "type": "0x25",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 15,
+          "dataSize": 968
+        }
+      ]
+    },
+    {
+      "type": "0x27",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 135
+        }
+      ]
+    }
+  ]
+}

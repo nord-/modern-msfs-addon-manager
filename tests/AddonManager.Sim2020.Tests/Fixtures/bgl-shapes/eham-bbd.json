@@ -1,0 +1,287 @@
+{
+  "sections": [
+    {
+      "type": "0x3",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 3992,
+          "records": [
+            {
+              "id": "0x56",
+              "size": 3992,
+              "fixedSize": 68,
+              "code": "EHAM",
+              "name": "Schiphol",
+              "latitude": 52.30805564671755,
+              "longitude": 4.764166474342346,
+              "children": [
+                {
+                  "id": "0x19",
+                  "size": 16
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD9",
+                  "size": 84
+                },
+                {
+                  "id": "0xD4",
+                  "size": 8
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 76
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 180
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 52
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 52
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 172
+                },
+                {
+                  "id": "0xCF",
+                  "size": 92
+                },
+                {
+                  "id": "0xCF",
+                  "size": 204
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 108
+                },
+                {
+                  "id": "0xCF",
+                  "size": 140
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 92
+                },
+                {
+                  "id": "0xCF",
+                  "size": 76
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 92
+                },
+                {
+                  "id": "0xCF",
+                  "size": 92
+                },
+                {
+                  "id": "0xCF",
+                  "size": 140
+                },
+                {
+                  "id": "0xCF",
+                  "size": 60
+                },
+                {
+                  "id": "0xCF",
+                  "size": 68
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 92
+                },
+                {
+                  "id": "0xCF",
+                  "size": 52
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 84
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                },
+                {
+                  "id": "0xCF",
+                  "size": 44
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "0x65",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 1379
+        }
+      ]
+    },
+    {
+      "type": "0x2C",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 44
+        }
+      ]
+    },
+    {
+      "type": "0x25",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 206,
+          "dataSize": 13184
+        }
+      ]
+    },
+    {
+      "type": "0x27",
+      "subsectionEntrySize": 16,
+      "subsections": [
+        {
+          "recordCount": 1,
+          "dataSize": 115
+        }
+      ]
+    }
+  ]
+}

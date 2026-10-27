@@ -14,10 +14,16 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/AddonManager.Sim2020/AddonManager.Sim2020.csproj" />
+    <ProjectReference Include="../../src/AddonManager.Infrastructure/AddonManager.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="AddonManager.Sim2020.Bgl" />
   </ItemGroup>
 
 </Project>

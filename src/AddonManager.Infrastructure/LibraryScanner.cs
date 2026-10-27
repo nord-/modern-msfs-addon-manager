@@ -21,8 +21,18 @@ public static class LibraryScanner
 
         foreach (var library in libraries)
         {
+            if (!Directory.Exists(library.Path))
+            {
+                unreachable.Add(library);
+                continue;
+            }
+
+            var found = new List<PackageCopy>();
+            Walk(library, found);
+
+            // The root can vanish during the walk (an unplugged drive): what was found is then incomplete, not deleted, so the Library counts as unreachable.
             if (Directory.Exists(library.Path))
-                Walk(library, packages);
+                packages.AddRange(found);
             else
                 unreachable.Add(library);
         }
@@ -45,8 +55,16 @@ public static class LibraryScanner
                 continue;
             }
 
-            foreach (var sub in Directory.EnumerateDirectories(folder, "*", Subfolders))
-                pending.Push(sub);
+            try
+            {
+                foreach (var sub in Directory.EnumerateDirectories(folder, "*", Subfolders))
+                    pending.Push(sub);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // The folder vanished between being found and being listed (an installer removed it): skip it.
+                // The Library root itself is checked by Discover before and after the walk.
+            }
         }
     }
 }

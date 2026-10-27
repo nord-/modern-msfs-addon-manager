@@ -52,4 +52,23 @@ public sealed class ManifestReaderTests : IDisposable
         Assert.Same(Manifest.Empty, Read("{ not json"));
         Assert.Same(Manifest.Empty, ManifestReader.Read(Path.Combine(temp.Root, "none.json")));
     }
+
+    [Fact]
+    public void Manifest_can_be_read_while_another_process_holds_it_open_for_writing()
+    {
+        var manifest = Path.Combine(temp.Root, "manifest.json");
+        File.WriteAllText(manifest, """{ "title": "Title" }""");
+        using var writer = new FileStream(manifest, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+        Assert.Equal("Title", ManifestReader.Read(manifest).Title);
+    }
+
+    [Fact]
+    public void A_utf8_bom_is_dropped()
+    {
+        var manifest = Path.Combine(temp.Root, "manifest.json");
+        File.WriteAllText(manifest, """{ "title": "Bom" }""", new System.Text.UTF8Encoding(true));
+
+        Assert.Equal("Bom", ManifestReader.Read(manifest).Title);
+    }
 }

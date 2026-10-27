@@ -16,8 +16,13 @@ public static class ManifestReader
     {
         try
         {
-            // ReadAllText drops a UTF-8 BOM.
-            using var doc = JsonDocument.Parse(File.ReadAllText(manifestPath), Options);
+            // Read-only and shared with writers (an installer may hold the file); StreamReader drops a UTF-8 BOM.
+            string text;
+            using (var stream = new FileStream(manifestPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var reader = new StreamReader(stream))
+                text = reader.ReadToEnd();
+
+            using var doc = JsonDocument.Parse(text, Options);
             var root = doc.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
                 return Manifest.Empty;

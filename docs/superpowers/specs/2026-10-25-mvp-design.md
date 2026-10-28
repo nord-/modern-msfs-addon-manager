@@ -84,6 +84,7 @@ Every entry in Community is classified on each reconcile:
 | Fixed | Real folder with `manifest.json` | Show only |
 | Ignored | Real folder without `manifest.json` (for example `flybywire-current-install-0`), or a link whose target isn't a Package. The sim ignores it | Show as neutral info |
 | Broken | Link whose target doesn't exist and whose name matches no Library Package | Remove the link, after confirmation |
+| Stale | Link whose target doesn't exist and whose name matches a Library Package (6.1, Moved Packages) | Re-point or remove, via the sync dialog |
 | Stray | Loose file | Show only, with a warning |
 
 - Link targets are compared as resolved, normalised paths, never by entry name: strip the `\\?\` prefix, ignore a trailing backslash (Addons Linker adds one, Neofly doesn't), and resolve relative symlink targets against Community.
@@ -97,7 +98,7 @@ Every entry in Community is classified on each reconcile:
 - On/off is applied in the Addon's dialog, never on the card wall: one control switches every switchable Package of the Addon, and each Package has its own switch.
 - **Managed elsewhere** is an attribute of a Library, inherited by every Package in it, including Packages that appear there later; it can be overridden per Package. A Package is locked when its active copy lies in such a Library (so a user's own copy of `neofly-neofly-cargo` in `C:\Sim\Addons` isn't locked by marking the Neofly Library). A locked Package's link is never created or removed by the app, by any action; "switch all" skips it and says so.
 - **Name taken** (6.2) rejects a turn-on at apply time; the choice isn't stored.
-- Fixed and External entries are Packages of read-only Addons, shown with a lock.
+- Fixed and External entries are locked Packages, shown with a lock. They join Addons like any other Package (an External EHAM Package joins the EHAM Addon); an Addon made only of locked Packages is Locked.
 
 ### 6.4 Menus, tabs and visibility
 
@@ -108,12 +109,12 @@ Every entry in Community is classified on each reconcile:
   Airports | Landscapes | Assets  Aircraft | Instruments | Other   (no tabs)
   ```
 
-- **Category (the menu section) comes from content:** manifest `content_type` `SCENERY` → Scenery, `AIRCRAFT`, `LIVERY` and `INSTRUMENTS` → Aircraft, everything else → Other. Exceptions: a `SCENERY` Package with no BGL files at all (`fsdreamteam-gsx-pro`, `neofly-neofly-smokes`) is Other; a Package where any `aircraft.cfg` declares `isAirTraffic=1` (for example `fsltl-traffic-base`, 2,551 such files, and `apronlife-jetway-helper`) is Other and isn't parsed for Liveries. An `AIRCRAFT` Package that belongs to no aircraft (6.6), such as `orbx-volanta-aerocaches`, stays in Aircraft on its Other tab (this replaces plan 2's rule that made it Other). An Addon's Category is the Category of its first Package (by name) unless the user moved it.
-- **Visibility:** a Library Package is shown in its menu section only when its Library carries that type. A Package whose Library lacks the type is listed under Settings → **Not shown** ("3 packages in Libraries not registered for their type"), with a shortcut to add the type to that Library. Packages outside every Library (Fixed and External entries) are always shown in their menu section, locked. An Addon the user moved to a menu section is shown there regardless of its Libraries' types.
+- **Category (the menu section) comes from content:** manifest `content_type` `SCENERY` → Scenery, `AIRCRAFT`, `LIVERY` and `INSTRUMENTS` → Aircraft, everything else → Other. Exceptions: a `SCENERY` Package with no BGL files at all is Other (on Rickard's machine `fsdreamteam-gsx-pro` and eight Library Packages: `yara-cj-aerial`, `ywbl-cj-aerial`, `yhsm-txt-cj`, `yhsm-txt-e-cj`, `tsr-windy-things`, `tsr-windy-things-AUS`, `neofly-neofly-objects`, `neofly-neofly-smokes`; the first four are photo textures for an Airport, and typing the code on their card moves them to Scenery → Airports, 6.5); a Package where any `aircraft.cfg` declares `isAirTraffic=1` (for example `fsltl-traffic-base`, 2,551 such files, and `apronlife-jetway-helper`) is Other and isn't parsed for Liveries. An `AIRCRAFT` Package that belongs to no aircraft (6.6), such as `orbx-volanta-aerocaches`, stays in Aircraft on its Other tab (this replaces plan 2's rule that made it Other). An Addon's Category is the Category of its first Package (by name) unless the user moved it.
+- **Visibility is decided per Addon:** an Addon's card is shown in its menu section when the user moved it there, or when at least one of its Packages lies in a Library that carries that menu section's type, or when it has a Fixed or External Package, or when it is a computed card (built-in content or a GSX profile, 6.5). The dialog of a shown card always lists all its Packages, and they all count for its state. An Addon that fails the test is not shown; its Packages are listed under Settings → **Not shown** ("3 packages in Libraries not registered for their type"), with a shortcut to add the type to their Library.
 - **Initial tab** (computed until the user moves the Addon):
-  - Scenery: **Airports** when the Addon is anchored to an Airport or has an Airport code (6.5); otherwise **Assets** when it is an Asset pack; otherwise **Landscapes**.
+  - Scenery: **Airports** when the Addon is anchored to an Airport, has an Airport code, or is a "(several)" Addon (6.5); otherwise **Assets** when it is an Asset pack; otherwise **Landscapes**.
   - **Asset pack test (2026-10-28):** a Scenery Addon whose Packages have no BGL section with placed objects (`0x25`) or terrain (`0x65`): only model data (`0x2B` ModelData, `0x30`), other non-placing sections, or no BGL at all (a card the user moved to Scenery). On Rickard's machine this gives `esd-modellib-eolib`, `library1v14-cbj`, `library2v14-cbj`, `mikeaat-assetpack` and `us-firedeptpack`. `human-library-animated` places objects and starts in Landscapes; the user drags it to Assets.
-  - Aircraft: **Instruments** when the Package's `content_type` is `INSTRUMENTS` (`pms50-instrument-gtn750-pro`, `sky4sim-os`); **Aircraft** when it is part of an aircraft Addon (6.6); otherwise **Other**. (`navigraph-avionics-*` ship navigation data as `MISC` and belong to the Other menu section by content.)
+  - Aircraft: **Instruments** when the `content_type` of the Addon's first Package (by name) is `INSTRUMENTS` (`pms50-instrument-gtn750-pro`, `sky4sim-os`); **Aircraft** when it is part of an aircraft Addon (6.6); otherwise **Other**. (`navigraph-avionics-*` ship navigation data as `MISC` and belong to the Other menu section by content.)
 - **Tags:** the folders between the Library root and a Package become the Package's tags, by these rules:
   - A Library root is not a tag.
   - A folder that holds a single Package (directly or below) gives no tag.
@@ -121,24 +122,26 @@ Every entry in Community is classified on each reconcile:
   - An Addon's tags are the union of its Packages' tags.
 
   Tags are shown on the card's dialog. Filtering and editing are Later (17).
-- **Built-in content is shown only when the user has an add-on for it** (2026-10-28): a Package that belongs to the same Airport (Replaces built-in), a Livery or Mod of the same aircraft, or a GSX profile for the Airport. The built-in part is shown locked in the dialog. Otherwise built-in Airports appear only on the map, and built-in aircraft not at all.
+- **Built-in content is shown only when the user has an add-on for it** (2026-10-28): a Package that belongs to the same Airport (Replaces built-in), a Livery, Mod or attached Package (6.6) of the same aircraft, or a GSX profile for the Airport. The built-in part is shown locked in the dialog. Otherwise built-in Airports appear only on the map, and built-in aircraft not at all.
 
 ### 6.5 Addons and Airports
 
 - **An Addon is shown as a card.** Every Package belongs to exactly one Addon.
+- **Anchor:** an Addon's anchor is a set of Airport codes or aircraft containers. For an Airport Addon the first code is its **primary code**, shown on the card; the others are listed in the dialog. "An Addon has code X" below always means X is in its anchor.
+- **Computed parts and cards:** built-in content (Sim-managed packages) and GSX profiles are never Packages of an Addon. On every analysis they are attached to the Addon whose anchor holds their Airport code or container. When no Addon holds it, a GSX profile gives a **computed card** anchored to its code: a built-in Airport card when a Sim-managed package belongs to that Airport, otherwise a profile-only card (8). Computed cards are not stored; one disappears when the content that made it does.
 - **Initial Addons (first scan, and for new Packages later):**
   - All Packages belonging to the same Airport form **one Addon per Airport**, named from the Airport (for example "EHAM Schiphol" with `brickbybrickdesign-airport-eham-amsterdam`, `duijffmedia-airport-eham-amsterdam`, `duijffmedia-schiphol-amsterdam-mega-enhancement-lighting`). The Addon is **anchored** to that Airport.
-  - **A Package that belongs to several Airports** (counted distinct codes, not records: `tag21-airport-ybas-alice-springs` has two YBAS records and is a plain YBAS Package): if exactly one of its codes appears as a separate token in its folder name or manifest title (the token rule of rule 2, stop-list included), it joins that Airport's Addon and the other codes are listed in the dialog (`sltcreations-airport-yq05-mount-mulligan` → YQ05, with YMUZ "Mount Mulligan Lodge" listed). Otherwise it gets **its own Addon with no Airport code**, shown as "(several)" on the card (`asf-mission-demo` with FEFA and FEGK); the dialog lists every code and the map shows the Package at each.
+  - **A Package that belongs to several Airports** (counted distinct codes, not records: `tag21-airport-ybas-alice-springs` has two YBAS records and is a plain YBAS Package): if exactly one of its codes appears as a separate token in its folder name or manifest title (the token test of rule 2, stop-list and the 3-character rule included, but applied even though the Package has counted records), it joins that Airport's Addon and the other codes are listed in the dialog (`sltcreations-airport-yq05-mount-mulligan` → YQ05, with YMUZ "Mount Mulligan Lodge" listed). Otherwise it gets **its own Addon with no anchor and no Airport code**, shown as "(several)" on the card and starting on Airports (`asf-mission-demo` with FEFA and FEGK); the dialog lists every code and the map shows the Package at each. Typing a code on it makes that code the anchor and primary code; the other codes stay listed.
   - Aircraft Packages form one Addon per aircraft, anchored to its container (6.6).
   - Every other Package is its own Addon.
-  - **New Packages later** join the Addon anchored to their Airport or container if one exists, otherwise they become a new Addon. They never rearrange existing Addons.
+  - **New Packages later** join the Addon whose anchor holds their Airport code or container if one exists, otherwise they become a new Addon. They never rearrange existing Addons.
 - **User changes (all saved immediately, no save button):**
-  - **Merge:** drag a card onto another card. The target takes over the dragged Addon's Packages; the target's name, image, Airport code, menu section and tab stay. Any two cards can be merged, including two Airport cards, a card with only built-in or locked parts, and a GSX-only card. A merged Airport card shows the target's code; the other codes are listed in the dialog.
+  - **Merge:** drag a card onto another card. The target takes over the dragged Addon's Packages and adds the dragged anchor to its own; the target's name, image, primary code, menu section and tab stay. Any two cards can be merged, including two Airport cards, a card with only built-in or locked parts, and a computed card (which adds only its code). After merging "EHRD Rotterdam" into "EHAM Schiphol", a later EHRD Package joins the merged card.
   - **Move:** drag a card onto a tab header (same menu section) or onto a menu section in the left menu. A card moved to another menu section lands on the tab the initial-tab rules give there.
-  - **Split:** "Move out" on a Package row in the dialog gives that Package its own Addon by the initial rules.
+  - **Split:** "Move out" on a Package row in the dialog gives that Package its own Addon with no anchor, marked **detached**: its card still shows the Package's own Airport code, but no automatic rule ever joins it to another Addon again, and new Packages never join it. The mark is cleared when the user merges the card or types a code on it. (Without the mark, the initial rules would put it straight back where it came from.)
   - **Edit:** name, image (the thumbnail of one of the Addon's Packages, or a file the user picks; only its path is stored, the file is never copied or moved) and **Airport code** in the dialog.
-  - **Airport code field:** any 3–5 letters or digits are accepted (C3 of plan 2). Known codes are suggested with their names while typing. Setting a code links the Addon's Packages to that Airport manually (rule 3 below), moves the card to Airports (unless the user moved it elsewhere) and, when another Addon already has that code, merges this card into it. A code no record knows gives a card with that code and the user's name, and no map marker. Clearing the field removes the Addon's links to that code, automatic ones included.
-  - Anchors survive rename and merge. When an Addon is split, the anchor stays with the card the dialog was opened on.
+  - **Airport code field** (edits the primary code): any 3–5 letters or digits are accepted (C3 of plan 2). Known codes are suggested with their names while typing. Setting a code links the Addon's Packages to that Airport manually (rule 3 below), adds it to the anchor as primary code, moves the card to Scenery → Airports from any menu section (unless the user moved it after setting the code) and, when another Addon already has that code, merges this card into it. A code no record knows gives a card with that code and the user's name, and no map marker. Clearing the field removes that code from the anchor and the Addon's links to it, automatic ones included; the next code in the anchor becomes primary, or the card has no code.
+  - Anchors survive rename and merge.
 - A Package belongs to an Airport if:
   1. one of its BGL files contains an airport record with that code, unless the Package is excluded (below), or
   2. rule 1 found no counted airport record in it, it is a Scenery Package that isn't Sim-managed, and its folder name or manifest title contains the code as a separate token that is not on a stop-list of common words (`PACK`, `SAVE`, `SWIM`, `SANS` and similar). 4–5 character tokens may sit anywhere (`…-esgj`, `EHAM …`); 3-character tokens only count as the leading token (`u60-u60`, `c53-…`), because about 3,000 generic idents are 3 characters long, or
@@ -193,7 +196,7 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 
 1. Locate `UserCfg.opt` (Steam: `%APPDATA%\Microsoft Flight Simulator\`; Microsoft Store: under `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_…\LocalCache\`), read `InstalledPackagesPath`, derive Community and Official. If not found, ask the user to pick the Community folder.
 2. Classify Community and collect the targets of all existing links.
-3. **The user adds Libraries (2026-10-28).** The first-run screen starts with an empty list and "Add Library…": the user picks a folder and its types (Scenery, Aircraft, Other). No Libraries are proposed. The existing junction targets are used only to show coverage ("87 of 95 links covered"), so a forgotten folder is noticed. A target under `…\FSDT Addon Manager\MSFS\` is not counted as uncovered: FSDT's Addon Manager owns its junctions, and those entries stay External.
+3. **The user adds Libraries (2026-10-28).** The first-run screen starts with an empty list and "Add Library…": the user picks a folder and its types (Scenery, Aircraft, Other). No Libraries are proposed. The existing links are used only to show coverage ("87 of 95 links covered"), so a forgotten folder is noticed. Counted are junctions whose target exists and holds a `manifest.json`, except targets under `…\FSDT Addon Manager\MSFS\` (FSDT's Addon Manager owns its junctions, and those entries stay External). Symlinks (made by installers such as SayIntentions) and Broken links are not counted; they are listed separately as "not counted (made by other tools)".
 4. For each Library the user can tick **Managed elsewhere**, with a plain explanation of the trade-off: the app won't switch those Packages, and switching them here would be undone by the tool if it relinks.
 5. Adopt the current Community state: each Package is on if linked, off if not. No sync dialog on first run.
 6. Run discovery, then the content scan (7.3). On/off is available as soon as discovery is done.
@@ -230,11 +233,11 @@ Two passes:
 ## 8. GSX
 
 - Profiles are read from `%APPDATA%\Virtuali\GSX\MSFS`.
-- **Airport code from the file name:** the leading run of 3–4 letters or digits, followed by `-`, `_`, `.` or the end of the name (`epgd_LukSid.ini` → EPGD, `LPMA.ini` → LPMA). The code is checked against known Airports.
+- **Airport code from the file name:** the leading run of 3–4 letters or digits, followed by `-`, `_`, `.` or the end of the name (`epgd_LukSid.ini` → EPGD, `LPMA.ini` → LPMA). 5-character idents (`YALR1`) are not matched by file name. A code no record knows still gives a profile-only card, without a map marker, like a typed unknown code (6.5).
 - `.off` files are disabled profiles: shown as disabled, not counted.
 - `.py` files belong to the Airport by code, not by base name (`essa-orbx.py` belongs with `essa-bwib1r-noolvdgs.ini`). A `.py` doesn't need an `.ini` with the same name. When an Airport has two profiles, its `.py` files are listed with the Airport, not paired with one profile.
 - Status per Airport: **Installed**, **Missing**, **Two profiles** (two or more active `.ini` profiles in the GSX folder for one code; real cases today: LDSP, LFMN, LFPG).
-- **Where it is shown (2026-10-28):** as a mark on the Airport card (✓ / missing / two) and in full in the card's dialog. There is no GSX table. A GSX profile is an add-on: a profile for a built-in Airport gives that Airport a card (locked, no light), and a profile whose code matches no Airport with real scenery gives a **profile-only** card.
+- **Where it is shown (2026-10-28):** as a mark on the Airport card (✓ / missing / two) and in full in the card's dialog. There is no GSX table. A GSX profile is an add-on: a profile for a built-in Airport gives that Airport a computed card (grey light with a lock), and a profile whose code matches no Airport with real scenery gives a computed **profile-only** card (6.5).
 - **Profiles shipped with scenery:** some Packages carry a profile in a subfolder (`GSX\`, `GSX-PROFILE\`, `GSX-Profile-EPKK\`). They are recognised by `<code>….ini`/`.py` file names, not by the folder name (`aerosoft-crj\Data\GSX\` holds aircraft `gsx.cfg` files, not profiles). They are shown in the dialog as "shipped with scenery, not installed" with an action to copy the profile into the GSX folder, and they don't count for Two profiles. GSX's own log (`Couatl.err`) has only ever shown it loading profiles from its own folder, which supports this; see 15.
 - Missing profiles get a deep link to flightsim.to, filtered to GSX profiles for the code.
 
@@ -244,7 +247,7 @@ For any Airport, the app offers deep links to search flightsim.to and SimMarket 
 
 ## 10. Screens
 
-Layout and feel follow BOB Dispatcher: dark, calm, airy, clear status colours. Mockups from the 2026-10-28 session: card dialog (B) and card style (A).
+Layout and feel follow BOB Dispatcher: dark, calm, airy, clear status colours.
 
 ```
 ┌───────────┬──────────────────────────────────────────────────┐
@@ -262,8 +265,8 @@ Layout and feel follow BOB Dispatcher: dark, calm, airy, clear status colours. M
 - **Tabs** per menu section as in 6.4. Dropping a card on a tab header moves it there.
 - **Card wall:** large cards with the image on top (the image of the first Package that has one, the user's choice, or a placeholder per type). An Airport card shows its code in bold and the Airport name below; other cards show the Addon name. Below: package count, GSX mark (Airports) and warnings. **No switch on the wall.** A traffic light in the top right corner shows state: red Off, yellow Mixed, green On, grey with a lock when Locked. A Pending card also shows "Next sim start". Missing Packages, "(several)" and built-in parts are labelled.
 - **Card dialog** (opens on click; Esc, ✕ or a click outside closes it): editable name, image and Airport code (saved immediately); one control to switch all switchable Packages; the Packages, each with display name, folder name, path, version, Library, Duplicate copy choice and its own switch, plus "Move out"; locked and built-in parts dimmed; Airport codes, tags, Replaces built-in, GSX profiles (installed, shipped, missing with a search link) and deep links to find scenery.
-- **Map** (Scenery → Airports, view switch `Cards | Map`): Airports with real scenery as markers coloured by state (on / off / built-in). "Show all airports" adds the generic ones, clustered when zoomed out. Airport search. Selecting an Airport opens its card's dialog, or shows code, name and search links when it has no card.
-- **Settings:** Community path (detected, overridable); Libraries (add/remove, types, Managed elsewhere, link coverage); **Not shown** (6.4); **Community** (every entry with its classification, link target and warnings; remove Broken links with confirmation); search URL templates; airport threshold, exclusion list and token stop-list; version and update notice.
+- **Map** (Scenery → Airports, view switch `Cards | Map`): Airports with real scenery as markers coloured like the card's light (green On, yellow Mixed, red Off, grey Locked or built-in). A card with several codes (merged, or "(several)") has one marker per known code, all opening the same dialog. "Show all airports" adds the generic ones, clustered when zoomed out. Airport search. Selecting an Airport opens its card's dialog, or shows code, name and search links when it has no card.
+- **Settings:** Community path (detected, overridable); Libraries (add/remove, types, Managed elsewhere, link coverage); **Not shown** (6.4); **Community** (every entry with its classification, link target and warnings; remove Broken links with confirmation, disabled while the sim runs with the reason shown); search URL templates; airport threshold, exclusion list and token stop-list; version and update notice.
 - **Banner** at the top of the window: Broken and Stray entries in Community (with a link to Settings → Community), pending changes while the sim runs, scan progress.
 - **Overlays:** first-run setup (7.1) and the sync dialog (7.4).
 
@@ -272,7 +275,7 @@ Thumbnails come from the Package's own files (`ContentInfo\<any>\Thumbnail.jpg`;
 ## 11. Storage
 
 - **User data** (`%APPDATA%\<app>\userdata.json`), JSON, small and human-readable, saved on every change (write to a temporary file, keep a `.bak`, then replace): Libraries with their types; each Package's on/off choice, Managed elsewhere flag and active copy; Addons (their Packages, anchor, and the user's overrides: name, image path, Airport code, menu section, tab); manual and removed Airport links; opted-in Packages; pending set; search URL templates; threshold, exclusion list and stop-list; the last accepted Community snapshot.
-- **What is stored versus computed:** an Addon's membership and anchor are stored when it is created and change only by user action. Its name, image, Category, tab, tags and state are computed on every analysis unless the user overrode them, so a rescan that finds an airport record in an untouched Landscape card moves it to Airports.
+- **What is stored versus computed:** an Addon's Packages, anchor and detached mark are stored when it is created and change only by user action. Its name, image, Category, tab, tags and state are computed on every analysis unless the user overrode them. Built-in parts, GSX profiles and computed cards (6.5) are never stored. A rescan that finds an airport record in an untouched Landscape card adds the code to its anchor and moves it to Airports; when another card already has that code, the two stay separate until the user merges them.
 - **Scan cache** (`%LOCALAPPDATA%\<app>\`), SQLite, disposable: per Package the change marker and the facts read from its files (manifest data, airport records, BGL section types, aircraft.cfg facts, airplane folders, thumbnail path), and GSX profiles (plan 4). Links, Airports and aircraft groups are recomputed from these on every analysis.
 - Deleting the cache must only cost a rescan. User data never lives in the cache file, so a cache rebuild can never touch it (2026-10-28).
 - New Packages found after first run get an initial Addon by the rules in 6.5; the user's existing arrangement is never rearranged.
@@ -324,7 +327,12 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Startup targets of about 1 second.
 - Sync dialog rows are per Package, grouped by Addon.
 - An Addon's Category is that of its first Package by name unless moved; mixed-Category Addons arise only from user merges.
-- A split keeps the anchor on the card whose dialog was open.
+- A Package moved out of an Addon is detached, so automation never puts it back; the card it left keeps its anchor.
+- An anchor is a set of codes or containers, and a merge unions them, so one Airport keeps one card after merges.
+- Built-in parts and GSX profiles are computed on every analysis, never stored as Addon members.
+- Visibility is decided per Addon, not per Package.
+- A GSX profile whose code no record knows gives a profile-only card without a map marker.
+- A rescan that gives a Landscape card a code another card already has doesn't merge them automatically.
 - Built-in parts and locked Packages don't count towards an Addon's On/Off/Mixed state.
 
 ## 17. Later (after the MVP)

@@ -9,7 +9,7 @@ A folder with a `manifest.json`. It is the smallest unit the sim loads, and the 
 _Avoid_: Mod
 
 **Addon**:
-One or more Packages that belong together, such as all Packages for one Airport. Every Package belongs to exactly one Addon. The app shows each Addon as a card; its Packages are listed in the card's dialog.
+One or more Packages that belong together, such as all Packages for one Airport. Every Package belongs to exactly one Addon. The app shows each Addon as a card; its Packages are listed in the card's dialog. Built-in content and GSX profiles are shown with an Addon but are never its Packages; a card made only of them is computed, not an Addon.
 _Avoid_: Bundle, group, product
 
 **Card**:
@@ -17,7 +17,7 @@ How the app shows one Addon on the card wall: an image, the Airport code and nam
 _Avoid_: Tile
 
 **Anchor**:
-The Airport or Container an Addon was built around, so that new Packages for the same Airport or aircraft join it after renames and merges.
+The set of Airport codes or Containers an Addon was built around, so that new Packages for the same Airport or aircraft join it after renames and merges. A merge unites the two sets; the first code is the one the card shows.
 
 **Tag**:
 A label on a Package taken from the folders between its Library root and the Package, such as "Europe". An Addon has the tags of all its Packages.

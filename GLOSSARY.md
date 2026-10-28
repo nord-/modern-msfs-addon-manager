@@ -17,7 +17,7 @@ How the app shows one Addon on the card wall: an image, the Airport code and nam
 _Avoid_: Tile
 
 **Anchor**:
-The set of Airport codes or Containers an Addon was built around, so that new Packages for the same Airport or aircraft join it after renames and merges. A merge unites the two sets; the first code is the one the card shows.
+The ordered list of Airport codes or Containers an Addon was built around, so that new Packages for the same Airport or aircraft join it after renames and merges. A code is in at most one anchor. A merge adds the dragged card's anchor to the target's; the first code is the one the card shows.
 
 **Tag**:
 A label on a Package taken from the folders between its Library root and the Package, such as "Europe". An Addon has the tags of all its Packages.

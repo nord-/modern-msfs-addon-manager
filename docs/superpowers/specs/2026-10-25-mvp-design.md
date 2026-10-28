@@ -98,7 +98,7 @@ Every entry in Community is classified on each reconcile:
 - **Only Packages have an on/off state.** It is the user's choice, stored by the app. A Package should be linked exactly when it is on.
 - **Addons have no state of their own.** An Addon's state is computed from its Packages that the app may switch (not Sim-managed, not Fixed or External): **On** when all are on, **Off** when all are off, **Mixed** otherwise. An Addon with no switchable Package has no state (it is **Locked**). Offline and Missing Packages count with their stored choice, and the card says so; a Package whose name is taken (6.2) counts as off.
 - On/off is applied in the Addon's dialog, never on the card wall: one control switches every switchable Package of the Addon, and each Package has its own switch.
-- **Every Package in a registered Library can be switched** (2026-10-28: Managed elsewhere was dropped). Folders whose links another tool owns (Orbx Central, FSDT's Addon Manager, Neofly) are simply not registered; their links are External entries, shown locked on the right card. "Switch all" skips locked Packages and says so.
+- **Every Package in a registered Library can be switched** (2026-10-28: Managed elsewhere was dropped). A folder that another tool also links from can be registered and switched from both: Orbx Central downloads into `C:\Sim\Orbx` and makes its own junctions, and the app treats them as Managed entries; when Orbx Central changes a link, reconciliation picks it up (7.4). A folder the user doesn't register stays External, shown locked on the right card. "Switch all" skips locked Packages and says so.
 - **Name taken** (6.2) rejects a turn-on at apply time; the choice isn't stored.
 - Fixed and External entries are locked Packages, shown with a lock. They join Addons like any other Package (an External EHAM Package joins the EHAM Addon); an Addon made only of locked Packages is Locked.
 
@@ -204,7 +204,7 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 1. Locate `UserCfg.opt` (Steam: `%APPDATA%\Microsoft Flight Simulator\`; Microsoft Store: under `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_…\LocalCache\`), read `InstalledPackagesPath`, derive Community and Official. If not found, ask the user to pick the Community folder.
 2. Classify Community and collect the targets of all existing links.
 3. **The user adds Libraries (2026-10-28).** The first-run screen starts with an empty list and "Add Library…": the user picks a folder and its types (Scenery, Aircraft, Other). No Libraries are proposed. The existing links are used only to show coverage ("87 of 95 links covered"), so a forgotten folder is noticed. Counted are junctions whose target exists and holds a `manifest.json`, except targets under `…\FSDT Addon Manager\MSFS\` (FSDT's Addon Manager owns its junctions, and those entries stay External). Symlinks (made by installers such as SayIntentions) and Broken links are not counted; they are listed separately as "not counted (made by other tools)".
-4. The screen explains that folders whose links another tool owns (Orbx Central, FSDT, Neofly) should not be added: their links stay External and are shown locked.
+4. The screen explains that Packages in folders the user doesn't add stay External and are shown locked, and that a folder another tool also links from (such as Orbx Central's download folder) can be added and switched from both.
 5. Adopt the current Community state: each Package is on if linked, off if not. No sync dialog on first run, with one exception: Stale entries (a link whose target is gone but whose Package is found in a Library) count as on and are offered for re-point in the sync dialog right after adoption (6.1, Moved Packages). The same holds when a Library is registered later.
 6. Run discovery, then the content scan (7.3). On/off is available as soon as discovery is done.
 
@@ -345,7 +345,7 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Initial Addons wait for the complete content pass; provisional per-Package cards are shown until then.
 - Stale links found at adoption are offered for re-point straight away.
 - A moved Scenery Package with no BGL starts in Landscapes, not Assets.
-- Managed elsewhere is dropped from the MVP (Rickard, 2026-10-28): every registered Package can be switched, and tool-owned folders stay unregistered.
+- Managed elsewhere is dropped from the MVP (Rickard, 2026-10-28): every registered Package can be switched, including Packages in a folder another tool also links from (Orbx Central); unregistered folders stay External.
 - A Library registered after first run adopts Community state without a sync dialog.
 - Not shown Packages can be moved to a menu section from Settings; typing an Airport code counts as a move to Scenery.
 - Folders named `Community` or like a menu section give no tag.

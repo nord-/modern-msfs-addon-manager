@@ -42,7 +42,7 @@ This app replaces Addons Linker for that workflow. Scenery is the focus, aircraf
 - **Any user file moved, modified or deleted** without an explicit, specific user action. In particular, the app must never delete recursively through a junction or symlink.
 - Community left in a broken state after the app is closed, crashes or is uninstalled.
 - A UI that freezes during scanning, or a startup that waits for scanning.
-- Changes to Sim-managed packages, Fixed entries or Managed elsewhere Packages.
+- Changes to Sim-managed packages, Fixed entries or External entries.
 - False alarms that train the user to ignore warnings (ADR 0002). Every warning rule below has been checked against Rickard's real install for this reason.
 - A package that is on in Community but shown nowhere in the app without the user being told (6.4, "Not shown").
 
@@ -67,7 +67,7 @@ This app replaces Addons Linker for that workflow. Scenery is the focus, aircraf
 - Package identity is its folder name (the name the sim uses). The junction in Community gets the same name.
 - A Package's display name is its manifest `title`, or its folder name when the title is empty. The folder name is shown as secondary text, because titles repeat (five Packages are titled "Simple Scenery" on Rickard's machine).
 - **Library types:** every Library has one or more of the types **Scenery**, **Aircraft** and **Other**, chosen by the user. Every Library is always scanned completely; its types only decide what is shown (6.4). The same folder may carry several types (a user who keeps everything in `C:\Sim\Addons` gives it all three).
-- **Nested Libraries** (`C:\Sim\Addons` as Other and `C:\Sim\Addons\Scenery` as Scenery) are allowed. A Package inside several Libraries is found once and has the types of all of them; since content decides the menu section and types only decide visibility, a Scenery Package is never shown under Other because of the outer Library (Rickard, 2026-10-28: "paket av typen Scenery ska aldrig dyka upp (automatiskt) under Other, och paket av andra typer än Scenery ska inte synas under Scenery"). Managed elsewhere and the Library shown in the dialog come from the innermost Library.
+- **Nested Libraries** (`C:\Sim\Addons` as Other and `C:\Sim\Addons\Scenery` as Scenery) are allowed. A Package inside several Libraries is found once and has the types of all of them; since content decides the menu section and types only decide visibility, a Scenery Package is never shown under Other because of the outer Library (Rickard, 2026-10-28: "paket av typen Scenery ska aldrig dyka upp (automatiskt) under Other, och paket av andra typer än Scenery ska inte synas under Scenery"). The Library shown in the dialog is the innermost one.
 - The same name more than once across the Libraries (in two Libraries, or at two depths in one) is a **Duplicate copy**. One copy is the active copy: by default the one Community already points to, otherwise the first by Library registration order, then path; the user can change it in the card's dialog. Only the active copy can be linked. Changing the active copy of a linked Package re-points the link.
 - **Registering a Library later** (Settings) adopts the Community state of its Packages like first run: on if linked, off if not, without a sync dialog except for Stale entries (7.1, step 5). Their initial Addons follow 6.5.
 - Unregistering a Library never deletes anything; its Managed entries become External entries, and its Packages' user data is kept as for Missing Packages (below).
@@ -96,9 +96,9 @@ Every entry in Community is classified on each reconcile:
 ### 6.3 State and on/off
 
 - **Only Packages have an on/off state.** It is the user's choice, stored by the app. A Package should be linked exactly when it is on.
-- **Addons have no state of their own.** An Addon's state is computed from its Packages that the app may switch (not locked, not Sim-managed, not Fixed or External): **On** when all are on, **Off** when all are off, **Mixed** otherwise. An Addon with no switchable Package has no state (it is **Locked**). Offline and Missing Packages count with their stored choice, and the card says so; a Package whose name is taken (6.2) counts as off.
+- **Addons have no state of their own.** An Addon's state is computed from its Packages that the app may switch (not Sim-managed, not Fixed or External): **On** when all are on, **Off** when all are off, **Mixed** otherwise. An Addon with no switchable Package has no state (it is **Locked**). Offline and Missing Packages count with their stored choice, and the card says so; a Package whose name is taken (6.2) counts as off.
 - On/off is applied in the Addon's dialog, never on the card wall: one control switches every switchable Package of the Addon, and each Package has its own switch.
-- **Managed elsewhere** is an attribute of a Library, inherited by every Package in it, including Packages that appear there later; it can be overridden per Package. A Package is locked when its active copy lies in such a Library (so a user's own copy of `neofly-neofly-cargo` in `C:\Sim\Addons` isn't locked by marking the Neofly Library). A locked Package's link is never created or removed by the app, by any action; "switch all" skips it and says so.
+- **Every Package in a registered Library can be switched** (2026-10-28: Managed elsewhere was dropped). Folders whose links another tool owns (Orbx Central, FSDT's Addon Manager, Neofly) are simply not registered; their links are External entries, shown locked on the right card. "Switch all" skips locked Packages and says so.
 - **Name taken** (6.2) rejects a turn-on at apply time; the choice isn't stored.
 - Fixed and External entries are locked Packages, shown with a lock. They join Addons like any other Package (an External EHAM Package joins the EHAM Addon); an Addon made only of locked Packages is Locked.
 
@@ -204,7 +204,7 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 1. Locate `UserCfg.opt` (Steam: `%APPDATA%\Microsoft Flight Simulator\`; Microsoft Store: under `%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_…\LocalCache\`), read `InstalledPackagesPath`, derive Community and Official. If not found, ask the user to pick the Community folder.
 2. Classify Community and collect the targets of all existing links.
 3. **The user adds Libraries (2026-10-28).** The first-run screen starts with an empty list and "Add Library…": the user picks a folder and its types (Scenery, Aircraft, Other). No Libraries are proposed. The existing links are used only to show coverage ("87 of 95 links covered"), so a forgotten folder is noticed. Counted are junctions whose target exists and holds a `manifest.json`, except targets under `…\FSDT Addon Manager\MSFS\` (FSDT's Addon Manager owns its junctions, and those entries stay External). Symlinks (made by installers such as SayIntentions) and Broken links are not counted; they are listed separately as "not counted (made by other tools)".
-4. For each Library the user can tick **Managed elsewhere**, with a plain explanation of the trade-off: the app won't switch those Packages, and switching them here would be undone by the tool if it relinks.
+4. The screen explains that folders whose links another tool owns (Orbx Central, FSDT, Neofly) should not be added: their links stay External and are shown locked.
 5. Adopt the current Community state: each Package is on if linked, off if not. No sync dialog on first run, with one exception: Stale entries (a link whose target is gone but whose Package is found in a Library) count as on and are offered for re-point in the sync dialog right after adoption (6.1, Moved Packages). The same holds when a Library is registered later.
 6. Run discovery, then the content scan (7.3). On/off is available as soon as discovery is done.
 
@@ -232,7 +232,7 @@ Two passes:
 ### 7.4 Reconciliation
 
 - The app stores the **last accepted Community snapshot**: every entry with its resolved target. Reconciling compares that snapshot with the current Community, not with the user's choices.
-- Changes to External, Fixed and Ignored entries, and to Managed elsewhere Packages, are recorded silently and never open the dialog. For Managed elsewhere Packages, "recorded" means the stored choice follows Community.
+- Changes to External, Fixed and Ignored entries are recorded silently and never open the dialog.
 - If other differences exist, a sync dialog lists them, one row per Package, grouped by Addon. Each row chooses "keep Community" (preselected) or "restore app state"; one choice can be applied to all rows.
 - "Keep Community" sets the Package's stored choice to match Community. "Restore app state" changes the link through the apply path (6.8). Either way, the snapshot is updated.
 - If Community changes while the app runs and the change didn't come from the app (for example Addons Linker, which may run alongside), the user is told and offered the same sync dialog, with a way to not be asked again for the rest of the session. The app never silently overwrites such a change.
@@ -273,7 +273,7 @@ Layout and feel follow BOB Dispatcher: dark, calm, airy, clear status colours.
 - **Card wall:** large cards with the image on top (the image of the first Package that has one, the user's choice, or a placeholder per type). An Airport card shows its code in bold and the Airport name below; other cards show the Addon name. Below: package count, GSX mark (Airports) and warnings. **No switch on the wall.** A traffic light in the top right corner shows state: red Off, yellow Mixed, green On, grey with a lock when Locked. A Pending card also shows "Next sim start". Missing Packages, "(several)" and built-in parts are labelled.
 - **Card dialog** (opens on click; Esc, ✕ or a click outside closes it): editable name, image and Airport code (saved immediately); one control to switch all switchable Packages; the Packages, each with display name, folder name, path, version, Library, Duplicate copy choice and its own switch, plus "Move out"; locked and built-in parts dimmed; Airport codes, tags, Replaces built-in, GSX profiles (installed, shipped, missing with a search link) and deep links to find scenery.
 - **Map** (Scenery → Airports, view switch `Cards | Map`): Airports with real scenery as markers coloured like the card's light (green On, yellow Mixed, red Off, grey Locked or built-in). A card with several codes (merged, "(several)" or detached) has a marker at each known code, all opening the same dialog. There is one marker per code: when several cards claim a code, the marker opens the anchored card, whose dialog lists the others. A computed card for a known code without real scenery gets a grey marker; a code no record knows gets none. "Show all airports" adds the generic ones, clustered when zoomed out. Airport search. Selecting an Airport opens its card's dialog, or shows code, name and search links when it has no card.
-- **Settings:** Community path (detected, overridable); Libraries (add/remove, types, Managed elsewhere, link coverage); **Not shown** (6.4); **Community** (every entry with its classification, link target and warnings; remove Broken links with confirmation, disabled while the sim runs with the reason shown); search URL templates; airport threshold, exclusion list and token stop-list; version and update notice.
+- **Settings:** Community path (detected, overridable); Libraries (add/remove, types, link coverage); **Not shown** (6.4); **Community** (every entry with its classification, link target and warnings; remove Broken links with confirmation, disabled while the sim runs with the reason shown); search URL templates; airport threshold, exclusion list and token stop-list; version and update notice.
 - **Banner** at the top of the window: Broken and Stray entries in Community (with a link to Settings → Community), pending changes while the sim runs, scan progress.
 - **Overlays:** first-run setup (7.1) and the sync dialog (7.4).
 
@@ -281,7 +281,7 @@ Thumbnails come from the Package's own files (`ContentInfo\<any>\Thumbnail.jpg`;
 
 ## 11. Storage
 
-- **User data** (`%APPDATA%\<app>\userdata.json`), JSON, small and human-readable, saved on every change (write to a temporary file, keep a `.bak`, then replace): Libraries with their types; each Package's on/off choice, Managed elsewhere flag and active copy; Addons (their Packages, anchor, detached mark, and the user's overrides: name, image path, menu section, tab; a typed Airport code is stored as the anchor's primary code plus manual links); manual and removed Airport links; opted-in Packages; pending set; search URL templates; threshold, exclusion list and stop-list; the last accepted Community snapshot.
+- **User data** (`%APPDATA%\<app>\userdata.json`), JSON, small and human-readable, saved on every change (write to a temporary file, keep a `.bak`, then replace): Libraries with their types; each Package's on/off choice and active copy; Addons (their Packages, anchor, detached mark, and the user's overrides: name, image path, menu section, tab; a typed Airport code is stored as the anchor's primary code plus manual links); manual and removed Airport links; opted-in Packages; pending set; search URL templates; threshold, exclusion list and stop-list; the last accepted Community snapshot.
 - **What is stored versus computed:** an Addon's Packages, anchor and detached mark are stored when it is created and change only by user action, with one automatic exception: a rescan may set the anchor of an untouched card (one the user has not moved, merged, renamed or given a code, not detached, not "(several)") whose anchor is **empty** and whose Packages are linked to **exactly one** distinct code that no anchor holds. The card then moves to Airports. A card that already has an anchor, or whose Packages link to several codes, is never changed, and a rescan never removes a code. When another Addon already has the code, the card stays as it is and the user can merge it. Its name, image, Category, tab, tags and state are computed on every analysis unless the user overrode them. Built-in parts, GSX profiles and computed cards (6.5) are never stored.
 - **Scan cache** (`%LOCALAPPDATA%\<app>\`), SQLite, disposable: per Package the change marker and the facts read from its files (manifest data, airport records, BGL section types, aircraft.cfg facts, airplane folders, thumbnail path), and GSX profiles (plan 4). Links, Airports and aircraft groups are recomputed from these on every analysis.
 - Deleting the cache must only cost a rescan. User data never lives in the cache file, so a cache rebuild can never touch it (2026-10-28).
@@ -300,7 +300,7 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 
 ## 13. Testing
 
-- Core rules are unit tested without touching disk: on/off per Addon and per Package, computed state (On/Off/Mixed/Locked), Managed elsewhere skipping, visibility and Not shown, initial Addons and tabs, the Asset pack test, tags, "(several)", merge/move/split and the Airport code field, Airport linking (threshold, exclusions, stop-list, encrypted official airports), Livery and mod rules, built-in cards, warnings, pending set, reconciliation diff.
+- Core rules are unit tested without touching disk: on/off per Addon and per Package, computed state (On/Off/Mixed/Locked), "switch all" skipping locked Packages, visibility and Not shown, initial Addons and tabs, the Asset pack test, tags, "(several)", merge/move/split and the Airport code field, Airport linking (threshold, exclusions, stop-list, encrypted official airports), Livery and mod rules, built-in cards, warnings, pending set, reconciliation diff.
 - Junction handling is tested against temporary folders, including guard tests that removing a link leaves the target untouched, that a failed creation leaves no empty folder, and that a taken name is never overwritten.
 - BGL reading and GSX file-name parsing are tested with small fixtures, including the real-world names above. Official sim files are not committed to the repo.
 - Guard tests for the state machine: a moved Package is re-pointed, a missing Package keeps its user data and its place in its Addon, a failed link change saves nothing, the self-check catches "on but not linked".
@@ -345,7 +345,7 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Initial Addons wait for the complete content pass; provisional per-Package cards are shown until then.
 - Stale links found at adoption are offered for re-point straight away.
 - A moved Scenery Package with no BGL starts in Landscapes, not Assets.
-- In nested Libraries, Managed elsewhere comes from the innermost Library.
+- Managed elsewhere is dropped from the MVP (Rickard, 2026-10-28): every registered Package can be switched, and tool-owned folders stay unregistered.
 - A Library registered after first run adopts Community state without a sync dialog.
 - Not shown Packages can be moved to a menu section from Settings; typing an Airport code counts as a move to Scenery.
 - Folders named `Community` or like a menu section give no tag.
@@ -365,3 +365,4 @@ Decided on 2026-10-28 to come after the MVP, in roughly this order of interest:
 - **Installing GSX profiles by drag and drop**, asking before overwriting.
 - **Uses**: an Addon using another (automatic from manifest `dependencies` and set by hand), with the "Used Addon off" warning.
 - **Undo** for merges, moves and edits.
+- **Managed elsewhere** (a lock on Packages whose links another tool recreates), if a real need appears.

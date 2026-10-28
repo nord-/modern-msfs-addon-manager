@@ -31,9 +31,6 @@ _Avoid_: Contains, includes
 The displayed state of an Addon when some of its Packages are on and others are off.
 _Avoid_: Partial
 
-**Managed elsewhere**:
-A Package whose link another tool keeps recreating, so the app shows it locked and never changes its link.
-
 **Asset pack**:
 A Package of shared objects or models that other Addons use, such as an object library. It places nothing in the world itself.
 _Avoid_: Library, model library, object library

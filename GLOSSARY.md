@@ -9,32 +9,39 @@ A folder with a `manifest.json`. It is the smallest unit the sim loads, and the 
 _Avoid_: Mod
 
 **Addon**:
-One or more Packages that belong together, such as all Packages for one Airport. Every Package belongs to exactly one Addon. An Addon is a leaf in the app's tree; its Packages are properties of it, not nodes.
+One or more Packages that belong together, such as all Packages for one Airport. Every Package belongs to exactly one Addon. The app shows each Addon as a card; its Packages are listed in the card's dialog.
 _Avoid_: Bundle, group, product
 
+**Card**:
+How the app shows one Addon on the card wall: an image, the Airport code and name or the Addon's name, and a light for its state.
+_Avoid_: Tile
+
+**Anchor**:
+The Airport or Container an Addon was built around, so that new Packages for the same Airport or aircraft join it after renames and merges.
+
+**Tag**:
+A label on a Package taken from the folders between its Library root and the Package, such as "Europe". An Addon has the tags of all its Packages.
+_Avoid_: Catalog, folder, group
+
 **Uses**:
-A relation from one Addon to another it needs but doesn't contain, such as an Airport using an Asset pack.
+A relation from one Addon to another it needs but doesn't contain, such as an Airport using an Asset pack. Not in the MVP.
 _Avoid_: Contains, includes
 
-**Catalog**:
-The user's own grouping of Addons in the app, such as "Europe". Catalogs can nest. They start out mirroring a Library's folders but are independent of the disk afterwards.
-_Avoid_: Folder, group, category
-
 **Mixed**:
-The displayed state of an Addon or Catalog when some of the Packages below it are on and others are off.
+The displayed state of an Addon when some of its Packages are on and others are off.
 _Avoid_: Partial
 
 **Managed elsewhere**:
 A Package whose link another tool keeps recreating, so the app shows it locked and never changes its link.
 
 **Asset pack**:
-A Package of shared objects or models that other Addons use, such as an object library.
+A Package of shared objects or models that other Addons use, such as an object library. It places nothing in the world itself.
 _Avoid_: Library, model library, object library
 
 ## Where Packages live
 
 **Library**:
-A folder on disk the user registers with the app as a home for Packages. Packages can sit at any depth inside it.
+A folder on disk the user registers with the app as a home for Packages, with one or more types (Scenery, Aircraft, Other) that decide which of its Packages are shown. Packages can sit at any depth inside it.
 _Avoid_: Addon folder, repository, store
 
 **Community**:

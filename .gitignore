@@ -486,3 +486,4 @@ $RECYCLE.BIN/
 
 # Claude Code local state (worktrees, review summaries)
 .claude/
+.superpowers/

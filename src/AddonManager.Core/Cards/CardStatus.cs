@@ -7,10 +7,13 @@ namespace AddonManager.Core.Cards;
 /// <summary>The traffic light of a card (spec 6.3). <c>Locked</c>: no Package of the card can be switched (a GSX profile, a Package held by a Community entry, one that is Not found or in no registered Library).</summary>
 public enum CardState { On, Off, Mixed, Locked }
 
-public enum WarningKind { DuplicatePackage, DuplicateCopy, LiveryWithoutAircraft, NotFound }
+public enum WarningKind { DuplicatePackage, DuplicateCopy, LiveryWithoutAircraft, NotFound, TwoGsxProfiles }
 
-/// <summary>A warning about one Package of a card (spec 6.7).</summary>
-public sealed record CardWarning(WarningKind Kind, PackageName Package);
+/// <summary>A warning about one Package of a card (spec 6.7). <c>Code</c> is the ICAO code of a <see cref="WarningKind.TwoGsxProfiles"/> warning, whose Package is the first active profile at it.</summary>
+public sealed record CardWarning(WarningKind Kind, PackageName Package)
+{
+    public AirportCode? Code { get; init; }
+}
 
 /// <summary>Sim-managed content that belongs to a card but is never a Package of it: an official Airport, or an aircraft base, livery or add-on (spec 6.4, rule A6).</summary>
 public sealed record BuiltInPart(PackageName Name, string DisplayName, AirportCode? Code, string? Container, AircraftRole Role);

@@ -1,6 +1,7 @@
 using AddonManager.Core.Cards;
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using static AddonManager.Core.Tests.Content.ContentBuilder;
@@ -20,6 +21,8 @@ internal sealed class World
     private readonly List<string> inaccessible = [];
     private readonly List<string> presentOutside = [];
     private readonly List<GsxProfile> profiles = [];
+    private readonly List<GsxScript> scripts = [];
+    private readonly List<string> unrecognised = [];
 
     /// <summary>The time every test card is created at.</summary>
     public static readonly DateTimeOffset Now = new(2026, 10, 30, 12, 0, 0, TimeSpan.Zero);
@@ -122,13 +125,23 @@ internal sealed class World
     /// <summary>Whether the GSX folder exists; false gives <c>BoardInput.GsxFolderFound</c> false.</summary>
     public bool GsxFolderFound { get; set; } = true;
 
-    /// <summary>A GSX profile file in the GSX folder; <paramref name="disabled"/> makes it a <c>.off</c> file.</summary>
-    public void Profile(string name, string code, bool disabled = false)
-        => profiles.Add(new GsxProfile(new PackageName(name), Code(code), $@"C:\GSX\{name}.{(disabled ? "off" : "ini")}", disabled));
+    /// <summary>A GSX profile file in the GSX folder; <paramref name="disabled"/> makes it a <c>.off</c> file, <paramref name="offVariant"/> adds a <c>.off</c> next to the <c>.ini</c>.</summary>
+    public void Profile(string name, string code, bool disabled = false, bool offVariant = false)
+        => profiles.Add(new GsxProfile(new PackageName(name), Code(code), $@"C:\GSX\{name}.{(disabled ? "off" : "ini")}", disabled)
+        {
+            OffVariantPath = offVariant ? $@"C:\GSX\{name}.off" : null,
+        });
 
     /// <summary>A profile file whose name yields no ICAO code.</summary>
     public void ProfileWithoutCode(string name)
         => profiles.Add(new GsxProfile(new PackageName(name), default, $@"C:\GSX\{name}.ini", false));
+
+    /// <summary>A <c>.py</c> file in the GSX folder.</summary>
+    public void Script(string fileName, string code)
+        => scripts.Add(new GsxScript(Code(code), $@"C:\GSX\{fileName}"));
+
+    /// <summary>An <c>.ini</c>, <c>.off</c> or <c>.py</c> file in the GSX folder whose name yields no ICAO code.</summary>
+    public void Unrecognised(string fileName) => unrecognised.Add(fileName);
 
     /// <summary>The profile file was deleted.</summary>
     public void WithoutProfile(string name) => profiles.RemoveAll(p => p.Name == new PackageName(name));
@@ -179,6 +192,19 @@ internal sealed class World
             ? contents.Where(c => c.Source == PackageSource.Community).Select(c => c.Path).Concat(presentOutside)
                 .Select(p => PathNormalizer.Normalize(p)).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : null;
-        return new BoardInput(index, community, [.. contents], ContentAnalyzer.Analyze(contents, State.Content), scanComplete) { PresentOutsideLibraries = outside, Profiles = [.. profiles], GsxFolderFound = GsxFolderFound }.Reanalyze(State);
+        return new BoardInput(index, community, [.. contents], ContentAnalyzer.Analyze(contents, State.Content), scanComplete) { PresentOutsideLibraries = outside }
+            .WithGsx(Gsx())
+            .Reanalyze(State);
+    }
+
+    /// <summary>The GSX folder as one read of it would give it, so tests take the production path through <c>WithGsx</c>.</summary>
+    private GsxFolderContent Gsx()
+    {
+        var names = profiles.SelectMany(p => new[] { p.Path, p.OffVariantPath })
+            .Concat(scripts.Select(s => s.Path))
+            .OfType<string>()
+            .Select(Path.GetFileName)
+            .Concat(unrecognised);
+        return new GsxFolderContent(GsxFolderFound, [.. profiles], [.. scripts], [.. unrecognised]) { FileNames = new HashSet<string>(names!, StringComparer.OrdinalIgnoreCase) };
     }
 }

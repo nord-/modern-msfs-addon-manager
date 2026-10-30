@@ -23,8 +23,7 @@ public static class ProfileCatalog
         var ignored = new HashSet<PackageName>();
         foreach (var profile in input.Profiles.OrderBy(p => p.Name.Value, Names).ThenBy(p => p.Path, Names))
         {
-            // A profile already on a card stays a Package even when its 3-character ICAO code is no longer known.
-            if (IsPackage(profile, input.Analysis) || state.CardOf(new PackageKey(PackageKind.GsxProfile, profile.Name)) is not null)
+            if (IsKept(profile, state, input))
             {
                 present.TryAdd(profile.Name, profile);
             }
@@ -35,7 +34,7 @@ public static class ProfileCatalog
         }
 
         var result = present.Values
-            .Select(p => Make(p.Name, p.Name.Value, p.Path, Presence.Found, p.Code, p.Disabled, state.Profiles.GetValueOrDefault(p.Name)?.Section))
+            .Select(p => Make(p.Name, p.Name.Value, p.Path, Presence.Found, p.Code, p.Disabled, state.Profiles.GetValueOrDefault(p.Name)?.Section, p.OffVariantPath))
             .ToList();
 
         // A stored profile that is no longer a file stays while it is on a card, so the card keeps it (spec 8: deleted means Not found).
@@ -70,10 +69,25 @@ public static class ProfileCatalog
     internal static PackageMemo MemoOf(PackageSummary profile)
         => new(profile.Path, PackageSource.GsxFolder, profile.DisplayName, null, null, null, BglPlacement.None, [.. profile.OwnCodes], [], AircraftRole.None, []);
 
+    /// <summary>
+    /// The file names shown as "GSX files not recognised" (spec 8): files with no ICAO code in their name, profiles that are no Package, and
+    /// scripts whose 3-character ICAO code no record knows (plan 4, D7). A script whose ICAO code is known but that no card has is shown nowhere.
+    /// </summary>
+    public static IReadOnlyList<string> NotRecognised(UserState state, BoardInput input)
+        => [.. input.GsxUnrecognised
+            .Concat(input.Profiles.Where(p => !IsKept(p, state, input)).Select(p => Path.GetFileName(p.Path)))
+            .Concat(input.GsxScripts.Where(s => s.Code.Value.Length == 3 && !input.Analysis.Airports.ContainsKey(s.Code)).Select(s => Path.GetFileName(s.Path)))
+            .Distinct(Names)
+            .Order(Names)];
+
+    /// <summary>A profile already on a card stays a Package even when its 3-character ICAO code is no longer known.</summary>
+    private static bool IsKept(GsxProfile profile, UserState state, BoardInput input)
+        => IsPackage(profile, input.Analysis) || state.CardOf(new PackageKey(PackageKind.GsxProfile, profile.Name)) is not null;
+
     private static bool IsPackage(GsxProfile profile, ContentAnalysis analysis)
         => profile.Code != default && (profile.Code.Value.Length != 3 || analysis.Airports.ContainsKey(profile.Code));
 
-    private static PackageSummary Make(PackageName name, string displayName, string path, Presence presence, AirportCode code, bool disabled, Category? fixedSection)
+    private static PackageSummary Make(PackageName name, string displayName, string path, Presence presence, AirportCode code, bool disabled, Category? fixedSection, string? offVariantPath = null)
     {
         IReadOnlyList<AirportCode> codes = code == default ? [] : [code];
         return new PackageSummary(
@@ -104,6 +118,7 @@ public static class ProfileCatalog
         {
             Kind = PackageKind.GsxProfile,
             Disabled = disabled,
+            OffVariantPath = offVariantPath,
         };
     }
 }

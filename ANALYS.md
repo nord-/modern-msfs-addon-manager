@@ -235,15 +235,93 @@ Rickard stoppade skrivandet av plan 3: gränssnittet styr modellen, och specen h
 - **Asset pack-testet:** inga BGL-sektioner med placerade objekt (`0x25`) eller terräng (`0x65`). Ger fem paket på Rickards maskin; `human-library-animated` flyttas för hand till Assets.
 - **`isAirTraffic=1` → Other**, även `apronlife-jetway-helper` (jetbryggor placeras som trafik i MSFS). Rickard: hjälparen passar bäst under Other.
 - **Dra och släpp:** kort på kort slår ihop (målet vinner: namn, bild, kod, flik); kort på flik eller menyval flyttar; "Move out" i dialogen delar upp. Alla kort kan slås ihop, även två flygplatskort och inbyggda kort.
-- **Redigerbart i dialogen, med direktsparning:** namn, bild (ett pakets thumbnail eller en egen fil; bara sökvägen sparas) och ICAO. Alla koder med giltigt format accepteras; en okänd kod ger ingen kartmarkör (position hamnar under Later). En kod som redan har ett kort slår ihop korten.
+- **Redigerbart i dialogen, med direktsparning:** namn, bild (ett pakets thumbnail eller en egen fil; bara sökvägen sparas) och ICAO. Alla koder med giltigt format accepteras; en okänd kod ger ingen kartmarkör (position hamnar under Later). ~~En kod som redan har ett kort slår ihop korten.~~ Ersatt 2026-10-29: att skriva en ICAO-kod slår aldrig ihop kort (se kortmodellen nedan).
 - **Kartan** är en vyväxling `Cards | Map` på Scenery → Airports.
 - **GSX** visas på kort och i dialogen; GSX-tabellen utgår. Installation med dra och släpp och av/på för profiler hamnar under Later.
 - **Community-vyn** ligger under Settings; trasiga länkar och lösa filer visas i en banner.
 - **Uses**, inklusive varningen "Used Addon off", hamnar under Later. Hide/Show hidden och Delete from disk likaså.
-- **Lagring:** användardatan stannar i JSON (`userdata.json`), skild från SQLite-cachen. Rickard utmanade beslutet; argumenten: sökningen körs ändå i minnet mot härledda data (C6), datamängden är liten, JSON går att läsa och rädda för hand, och cachen raderas vid formatbyte. Den enda verkliga vinsten med SQLite, låsning mellan två instanser, löses med en mutex: appen tillåter en instans åt gången.
+- **Lagring (ersatt 2026-10-29 av en SQLite-fil, se kortmodellen nedan):** användardatan stannar i JSON (`userdata.json`), skild från SQLite-cachen. Rickard utmanade beslutet; argumenten: sökningen körs ändå i minnet mot härledda data (C6), datamängden är liten, JSON går att läsa och rädda för hand, och cachen raderas vid formatbyte. Den enda verkliga vinsten med SQLite, låsning mellan två instanser, löses med en mutex: appen tillåter en instans åt gången.
 - **Managed elsewhere utgår ur MVP:n** (spec-granskning runda 3). Rickard: "jag lägger aldrig till ett lib hos oss som är 'Managed elsewhere'? Vad skulle syftet vara för mig att lägga till `C:\Sim\Addons\Neofly` om jag inte har för avsikt att hantera de Addons:en i den här appen?" Allt i en registrerad Library går att slå av och på, även `C:\Sim\Orbx` där Orbx Central laddar ner och skapar egna junctions. Rickard: "Vill jag stänga av en flygplats från `C:\Sim\Orbx`, t.ex. 'ESGG', så kan jag göra det från antingen vår app eller från OrbX." Orbx ändringar fångas av avstämningen mot Community. Mappar som inte registreras (FSDT, Neofly) är External och visas låsta. Ersätter flaggan i designbesluten 2026-10-25.
 - **Nästlade Libraries är tillåtna:** innehållet avgör menyn och typen bara synligheten, så ett paket får typerna från alla Libraries det ligger i.
 - **Ny färdplan:** plan 3 = Addons (kort, Library-typer och synlighet, flikar, taggar, dina ändringar, trafikljus, varningar, mutex, CLI `addons` med ett ready-for-human-issue); plan 4 = GSX (läsa, status, profil-kort); plan 5 = WPF-appen enligt denna design; plan 6 = karta och release.
+
+## Beslut för plan 3 (2026-10-28)
+
+Val som gjordes när plan 3 (Addons) skrevs och implementerades. Specen är uppdaterad där valen ändrar den (avsnitt 6.1, 6.4, 7.1, 7.4 och 16).
+
+- **Library-typer (ersatt 2026-10-29 av en SQLite-fil och sektioner per Library, se kortmodellen nedan)** lagras på `LibraryRoot` som en lista av `Category`. En gammal `userdata.json` laddas med alla tre typerna och Managed elsewhere-medlemmarna ignoreras, så ingen migrering och ingen schemaändring behövs. Det är säkert eftersom inget släppt hittills skriver `userdata.json` (CLI:t sparar aldrig och appen finns inte än).
+- **En sammanslagning fäster målets utseende men är inte en flytt:** synligheten följer fortfarande Libraries typer om inte användaren flyttat kortet (`Overrides.Moved`, som sätts av Move, flytten från Not shown och när en kod skrivs in).
+- **Ett Package med någon oläsbar BGL** faller på Asset pack-testet och startar i Landscapes (krypterad scenery kan placera objekt).
+- **Ett Library-Package som länkas till en annan kopia** än den lagrade aktiva kopian ger en `LinkRetargeted`-rad i synkdialogen vid registrering, i stället för att tyst behålla eller skriva över.
+- **Namn som hålls av en Fixed- eller External-post** förblir `RejectReason.NameTaken` i `LinkPlanner`; kortet kallar det låst. `RejectReason.Locked` är borttagen.
+- **En Library-länk som ett annat verktyg ändrar** i ett registrerat Library ger nu en vanlig synkrad (Managed elsewhere följde den tyst förut).
+- **`LinkCoverage`** räknar FSDT:s junctions som "inte räknade" tillsammans med symlänkar och trasiga länkar. På Rickards maskin: 87 av 91 täckta med `C:\Sim\Addons` och `C:\Sim\Orbx Library\msfs`, 7 inte räknade.
+- **`RegisterLibrary`** adopterar via "har en kopia under Librarys sökväg" och hoppar över väntande Packages; `UnregisterLibrary` ändrar bara listan.
+- **Synkdialogens självkontroll** hoppar över ett Package vars namn en Fixed- eller External-post håller (det är låst och räknas som av), så avregistrering av ett Library vars Package har en kopia någon annanstans ger ingen rad.
+- **Att skriva eller rensa en kod** markerar kortet `CodeEdited`, vilket räknas som rört, så en omskanning förankrar aldrig ett kort vars kod användaren redigerat. En bildöverstyrning ensam rör inte kortet (spec 11 listar flyttat, sammanslaget, omdöpt, fått kod).
+- **Två orörda kort som skulle få samma kod** får ingen av dem; användaren slår ihop dem.
+- **Ett Package vars lagrade kopia är offline** visas som Offline även när en annan kopia är nåbar, i linje med apply-vägen.
+- **Ett försvunnet Fixed- eller External-Package** blir kvar som Missing i sin Addons dialog; ett som inte låg i någon Addon försvinner.
+- **En länk in i ett onåbart Library** vars Package ingen slutförd skanning har sett (disken försvann under första skanningen) får inget kort. Settings → Community listar den som Offline, och den får sitt kort när disken är tillbaka och en skanning slutförts (Rickard, 2026-10-28).
+- **"Grouping cards…"** räknar provisoriska kort bara tills en skanning slutförts; Packages som en slutförd skanning inte kunde läsa nämns i bannern i stället och förblir provisoriska.
+- **En synkrad för ett namn som en Fixed- eller External-post nu håller** erbjuder bara Keep Community.
+- **Aktiv kopia kan inte ändras** medan en Fixed- eller External-post håller Packagets namn (apply-vägen avvisar det som NameTaken).
+- **Minnet av ett Packages senaste fakta** (`UserState.LastSeen`) skrivs efter varje slutförd skanning, för varje hittat Package, även Community-Packages.
+- **Aircraft-gruppering:** Providers, Mods och låsta baser går samman via delade containrar. En Livery eller ett Attached Package vars container hålls av en Provider-, Mod- eller låst-bas-grupp går med i gruppen för den första sådana containern (efter namn) och bidrar inte med egna containrar; först när ingen av dess containrar hålls bildar de en egen grupp. Ett liverypaket som täcker två flygplan slår alltså aldrig ihop dem, och en livery vars container ingen levererar förankras inte förrän en leverantör dyker upp. En grupps anchor är alla dess containrar sorterade efter namn.
+- **Minnet av ett Packages senaste fakta** sparar också namnen på dess flygplatskoder, så ett kort vars Airport-Package är Missing behåller sitt namn ("EHAM Schiphol").
+- **Ett nytt Package som går med i en befintlig Addon** läggs sist bland dess Packages; den lagrade ordningen ordnas aldrig om.
+- **"(several)" och länkade koder** beräknas, de lagras inte.
+- **Ett kort vars Airport är okänd** får namn efter sitt första Package, inte efter sin kod.
+- **Ett provisoriskt kort** är kortet för ett Package som ligger i ingen Addon, inte ett eget begrepp i lagringen. Det följer samma synlighetsregel som lagrade kort (det kan vara Not shown) och visar länkade koder och "(several)" som andra kort.
+- **Inbyggda flygplatsdelar** fäster bara vid ett befintligt kort; beräknade (GSX) kort hör till plan 4.
+- **`addons` (heter `cards` sedan 2026-10-30, se plan 3b nedan)** adopterar Community i minnet när ingen snapshot finns, så det visar på/av på en maskin där appen aldrig körts, och sparar ingenting.
+- **Inget CLI-testprojekt:** `--library`-parsern bor i Infrastructure (`LibraryArgument`) och enhetstestas där; Task 20 kör den också med typer.
+- **Brädets analys** byggs om med de aktuella länkinställningarna efter en kodändring (`BoardInput.Reanalyze`) i stället för att vänta på nästa skanning.
+- **Spec 6.4 kallar `navigraph-navdata` och `navigraph-navdata-base` External-poster;** på Rickards maskin är de riktiga mappar i Community (Fixed). Båda är låsta på samma sätt, så kortväggen påverkas inte.
+- **Implementationen körs på branchen `feat/addons`** (avgrenad från planbranchen), så plancommitsen följer med i implementations-PR:en.
+- **Kort med samma titel (2026-10-29, sim-körningen i #15):** två synliga kort kan få samma namn (två "My Company Aerial", två "Windy Things Library") och skiljs då bara åt av taggar. Rickard valde att plan 5 löser det i kortväggen: när titlar krockar visar kortet även paketnamnet (t.ex. som undertitel). Core ändras inte i plan 3.
+
+## Beslut för kortmodellen (2026-10-29)
+
+Granskningen av PR #16 visade att sammanslagning byggde på ankarlistor som växer och matchar värden (en ICAO-kod som skrevs in slog ihop korten). Rickard: "vi kan inte bygga ett stabilt hus på en skakig grund." Modellen byggs om i samma PR. Specen är uppdaterad (6.1–6.7, 7.1, 8, 10, 11, 13, 16, 17) och GLOSSARY.md likaså.
+
+- **Card och Package:** Card är gruppen och lagras med id, sektion, flik, ICAO-koder (bara Scenery) och användarens namn och bild. Package är mappen (eller en GSX-profil) och har en FK till sitt kort. Termen Addon utgår. Rickard: "Varför inte ha en Card-entitet som har en typ … Varje paket … måste ha en Card-entitet som förälder för att synas."
+- **Scenery-, Aircraft- och Other-kort är olika sorter.** Bara Scenery-kort har ICAO-kod. Rickard: "Other-kort har inte samma metadata som Scenery-kort eller Aircraft-kort har, så ICAO ska inte gå att sätta på varken ett Other- eller Aircraft-kort."
+- **Sammanslagning sker bara med dra och släpp,** inom samma sektion och flik. Målet behåller namn, bild och flik; det dragna kortets paket flyttas och det tomma kortet tas bort. En ICAO-kod som ett annat kort redan har avvisas i ICAO-kod-fältet, den slår aldrig ihop. ~~Efter att EHRD slagits ihop med EHAM får ett senare EHRD-paket ett eget kort.~~ Ersatt i spec-granskning runda 2: målet får även det dragna kortets ICAO-koder, så ett senare EHRD-paket går till det sammanslagna kortet. Rickard: "beslutet från avsnitt 1 togs innan vi bestämde att ett kort kan ha flera koder." Ersätter "En kod som redan har ett kort slår ihop korten" i designbesluten 2026-10-28.
+- **Flytt till en annan sektion** gör kortet till den sektionens sort, och det hamnar på fliken som reglerna ger där. Ett kort som lämnar Scenery förlorar sina ICAO-koder. Paketen behåller sin egen sektion.
+- **Ett pakets sektion låses** när en fullständig skanning har läst det. Kort skapas aldrig från den snabba skanningen. Rickard: "Vi ska aldrig lägga till nya paket baserat på den snabba skanningen."
+- **Libraries hör till en sektion,** inte tvärtom. Rickard: "ett Library kan aldrig ha en typ, det är åt fel håll. Scenery t.ex. kan ha flera Libraries (rot-sökvägar)." En sektions Libraries avgör bara om ett paket får ett kort automatiskt; övriga listas under Not shown. Ett befintligt kort syns alltid. En varning när ett Library tas bort från en sektion hamnar under Later.
+- **Scenery:** paket med samma enda ICAO-kod delar kort. Ett paket med flera ICAO-koder får alltid ett "(several)"-kort som listar alla, och namnet tas från manifestets titel (`sltcreations-airport-yq05-mount-mulligan` → "YQ05 Mount Mulligan" med YQ05 och YMUZ). Token-regeln som valde en ICAO-kod och linked codes utgår. Ett nytt paket går till kortet med exakt samma ICAO-koder.
+- **Aircraft grupperas på Container.** `icao_type_designator` läses ur `aircraft.cfg` och visas som tagg på kortet. Rickard: "vi ska fortfarande läsa ur icao_type_designator, men flygplanen grupperas på container." Liveries följer `base_container`.
+- **Other** grupperas aldrig automatiskt.
+- **En GSX-profil är ett paket.** Rickard: "GSX-profil är som vilket annat paket som helst … På samma sätt ska vi göra för GSX, och skapa ett Airport-kort." Beräknade kort utgår.
+- **Kartan** tar markörerna från paketens flygplatsposter, oavsett vilken sektion kortet ligger i. Rickard: "är det en flygplats enligt paketets data så ska den visas upp på kartan."
+- **Not found (alternativ B):** användaren avgör vad som tas bort. Ett paket vars Library svarar men vars mapp är borta stannar på kortet med all sin data och får varningen Not found; knappen Remove glömmer det. Rickard: "I fallet med 'EHAM 1.3' -> 'EHAM 1.5' skulle jag tappa all customization för EHAM med A. Med B ligger kortet kvar och skanningen upptäcker 'EHAM 1.5' … Avinstallerar jag 'EHAM 1.3' så får jag ett kort med ett paket som har en sökväg som inte finns längre --> varning." Massborttagning hamnar under Later.
+- **Library not found:** svarar inte roten alls ändras ingenting, och bannern säger det. Ett läsfel under skanningen ger ett oläsbart paket, aldrig Not found. Offline- och Missing-maskineriet per paket från plan 3 (som Kjell lade till på eget initiativ i spec-granskningen) ersätts av detta.
+- **Lagring i en SQLite-fil:** `%LOCALAPPDATA%\ModernMsfsAddonManager\userdata.db` med användartabeller och cachetabeller, var för sig versionerade. Rickard: "Nu börjar vi bygga relationer mellan entiteter, med FK:s i databasen" och "Allt i samma db-fil." En ny cacheversion bygger bara om cachetabellerna. Ersätter lagringsbeslutet i designbesluten 2026-10-28 och spec 11:s "User data never lives in the cache file". Ingen flytt från `userdata.json` behövs, eftersom ingen sådan fil finns.
+- **CLI:t är inte en del av produkten,** utan ett utvecklarverktyg för fixturexport och kontroll mot den riktiga maskinen.
+- **Ett paket utan exakt träff** går till det äldsta kortet vars ICAO-koder innehåller alla paketets ICAO-koder (spec-granskning runda 1 för en ICAO-kod, utvidgat i runda 2 till flera; Rickard valde A båda gångerna). En uppdatering med en ICAO-kod som inget kort har får ett nytt kort, och dubbletten försvinner för gott när användaren drar ihop den eftersom sammanslagningen tar med ICAO-koderna. Annars skulle "OrbX EHAM 1.5" få ett nytt kort så fort användaren lagt till EHRD på EHAM-kortet. Följd: ett paket med bara YQ05 går till "(several)"-kortet när inget YQ05-kort finns.
+- **Ett paket som håller på att installeras lämnas i fred** (spec-granskning runda 1, Rickard valde A): kort skapas, och sektionen låses, först när paketets mapp varit orörd några sekunder efter den senaste ändringen bevakarna såg. En uppackning kan skriva `manifest.json` före BGL-filerna, och en skanning däremellan skulle låsa ett Scenery-paket som Other.
+
+## Beslut för plan 3b (2026-10-30)
+
+Plan 3b bygger kortmodellen. Besluten nedan ska Rickard kontrollera.
+
+- **Tystnadstid:** 10 sekunder (`ContentScanner.QuietPeriod`). Ett paket som skrevs medan mappen inte var orörd cachas inte och får varken sektion eller kort förrän en senare körning läser det i lugn och ro.
+- **Låst fil under en skanning** gör att körningen misslyckas med `UserDataLockedException`. Nästa bevakarhändelse, schemalagda omskanning eller F5 återupptar inkrementellt, och det är så skanningen "pausar".
+- **Migreringskopior** heter `userdata.v<från>-<yyyyMMddHHmmss>.db.bak`, så en omförsökt migrering skriver aldrig över en tidigare kopia.
+- **`SqliteUserStateStore.Save`** skriver om alla användarrader i en transaktion (några hundra rader), utan diffning per rad.
+- **Utvecklar-CLI:t:** kommandot `addons` heter nu `cards` och skriver ut kortväggen. Det öppnar databasen med `CacheOnly`, sparar ingenting och lagrar aldrig sektioner, så paket utan lagrad sektion läses om vid varje körning av `scan` och `cards`.
+- **GSX-profiler** placeras och lagras som paket här, från en `GsxProfile`-lista som läsaren i plan 4 levererar. Nya profiler i en skanning grupperas med nya mappaket från samma skanning på mängden ICAO-koder (ett nytt EHAM-scenery och en ny `eham.ini` ger ett kort).
+- **Provisoriska kort** listas efter flikens lagrade kort, sorterade på paketnamn.
+- **Ett paket under en mapp som upptäckten inte kunde läsa** visas som Unreadable på sitt kort (reglaget avstängt, går inte att ta bort, nämns i bannern), aldrig som Not found.
+- **"Kort som har ICAO-koderna först, kort som täcker dem genom borttagningar sedan"** (spec 6.5, Rickard 2026-10-29) gäller även exakt träff, inte bara inklusionsmatchningen: ett EHAM-paket går till kortet som har EHAM före ett äldre kort där användaren tagit bort EHAM.
+- **Aircraft-kort:** ett paket går först till det äldsta kortet där ett paket tillhandahåller eller är låst bas för en delad Container, och först därefter till ett kort som bara målar om eller kopplas till den. Spec 6.6: en livery för flera flygplan slår aldrig ihop kort.
+- **Inbyggda flygplansdelar** visas på kort vars paket tillhandahåller, målar om eller kopplas till Containern (spec 6.4).
+- **Behörighet för en menysektion** är unionen av alla kopiors Libraries.
+- **En GSX-profil som redan ligger på ett kort** förblir ett paket även när dess ICAO-kod på tre tecken inte längre är känd.
+- **Memo-enum lagras som namn.** Ett okänt namn eller ett tal räknas som skada.
+- **Plan 4 måste sätta `GsxFolderFound` till true** när GSX inte är installerat, annars visas bannern "GSX folder missing" för evigt.
 
 ## Komponenter och bedömd svårighet
 

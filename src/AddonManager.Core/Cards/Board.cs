@@ -1,5 +1,6 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 
 namespace AddonManager.Core.Cards;
@@ -11,6 +12,9 @@ namespace AddonManager.Core.Cards;
 public sealed record Board(IReadOnlyList<Card> Cards, IReadOnlyList<NotShownPackage> NotShown, Banner Banner)
 {
     private static readonly StringComparer Names = StringComparer.OrdinalIgnoreCase;
+
+    /// <summary>File names in the GSX folder that are not Packages and are not shown on a card, sorted (spec 8: "GSX files not recognised").</summary>
+    public IReadOnlyList<string> GsxNotRecognised { get; init; } = [];
 
     /// <summary>The cards of a section and tab, in display order.</summary>
     public IEnumerable<Card> On(Category section, CardTab tab) => Cards.Where(c => c.Section == section && c.Tab == tab);
@@ -56,6 +60,12 @@ public sealed record Card(
 {
     /// <summary>More than one ICAO code: the card shows as "(several)".</summary>
     public bool Several => Codes.Count > 1;
+
+    /// <summary>The GSX status of the card's first ICAO code (spec 8); <c>None</c> for a card without ICAO codes. The wall shows it on Airports only.</summary>
+    public GsxMark Gsx { get; init; }
+
+    /// <summary>The GSX facts of each ICAO code of the card, in <see cref="Codes"/> order.</summary>
+    public IReadOnlyList<GsxAirport> GsxAirports { get; init; } = [];
 }
 
 /// <summary>A Package on a card, with what the card list shows about it. <c>Removable</c>: the dialog offers "Remove" (Not found, or held by no registered Library).</summary>

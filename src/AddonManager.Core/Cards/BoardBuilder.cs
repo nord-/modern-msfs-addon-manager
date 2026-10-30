@@ -1,5 +1,6 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 
@@ -14,7 +15,7 @@ public static class BoardBuilder
     {
         var summaries = PackageCatalog.Build(state, input);
         var profiles = ProfileCatalog.Build(state, input);
-        var facts = new Facts(state, input, summaries);
+        var facts = new Facts(state, input, summaries, profiles);
 
         // Not found and Library-not-found Packages count too, so a folder's tag doesn't flicker while one of its Packages is on an unplugged drive.
         var tagIndex = PackageCatalog.TagIndexOf(state, input, summaries);
@@ -52,7 +53,10 @@ public static class BoardBuilder
         }
 
         var banner = MakeBanner(state, input, summaries, cards.Count(c => c.Id is null));
-        return new Board(WithBuiltIns(Ordered(cards), banner, facts), [.. notShown.OrderBy(n => n.Name.Value, Names)], banner);
+        return new Board(WithBuiltIns(Ordered(cards), banner, facts), [.. notShown.OrderBy(n => n.Name.Value, Names)], banner)
+        {
+            GsxNotRecognised = ProfileCatalog.NotRecognised(state, input),
+        };
     }
 
     private static List<PackageSummary> PackagesOf(IEnumerable<PackageKey> keys, IReadOnlyDictionary<PackageName, PackageSummary> summaries, IReadOnlyList<PackageSummary> profiles)
@@ -88,6 +92,7 @@ public static class BoardBuilder
         IReadOnlyList<string> designators = layout.Section == Category.Aircraft
             ? [.. packages.SelectMany(p => p.TypeDesignators).Distinct(Names).Order(Names)]
             : [];
+        var gsxAirports = facts.GsxAirportsOf(layout.Codes, packages);
         return new Card(
             record?.Id,
             record is null ? packages[0].Key : null,
@@ -104,8 +109,19 @@ public static class BoardBuilder
             StateOf(cardPackages),
             packages.Any(p => p.Kind == PackageKind.Folder && facts.State.Pending.Contains(p.Name)),
             [],
-            facts.WarningsOf(packages));
+            [.. facts.WarningsOf(packages), .. TwoGsxProfileWarnings(gsxAirports)])
+        {
+            Gsx = gsxAirports.Count > 0 ? gsxAirports[0].Status : GsxMark.None,
+            GsxAirports = gsxAirports,
+        };
     }
+
+    /// <summary>Plan 4, D10: one warning per ICAO code of the card whose status is Two profiles, also when the profiles sit on another card.</summary>
+    private static IEnumerable<CardWarning> TwoGsxProfileWarnings(IReadOnlyList<GsxAirport> airports)
+        => airports
+            .Where(a => a.Status == GsxMark.TwoProfiles)
+            .OrderBy(a => a.Code.Value, StringComparer.Ordinal)
+            .Select(a => new CardWarning(WarningKind.TwoGsxProfiles, a.Active[0]) { Code = a.Code });
 
     /// <summary>
     /// Only Packages that lie in a registered Library count (spec 6.3), with their stored choice; a name-taken Package counts as off.
@@ -158,7 +174,8 @@ public static class BoardBuilder
                 .OrderBy(n => n.Value, Names)],
             [.. input.Index.Unreachable.OrderBy(l => l.Path, Names)])
         {
-            GsxFolderMissing = !input.GsxFolderFound,
+            // Plan 4, D3: only a machine that has stored profiles on cards can have lost the folder.
+            GsxFolderMissing = !input.GsxFolderFound && state.Profiles.Any(p => p.Value.CardId is not null),
         };
     }
 
@@ -231,12 +248,20 @@ public static class BoardBuilder
         private readonly HashSet<PackageName> simManaged;
         private readonly HashSet<PackageName> communityNames;
         private readonly ILookup<string, AirportCode> replaces;
+        private readonly IReadOnlyList<PackageSummary> gsxProfiles;
+        private readonly Dictionary<string, PackageContent> contentsByPath = new(Names);
 
-        public Facts(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries)
+        public Facts(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries, IReadOnlyList<PackageSummary> gsxProfiles)
         {
             State = state;
             Input = input;
             this.summaries = summaries;
+            this.gsxProfiles = gsxProfiles;
+            foreach (var content in input.Contents)
+            {
+                contentsByPath.TryAdd(PathNormalizer.Normalize(content.Path), content);
+            }
+
             simManaged = input.Contents.Where(c => c.Source == PackageSource.SimManaged).Select(c => c.Name).ToHashSet();
             communityNames = input.Community.Select(e => e.Name).ToHashSet();
             replaces = input.Analysis.ReplacesBuiltIn.ToLookup(r => PathNormalizer.Normalize(r.Package.Path), r => r.Code, Names);
@@ -288,6 +313,49 @@ public static class BoardBuilder
 
         public IEnumerable<AirportLink> SimManagedLinks()
             => AirportCatalog.RealLinks(Input.Analysis.AirportLinks, State.Content).SelectMany(g => g).Where(l => l.Package.Source == PackageSource.SimManaged);
+
+        /// <summary>The GSX facts of each ICAO code of a card, in the card's order; none for a card without ICAO codes.</summary>
+        public IReadOnlyList<GsxAirport> GsxAirportsOf(IReadOnlyList<AirportCode> codes, IReadOnlyList<PackageSummary> packages)
+        {
+            // Spec 8: a GSX folder that can't be read changes nothing, so no card claims a status the folder can't back up; the banner says why.
+            if (codes.Count == 0 || !Input.GsxFolderFound)
+            {
+                return [];
+            }
+
+            var shipped = ShippedProfilesOf(codes, packages);
+            return [.. codes.Select(code => GsxStatus.For(code, gsxProfiles, Input.GsxScripts, shipped))];
+        }
+
+        /// <summary>
+        /// The profiles the card's Found folder Packages ship under the card's ICAO codes (plan 4, D4). A Package that is not Found, or whose
+        /// content is not known, has no readable files, so it ships nothing.
+        /// </summary>
+        private List<ShippedProfile> ShippedProfilesOf(IReadOnlyList<AirportCode> codes, IReadOnlyList<PackageSummary> packages)
+        {
+            var result = new List<ShippedProfile>();
+            foreach (var package in packages.Where(p => p.Kind == PackageKind.Folder && p.Presence == Presence.Found))
+            {
+                if (!contentsByPath.TryGetValue(PathNormalizer.Normalize(package.Path), out var content))
+                {
+                    continue;
+                }
+
+                var files = content.GsxFiles.Select(f => (Path: f, Parsed: GsxFileName.TryParse(Path.GetFileName(f), out var kind, out var code), Kind: kind, Code: code)).Where(f => f.Parsed).ToList();
+                foreach (var ini in files.Where(f => f.Kind == GsxFileKind.Profile && codes.Contains(f.Code)))
+                {
+                    var folder = Path.GetDirectoryName(ini.Path) ?? "";
+                    var stem = Path.GetFileNameWithoutExtension(ini.Path);
+                    var scripts = files
+                        .Where(f => f.Kind == GsxFileKind.Script && f.Code == ini.Code && Names.Equals(Path.GetDirectoryName(f.Path) ?? "", folder))
+                        .Select(f => Path.Combine(content.Path, f.Path));
+                    var inFolder = Input.GsxFileNames.Contains(stem + ".ini") || Input.GsxFileNames.Contains(stem + ".off");
+                    result.Add(new ShippedProfile(ini.Code, package.Name, Path.Combine(content.Path, ini.Path), [.. scripts], inFolder));
+                }
+            }
+
+            return result;
+        }
 
         public IReadOnlyList<CardWarning> WarningsOf(IEnumerable<PackageSummary> packages)
         {

@@ -392,6 +392,52 @@ public sealed class GsxProfileTests
     }
 
     [Fact]
+    public void Gsx_files_not_recognised_are_listed()
+    {
+        var w = NewWorld();
+        w.Unrecognised("YALR1.ini");
+        w.Profile("gsx", "GSX");
+        w.Script("abc.py", "ABC");
+
+        var board = Wall(w);
+
+        Assert.Equal(["abc.py", "gsx.ini", "YALR1.ini"], board.GsxNotRecognised);
+    }
+
+    [Fact]
+    public void A_known_three_character_profile_is_not_listed_as_not_recognised()
+    {
+        var w = NewWorld();
+        w.SimManaged(Scenery("asobo-airport-gsx", fullRecords: [Rec("GSX", "Gsx Field")]));
+        w.Profile("gsx", "GSX");
+        w.Script("gsx-x.py", "GSX");
+
+        Assert.Empty(Wall(w).GsxNotRecognised);
+    }
+
+    [Fact]
+    public void A_script_alone_makes_no_card()
+    {
+        var w = NewWorld();
+        w.Script("lpma-x.py", "LPMA");
+
+        var board = Wall(w);
+
+        Assert.Empty(board.Cards);
+        Assert.Empty(w.State.Cards);
+        Assert.Empty(board.GsxNotRecognised);
+    }
+
+    [Fact]
+    public void No_banner_when_gsx_is_not_installed()
+    {
+        var w = NewWorld();
+        w.GsxFolderFound = false;
+
+        Assert.False(Wall(w).Banner.GsxFolderMissing);
+    }
+
+    [Fact]
     public void Removing_the_icao_code_from_a_card_does_not_unlink_its_profile()
     {
         var w = NewWorld();

@@ -65,6 +65,9 @@ public sealed record PackageSummary(
     /// <summary>A <c>.off</c> GSX profile.</summary>
     public bool Disabled { get; init; }
 
+    /// <summary>The <c>.off</c> file next to an enabled GSX profile's <c>.ini</c>, when there is one.</summary>
+    public string? OffVariantPath { get; init; }
+
     /// <summary>The Package's identity across kinds.</summary>
     public PackageKey Key => new(Kind, Name);
 

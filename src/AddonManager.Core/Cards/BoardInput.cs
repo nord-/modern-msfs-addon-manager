@@ -1,5 +1,6 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 
@@ -34,11 +35,31 @@ public sealed record BoardInput(
     /// <summary>True for an input built by <see cref="Reanalyze"/>; <see cref="Settlement.Apply"/> refuses any other.</summary>
     public bool Reanalyzed { get; private init; }
 
-    /// <summary>The profile files found in the GSX folder (plan 4 reads them); <see cref="ProfileCatalog"/> decides which of them are Packages.</summary>
+    /// <summary>The profile files found in the GSX folder (<see cref="WithGsx"/>); <see cref="ProfileCatalog"/> decides which of them are Packages.</summary>
     public IReadOnlyList<GsxProfile> Profiles { get; init; } = [];
 
-    /// <summary>False when the GSX folder does not exist: its profiles are Library not found and the banner says so (spec 8).</summary>
+    /// <summary>The <c>.py</c> files of the GSX folder; they are only listed by ICAO code and never make a card (spec 8).</summary>
+    public IReadOnlyList<GsxScript> GsxScripts { get; init; } = [];
+
+    /// <summary>File names of GSX files that yield no ICAO code.</summary>
+    public IReadOnlyList<string> GsxUnrecognised { get; init; } = [];
+
+    /// <summary>All file names in the GSX folder, case-insensitive.</summary>
+    public IReadOnlySet<string> GsxFileNames { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>False when the GSX folder does not exist: its profiles are Library not found (spec 8). The banner says so only when a profile is stored on a card (plan 4, D3).</summary>
     public bool GsxFolderFound { get; init; } = true;
+
+    /// <summary>The same input with one read of the GSX folder. Every board, the startup board too, takes the folder this way (plan 4, D2).</summary>
+    public BoardInput WithGsx(GsxFolderContent gsx)
+        => this with
+        {
+            Profiles = gsx.Profiles,
+            GsxScripts = gsx.Scripts,
+            GsxUnrecognised = gsx.Unrecognised,
+            GsxFileNames = gsx.FileNames,
+            GsxFolderFound = gsx.Found,
+        };
 
     /// <summary>True when the Package at <paramref name="path"/> was read completely and while quiet, so its facts may be stored (rule R3).</summary>
     public bool IsSettled(string path)

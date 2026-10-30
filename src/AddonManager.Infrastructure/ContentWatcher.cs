@@ -19,6 +19,7 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
     private bool _communityEventSeen;
     private bool _pending;
     private long _dueAt;
+    private long _scheduledAt;
     private bool _disposed;
     private int _eventCount;
 
@@ -77,6 +78,24 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
     /// <summary>Test hook: behaves like an <c>Error</c> from the Community or a Library watcher.</summary>
     internal void SimulateError(Exception error, bool fromCommunity) => OnChange(fromCommunity);
 
+    /// <summary>
+    /// Asks for one <see cref="RescanNeeded"/> at <paramref name="at"/>, or right away when it has passed; the app uses it to scan again
+    /// once a Package that was still being written has settled. It merges with a pending burst: one raise, at the later due time.
+    /// The delay is capped at one day. Does nothing before <see cref="Start"/> or after <see cref="Dispose"/>.
+    /// </summary>
+    public void ScheduleRescan(DateTimeOffset at)
+    {
+        lock (_gate)
+        {
+            if (_disposed || _timer is null)
+                return;
+            var delay = (long)Math.Clamp((at - DateTimeOffset.UtcNow).TotalMilliseconds, 0, TimeSpan.FromDays(1).TotalMilliseconds);
+            _scheduledAt = Math.Max(_scheduledAt, Environment.TickCount64 + delay);
+            _pending = true;
+            Rearm();
+        }
+    }
+
     private void OnChange(bool isCommunity)
     {
         lock (_gate)
@@ -87,9 +106,12 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
             _communityEventSeen |= isCommunity;
             _pending = true;
             _dueAt = Environment.TickCount64 + (long)quietPeriod.TotalMilliseconds;
-            _timer.Change(quietPeriod, Timeout.InfiniteTimeSpan);
+            Rearm();
         }
     }
+
+    // Callers hold _gate. The raise is due at the later of the last event's quiet period and the scheduled time.
+    private void Rearm() => _timer!.Change(Math.Max(0, Math.Max(_dueAt, _scheduledAt) - Environment.TickCount64), Timeout.Infinite);
 
     private void OnQuiet(object? state)
     {
@@ -102,7 +124,7 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
                     return;
 
                 // A callback that was already queued when an event re-armed the timer must not raise before the new quiet period is over.
-                var remaining = _dueAt - Environment.TickCount64;
+                var remaining = Math.Max(_dueAt, _scheduledAt) - Environment.TickCount64;
                 if (remaining > 0)
                 {
                     _timer!.Change(remaining, Timeout.Infinite);
@@ -110,6 +132,7 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
                 }
 
                 _pending = false;
+                _scheduledAt = 0;
                 communityChanged = _communityEventSeen;
                 _communityEventSeen = false;
             }

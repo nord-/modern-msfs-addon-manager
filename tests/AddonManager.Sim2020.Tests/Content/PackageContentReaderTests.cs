@@ -49,6 +49,99 @@ public sealed class PackageContentReaderTests : IDisposable
         File.WriteAllText(Path.Combine(pkg, "layout.json"),
             "{\"content\":[" + string.Join(",", paths.Select(p => "{\"path\":\"" + p.Replace("\\", "/") + "\"}")) + "]}");
 
+    [Fact]
+    public void Newest_write_finds_the_newest_file_below_the_package()
+    {
+        var pkg = Package("nw1", ("scenery\\a.bgl", [1]), ("scenery\\deep\\b.bgl", [2]));
+        MakeAllOld(pkg);
+        var stamp = DateTime.UtcNow.AddMinutes(-5);
+        File.SetLastWriteTimeUtc(Path.Combine(pkg, "scenery", "deep", "b.bgl"), stamp);
+
+        Assert.Equal(new DateTimeOffset(stamp, TimeSpan.Zero), _reader.NewestWrite(pkg));
+    }
+
+    private static readonly DateTime Old = new(2019, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>Pushes the creation and write time of the folder and everything below it into the past.</summary>
+    private static void MakeAllOld(string pkg)
+    {
+        foreach (var file in Directory.EnumerateFiles(pkg, "*", SearchOption.AllDirectories))
+        {
+            File.SetCreationTimeUtc(file, Old);
+            File.SetLastWriteTimeUtc(file, Old);
+        }
+
+        foreach (var dir in Directory.EnumerateDirectories(pkg, "*", SearchOption.AllDirectories).Append(pkg))
+        {
+            Directory.SetCreationTimeUtc(dir, Old);
+            Directory.SetLastWriteTimeUtc(dir, Old);
+        }
+    }
+
+    [Fact]
+    public void Newest_write_counts_a_new_file_whose_write_time_was_restored_old()
+    {
+        var pkg = Package("nw2", ("scenery\\a.bgl", [1]));
+        var file = Path.Combine(pkg, "scenery", "a.bgl");
+        MakeAllOld(pkg);
+        var created = DateTime.UtcNow.AddMinutes(-5);
+        File.SetCreationTimeUtc(file, created);
+        File.SetLastWriteTimeUtc(file, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(new DateTimeOffset(created, TimeSpan.Zero), _reader.NewestWrite(pkg));
+    }
+
+    [Fact]
+    public void Newest_write_ignores_write_times_in_the_future()
+    {
+        var pkg = Package("nw3", ("a.bgl", [1]));
+        var file = Path.Combine(pkg, "a.bgl");
+        var created = File.GetCreationTimeUtc(file);
+        File.SetLastWriteTimeUtc(file, DateTime.UtcNow.AddHours(9));
+
+        var newest = _reader.NewestWrite(pkg)!.Value;
+
+        Assert.True(newest < DateTimeOffset.UtcNow.AddHours(1));
+        Assert.True(newest >= new DateTimeOffset(created, TimeSpan.Zero));
+    }
+
+    [Fact]
+    public void Newest_write_ignores_creation_times_in_the_future()
+    {
+        var pkg = Package("nw3b", ("a.bgl", [1]));
+        var file = Path.Combine(pkg, "a.bgl");
+        File.SetLastWriteTimeUtc(file, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        File.SetCreationTimeUtc(file, DateTime.UtcNow.AddHours(9));
+
+        var newest = _reader.NewestWrite(pkg)!.Value;
+
+        Assert.True(newest < DateTimeOffset.UtcNow.AddHours(1));
+    }
+
+    [Fact]
+    public void Newest_write_counts_a_time_slightly_ahead_as_just_written()
+    {
+        // A file server whose clock runs two minutes fast: the file was just written, not "in the future".
+        var pkg = Package("nw3c", ("a.bgl", [1]));
+        MakeAllOld(pkg);
+        var before = DateTimeOffset.UtcNow;
+        File.SetLastWriteTimeUtc(Path.Combine(pkg, "a.bgl"), DateTime.UtcNow.AddMinutes(2));
+
+        var newest = _reader.NewestWrite(pkg)!.Value;
+
+        Assert.True(newest >= before);
+        Assert.True(newest <= DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public void Newest_write_is_null_when_the_package_is_gone()
+    {
+        var pkg = Package("nw4", ("a.bgl", [1]));
+        Directory.Delete(pkg, true);
+
+        Assert.Null(_reader.NewestWrite(pkg));
+    }
+
     private PackageContent Read(string pkg) => _reader.Read(Target(pkg), _reader.ReadMarker(pkg)!)!;
 
     [Fact]
@@ -262,6 +355,13 @@ public sealed class PackageContentReaderTests : IDisposable
         var before = Snapshot(library);
         Read(pkg);
         Assert.Equal(before, Snapshot(library));
+    }
+
+    [Fact]
+    public void The_package_reader_passes_the_type_designator_on()
+    {
+        var pkg = Package("p", (@"SimObjects\Airplanes\A\aircraft.cfg", Cfg("icao_type_designator = \"C152\"")));
+        Assert.Equal([new AircraftConfig("A", null, "C152")], Read(pkg).AircraftConfigs);
     }
 
     [Fact]

@@ -29,6 +29,18 @@ public sealed class AircraftCfgReaderTests : IDisposable
     }
 
     [Fact]
+    public void Reads_the_type_designator_from_the_general_section()
+        => Assert.Equal("C152", AircraftCfgReader.Read(Write("aircraft.cfg", "[GENERAL]\nicao_type_designator = \"C152\"\n"))!.TypeDesignator);
+
+    [Fact]
+    public void Ignores_a_type_designator_outside_the_general_section()
+        => Assert.Null(AircraftCfgReader.Read(Write("aircraft.cfg", "[FLTSIM.0]\nicao_type_designator = A20N\n"))!.TypeDesignator);
+
+    [Fact]
+    public void An_empty_type_designator_reads_as_none()
+        => Assert.Null(AircraftCfgReader.Read(Write("aircraft.cfg", "[general]\nicao_type_designator = \"\"\n"))!.TypeDesignator);
+
+    [Fact]
     public void Unreadable_cfg_is_null() => Assert.Null(AircraftCfgReader.Read(Path.Combine(_temp.Root, "missing.cfg")));
 
     [Theory]

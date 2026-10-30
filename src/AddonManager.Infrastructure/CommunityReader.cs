@@ -22,7 +22,7 @@ public sealed class CommunityReader(string communityPath) : ICommunitySource
         }
 
         return info is DirectoryInfo
-            ? new CommunityEntryInfo(info.Name, EntryKind.Directory, null, false, HasManifest(info.FullName))
+            ? new CommunityEntryInfo(info.Name, EntryKind.Directory, null, false, HasManifest(info.FullName), info.FullName)
             : new CommunityEntryInfo(info.Name, EntryKind.File, null, false, false);
     }
 

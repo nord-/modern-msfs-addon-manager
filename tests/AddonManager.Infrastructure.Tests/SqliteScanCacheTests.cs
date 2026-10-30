@@ -7,7 +7,7 @@ namespace AddonManager.Infrastructure.Tests;
 public sealed class SqliteScanCacheTests : IDisposable
 {
     private readonly TempFolder _temp = new();
-    private string File_ => Path.Combine(_temp.Root, "scan-cache.db");
+    private string DbFile => Path.Combine(_temp.Root, "userdata.db");
 
     public void Dispose() => _temp.Dispose();
 
@@ -37,29 +37,50 @@ public sealed class SqliteScanCacheTests : IDisposable
         return code;
     }
 
-    private static void Exec(string file, string sql)
+    private static void Exec(UserDataDatabase db, string sql)
+        => db.Write(WriteScope.Cache, (c, t) =>
+        {
+            using var cmd = c.CreateCommand();
+            cmd.Transaction = t;
+            cmd.CommandText = sql;
+            cmd.ExecuteNonQuery();
+            return 0;
+        });
+
+    private static void ExecRaw(SqliteConnection c, string sql)
     {
-        using var db = Open(file);
-        using var cmd = db.CreateCommand();
+        using var cmd = c.CreateCommand();
         cmd.CommandText = sql;
         cmd.ExecuteNonQuery();
     }
 
-    private static SqliteConnection Open(string file)
+    private static string? Scalar(UserDataDatabase db, string sql)
+        => db.Read(c =>
+        {
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = sql;
+            return Convert.ToString(cmd.ExecuteScalar());
+        });
+
+    [Fact]
+    public void Contents_survive_a_round_trip_through_the_shared_file()
     {
-        var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = file, Pooling = false }.ToString());
-        db.Open();
-        return db;
+        using (var db = UserDataDatabase.Open(DbFile))
+            new SqliteScanCache(db).Upsert([Sample()]);
+
+        using var reopened = UserDataDatabase.Open(DbFile);
+        Assert.Equivalent(Sample(), new SqliteScanCache(reopened).LoadAll().Single());
     }
 
     [Fact]
-    public void Round_trips_content_including_airports_and_aircraft()
+    public void A_type_designator_survives_the_cache()
     {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample()]);
+        var content = Sample() with { AircraftConfigs = [new AircraftConfig("Cessna", "Base", "C152")] };
+        using (var db = UserDataDatabase.Open(DbFile))
+            new SqliteScanCache(db).Upsert([content]);
 
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Equivalent(Sample(), reopened.LoadAll().Single());
+        using var reopened = UserDataDatabase.Open(DbFile);
+        Assert.Equal("C152", new SqliteScanCache(reopened).LoadAll().Single().AircraftConfigs.Single().TypeDesignator);
     }
 
     [Fact]
@@ -71,43 +92,42 @@ public sealed class SqliteScanCacheTests : IDisposable
             Manifest = Manifest.Empty,
             ThumbnailPath = null,
         };
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([content]);
+        using (var db = UserDataDatabase.Open(DbFile))
+            new SqliteScanCache(db).Upsert([content]);
 
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Equivalent(content, reopened.LoadAll().Single());
-        Assert.False(reopened.IsFallback);
+        using var reopened = UserDataDatabase.Open(DbFile);
+        Assert.Equivalent(content, new SqliteScanCache(reopened).LoadAll().Single());
     }
 
     [Fact]
     public void Upsert_replaces_by_path_case_insensitively()
     {
-        using var cache = new SqliteScanCache(File_);
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
         cache.Upsert([Sample(@"C:\Sim\Addons\Acme-ESGG", "Old")]);
         cache.Upsert([Sample(@"c:\sim\addons\acme-esgg", "New")]);
 
-        var loaded = Assert.Single(cache.LoadAll());
-        Assert.Equal("New", loaded.Manifest.Title);
+        Assert.Equal("New", Assert.Single(cache.LoadAll()).Manifest.Title);
     }
 
     [Fact]
     public void Paths_that_differ_only_in_the_case_of_a_non_ascii_letter_are_one_row()
     {
-        using var cache = new SqliteScanCache(File_);
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
         cache.Upsert([Sample(@"C:\Flygsim\Övrigt\pkg", "Old")]);
         cache.Upsert([Sample(@"C:\Flygsim\övrigt\pkg", "New")]);
         Assert.Equal("New", Assert.Single(cache.LoadAll()).Manifest.Title);
 
         cache.Remove([@"C:\Flygsim\Övrigt\pkg"]);
         Assert.Empty(cache.LoadAll());
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Empty(reopened.LoadAll());
     }
 
     [Fact]
     public void Remove_deletes_rows()
     {
-        using var cache = new SqliteScanCache(File_);
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
         cache.Upsert([Sample(@"c:\a"), Sample(@"c:\b")]);
         cache.Remove([@"C:\A"]);
 
@@ -115,134 +135,71 @@ public sealed class SqliteScanCacheTests : IDisposable
     }
 
     [Fact]
-    public void Constructing_creates_nothing()
+    public void A_row_that_cannot_be_read_rebuilds_the_cache_and_keeps_user_rows()
     {
-        _ = new SqliteScanCache(Path.Combine(_temp.Root, "sub", "c.db"));
-
-        Assert.False(Directory.Exists(Path.Combine(_temp.Root, "sub")));
-    }
-
-    [Fact]
-    public void Garbage_file_is_replaced_by_an_empty_cache()
-    {
-        File.WriteAllText(File_, "not a database, just some text that is long enough to be read as a header");
-        using var cache = new SqliteScanCache(File_);
-
-        Assert.Empty(cache.LoadAll());
-        cache.Upsert([Sample()]);
-        Assert.Single(cache.LoadAll());
-        Assert.False(cache.IsFallback);
-    }
-
-    [Fact]
-    public void Other_schema_version_is_rebuilt()
-    {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample()]);
-        Exec(File_, "PRAGMA user_version = 99");
-
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Empty(reopened.LoadAll());
-        Assert.False(reopened.IsFallback);
-    }
-
-    [Fact]
-    public void Row_with_invalid_json_rebuilds_the_cache()
-    {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample()]);
-        Exec(File_, "UPDATE package SET content = '{'");
-
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Empty(reopened.LoadAll());
-        Assert.False(reopened.IsFallback);
-    }
-
-    [Fact]
-    public void Corrupt_file_that_cannot_be_deleted_falls_back_to_memory()
-    {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample()]);
-        Exec(File_, "PRAGMA user_version = 99");
-
-        using var holder = Open(File_);
-        using (var cmd = holder.CreateCommand())
+        using var db = UserDataDatabase.Open(DbFile);
+        db.Write(WriteScope.User, (c, t) =>
         {
-            cmd.CommandText = "SELECT count(*) FROM package";
-            cmd.ExecuteScalar();
+            using var cmd = c.CreateCommand();
+            cmd.Transaction = t;
+            cmd.CommandText = "INSERT INTO card(id, section, tab, created) VALUES (1, 'Scenery', 'A', 'now')";
+            cmd.ExecuteNonQuery();
+            return 0;
+        });
+        Exec(db, "INSERT INTO scan_package(key, content) VALUES ('K', '{}')");
+
+        Assert.Empty(new SqliteScanCache(db).LoadAll());
+        Assert.Equal("0", Scalar(db, "SELECT count(*) FROM scan_package"));
+        Assert.Equal("1", Scalar(db, "SELECT count(*) FROM card"));
+        Assert.True(File.Exists(DbFile));
+    }
+
+    [Fact]
+    public void A_locked_file_fails_the_write_and_never_falls_back_to_memory()
+    {
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
+
+        using (var other = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = DbFile, Mode = SqliteOpenMode.ReadWrite, Pooling = false }.ToString()))
+        {
+            other.Open();
+            ExecRaw(other, "BEGIN IMMEDIATE");
+            Assert.Throws<UserDataLockedException>(() => cache.Upsert([Sample()]));
+            ExecRaw(other, "ROLLBACK");
         }
 
-        using var c = new SqliteScanCache(File_);
-        Assert.Empty(c.LoadAll());
-        Assert.True(c.IsFallback);
-        c.Upsert([Sample()]);
-        Assert.Single(c.LoadAll());
+        Assert.Empty(cache.LoadAll());
     }
 
     [Fact]
-    public void Locked_file_falls_back_to_memory_without_throwing()
+    public void The_database_file_lives_under_local_app_data()
     {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample(@"c:\other")]);
-
-        using var holder = Open(File_);
-        Exec(holder, "BEGIN EXCLUSIVE");
-
-        using var locked = new SqliteScanCache(File_);
-        locked.Upsert([Sample()]);
-
-        Assert.True(locked.IsFallback);
-        Assert.Single(locked.LoadAll());
-        locked.Remove([@"c:\sim\addons\acme-esgg"]);
-        Assert.Empty(locked.LoadAll());
+        Assert.EndsWith(@"ModernMsfsAddonManager\userdata.db", AppPaths.DatabaseFile);
+        Assert.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify), AppPaths.DatabaseFile);
+        Assert.Equal(Path.GetDirectoryName(AppPaths.DatabaseFile), AppPaths.DataDirectory);
     }
 
     [Theory]
-    [InlineData("UPDATE package SET content = '{}'")]
-    [InlineData("UPDATE package SET content = replace(content, '\"Name\":\"acme-esgg\"', '\"Name\":\"\"')")]
-    [InlineData("UPDATE package SET content = '{\"Name\":\"x\",\"Path\":\"C:\\\\x\"}'")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.Airports', json('null'))")]
-    [InlineData("UPDATE package SET content = json_remove(content, '$.AircraftConfigs')")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.Marker', json('null'))")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.Manifest.Dependencies', json('null'))")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.Airports', json('[null]'))")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.AircraftConfigs', json('[null]'))")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.AirplaneFolders', json('[null]'))")]
-    [InlineData("UPDATE package SET content = json_set(content, '$.Manifest.Dependencies', json('[null]'))")]
-    public void Row_that_is_json_but_not_valid_content_rebuilds_the_cache(string sql)
+    [InlineData("UPDATE scan_package SET content = '{'")]
+    [InlineData("UPDATE scan_package SET content = '{}'")]
+    [InlineData("UPDATE scan_package SET content = replace(content, '\"Name\":\"acme-esgg\"', '\"Name\":\"\"')")]
+    [InlineData("UPDATE scan_package SET content = '{\"Name\":\"x\",\"Path\":\"C:\\\\x\"}'")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.Airports', json('null'))")]
+    [InlineData("UPDATE scan_package SET content = json_remove(content, '$.AircraftConfigs')")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.Marker', json('null'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.Manifest.Dependencies', json('null'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.Airports', json('[null]'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.AircraftConfigs', json('[null]'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.AirplaneFolders', json('[null]'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.Manifest.Dependencies', json('[null]'))")]
+    public void Row_that_is_not_valid_content_rebuilds_the_cache(string sql)
     {
-        using (var cache = new SqliteScanCache(File_))
-            cache.Upsert([Sample()]);
-        Exec(File_, sql);
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
+        cache.Upsert([Sample()]);
+        Exec(db, sql);
 
-        using var reopened = new SqliteScanCache(File_);
-        Assert.Empty(reopened.LoadAll());
-        Assert.False(reopened.IsFallback);
-    }
-
-    [Fact]
-    public void Fallback_starts_from_rows_written_and_removed_this_session()
-    {
-        using (var seed = new SqliteScanCache(File_))
-            seed.Upsert([Sample(@"c:\gone"), Sample(@"c:\kept")]);
-
-        using var cache = new SqliteScanCache(File_);
-        Assert.Equal(2, cache.LoadAll().Count);
-        cache.Upsert([Sample(@"c:\x")]);
-        cache.Remove([@"c:\gone"]);
-
-        using var holder = Open(File_);
-        Exec(holder, "BEGIN EXCLUSIVE");
-        cache.Upsert([Sample(@"c:\y")]);
-
-        Assert.True(cache.IsFallback);
-        Assert.Equal([@"c:\kept", @"c:\x", @"c:\y"], cache.LoadAll().Select(c => c.Path).Order().ToArray());
-    }
-
-    private static void Exec(SqliteConnection db, string sql)
-    {
-        using var cmd = db.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.ExecuteNonQuery();
+        Assert.Empty(cache.LoadAll());
+        Assert.Equal("0", Scalar(db, "SELECT count(*) FROM scan_package"));
     }
 }

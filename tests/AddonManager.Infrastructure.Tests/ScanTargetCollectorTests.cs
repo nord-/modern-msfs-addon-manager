@@ -19,7 +19,7 @@ public sealed class ScanTargetCollectorTests : IDisposable
     public ScanTargetCollectorTests()
     {
         community = Directory.CreateDirectory(Path.Combine(temp.Root, "community")).FullName;
-        library = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib")).FullName);
+        library = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib")).FullName, LibraryRoot.AllSections);
     }
 
     public void Dispose() => temp.Dispose();
@@ -139,7 +139,7 @@ public sealed class ScanTargetCollectorTests : IDisposable
     [Fact]
     public void Managed_entries_are_in_entry_name_order_not_library_order()
     {
-        var second = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib2")).FullName);
+        var second = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib2")).FullName, LibraryRoot.AllSections);
         var b = LibraryCopy("b-managed");
         var a = new PackageCopy(new PackageName("a-managed"), temp.MakePackage(@"lib2\a-managed"), second, Manifest.Empty);
         links.CreateJunction(C("a-managed"), a.Path);
@@ -181,7 +181,7 @@ public sealed class ScanTargetCollectorTests : IDisposable
     [Fact]
     public void Inactive_duplicate_copies_are_scanned_in_library_order()
     {
-        var second = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib2")).FullName);
+        var second = new LibraryRoot(Directory.CreateDirectory(Path.Combine(temp.Root, "lib2")).FullName, LibraryRoot.AllSections);
         var a = new PackageCopy(new PackageName("dup"), temp.MakePackage(@"lib2\dup"), second, Manifest.Empty);
         var b = new PackageCopy(new PackageName("dup"), temp.MakePackage(@"lib\dup"), library, Manifest.Empty);
         var index = new PackageIndex([a, b], [library, second]);

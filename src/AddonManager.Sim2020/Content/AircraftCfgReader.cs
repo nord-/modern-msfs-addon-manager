@@ -1,7 +1,7 @@
 namespace AddonManager.Sim2020.Content;
 
-/// <summary>What the scan needs from an <c>aircraft.cfg</c>: the last segment of <c>base_container</c> and whether it is AI traffic.</summary>
-public sealed record CfgFacts(string? BaseContainer, bool IsAirTraffic);
+/// <summary>What the scan needs from an <c>aircraft.cfg</c>: the last segment of <c>base_container</c> and whether it is AI traffic, and the ICAO type designator from <c>[GENERAL]</c>.</summary>
+public sealed record CfgFacts(string? BaseContainer, bool IsAirTraffic, string? TypeDesignator);
 
 /// <summary>Reads <c>aircraft.cfg</c> files. Read-only; never throws for bad content.</summary>
 public static class AircraftCfgReader
@@ -15,10 +15,18 @@ public static class AircraftCfgReader
             using var reader = new StreamReader(stream);
 
             string? baseContainer = null;
+            string? typeDesignator = null;
             var airTraffic = false;
+            var inGeneral = false;
             while (reader.ReadLine() is { } line)
             {
                 var text = StripComment(line);
+                var trimmed = text.Trim();
+                if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
+                {
+                    inGeneral = trimmed[1..^1].Trim().Equals("GENERAL", StringComparison.OrdinalIgnoreCase);
+                    continue;
+                }
                 var eq = text.IndexOf('=');
                 if (eq < 0)
                     continue;
@@ -29,8 +37,10 @@ public static class AircraftCfgReader
                     baseContainer ??= LastSegment(value);
                 else if (key.Equals("isAirTraffic", StringComparison.OrdinalIgnoreCase) && value == "1")
                     airTraffic = true;
+                else if (inGeneral && key.Equals("icao_type_designator", StringComparison.OrdinalIgnoreCase))
+                    typeDesignator ??= value.Length > 0 ? value : null;
             }
-            return new CfgFacts(baseContainer, airTraffic);
+            return new CfgFacts(baseContainer, airTraffic, typeDesignator);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

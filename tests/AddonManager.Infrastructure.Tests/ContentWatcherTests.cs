@@ -63,6 +63,55 @@ public sealed class ContentWatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task A_scheduled_rescan_is_raised_once_at_its_time()
+    {
+        using var watcher = StartWatcher();
+
+        // A wide margin (500 ms ahead, checked after 50 ms) so a stalled runner cannot raise it before the check.
+        watcher.ScheduleRescan(DateTimeOffset.UtcNow.AddMilliseconds(500));
+        await Task.Delay(50);
+        Assert.Equal(0, Rescans);
+
+        await WaitUntil(() => Rescans == 1, TimeSpan.FromSeconds(1));
+        await PastQuietPeriod();
+        Assert.Equal(1, Rescans);
+        Assert.Equal(0, CommunityChanges);
+    }
+
+    [Fact]
+    public async Task A_scheduled_rescan_in_the_past_is_raised_right_away()
+    {
+        using var watcher = StartWatcher();
+
+        watcher.ScheduleRescan(DateTimeOffset.UtcNow.AddMinutes(-1));
+
+        await WaitUntil(() => Rescans == 1, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task An_event_burst_and_a_scheduled_rescan_raise_once()
+    {
+        // A long quiet period (1 s) leaves a wide window between the scheduled time and the burst's due time, so the check below
+        // always runs and a stalled runner cannot slip past it.
+        var quiet = TimeSpan.FromSeconds(1);
+        using var watcher = StartWatcher(quiet);
+        var scheduled = DateTimeOffset.UtcNow.AddMilliseconds(150);
+
+        watcher.ScheduleRescan(scheduled);
+        Directory.CreateDirectory(Path.Combine(_lib, "p0"));
+        await Task.Delay(100);
+        Directory.CreateDirectory(Path.Combine(_lib, "p1"));
+
+        // The last event is due a quiet period after it, which is later than the scheduled time.
+        // Wait until the scheduled time has passed, still well inside the quiet period: nothing may be raised yet.
+        await Task.Delay(scheduled - DateTimeOffset.UtcNow + TimeSpan.FromMilliseconds(200));
+        Assert.Equal(0, Rescans);
+        await WaitUntil(() => Rescans >= 1, Bound);
+        await PastQuietPeriod(quiet);
+        Assert.Equal(1, Rescans);
+    }
+
+    [Fact]
     public async Task Community_is_watched_non_recursively()
     {
         var inner = Directory.CreateDirectory(Path.Combine(_community, "real-folder")).FullName;

@@ -71,6 +71,51 @@ public sealed class PackageContentReader(AirportNames airportNames) : IPackageCo
             ThumbnailOf(target.Path, files));
     }
 
+    public DateTimeOffset? NewestWrite(string packagePath)
+    {
+        if (!PackageExists(packagePath))
+            return null;
+
+        var now = DateTime.UtcNow;
+        var root = new DirectoryInfo(packagePath);
+        var newest = Later(root, now);
+        try
+        {
+            var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = false };
+            foreach (var entry in root.EnumerateFileSystemInfos("*", options))
+            {
+                var time = Later(entry, now);
+                if (time > newest)
+                    newest = time;
+            }
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // Vanished while listing: null when the folder is gone, an error when it is unreachable.
+            if (PackageExists(packagePath))
+                throw;
+            return null;
+        }
+
+        return new DateTimeOffset(newest, TimeSpan.Zero);
+    }
+
+    /// <summary>How far ahead of now a time may be and still count as "just written": a file server whose clock runs a little fast.</summary>
+    private static readonly TimeSpan ClockSkew = TimeSpan.FromMinutes(5);
+
+    // Extractors restore old write times but the creation time is new. A time slightly ahead of now (a fast file-server clock) counts as
+    // now; one far ahead (a zip's local time from a zone ahead, a clock correction) is ignored.
+    private static DateTime Later(FileSystemInfo entry, DateTime now)
+    {
+        var created = entry.CreationTimeUtc;
+        var written = entry.LastWriteTimeUtc;
+        return new[] { created, written }
+            .Where(t => t <= now + ClockSkew)
+            .Select(t => t > now ? now : t)
+            .DefaultIfEmpty(DateTime.MinValue)
+            .Max();
+    }
+
     /// <summary>False (vanished) when the folder is gone but its parent is there; throws when the parent is gone too, because then the folder is unreachable, not deleted.</summary>
     private static bool PackageExists(string packagePath)
     {
@@ -159,7 +204,7 @@ public sealed class PackageContentReader(AirportNames airportNames) : IPackageCo
                 break;
             }
 
-            configs.Add(new AircraftConfig(folder, facts.BaseContainer));
+            configs.Add(new AircraftConfig(folder, facts.BaseContainer, facts.TypeDesignator));
         }
 
         var encrypted = files.Any(f => f.EndsWith(".fsarchive", StringComparison.OrdinalIgnoreCase))

@@ -64,6 +64,9 @@ internal sealed class GatedContentReader : IPackageContentReader
         }
     }
 
+    /// <summary>Always quiet.</summary>
+    public DateTimeOffset? NewestWrite(string packagePath) => DateTimeOffset.UnixEpoch;
+
     public bool? HasBgl(string packagePath)
     {
         var name = NameOf(packagePath);

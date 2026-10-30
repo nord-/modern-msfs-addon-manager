@@ -1,3 +1,5 @@
+using AddonManager.Core.Community;
+using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
@@ -34,7 +36,7 @@ public sealed class ScanServiceTests : IDisposable
         Package("lib", "p3");
         simPackage = Package("official", "asobo-sim");
         simFolders.Add(simPackage);
-        state = new UserState { Libraries = [new LibraryRoot(Path.Combine(temp.Root, "lib"))] };
+        state = new UserState { Libraries = [new LibraryRoot(Path.Combine(temp.Root, "lib"), LibraryRoot.AllSections)] };
         service = new ScanService(reader, cache, community, new FakeSimManaged(simFolders));
     }
 
@@ -51,7 +53,7 @@ public sealed class ScanServiceTests : IDisposable
         return path;
     }
 
-    private static UserState StateWith(params string[] libraryPaths) => new() { Libraries = [.. libraryPaths.Select(p => new LibraryRoot(p))] };
+    private static UserState StateWith(params string[] libraryPaths) => new() { Libraries = [.. libraryPaths.Select(p => new LibraryRoot(p, LibraryRoot.AllSections))] };
 
     private string LibPath(string folder) => Path.Combine(temp.Root, folder);
 
@@ -157,6 +159,7 @@ public sealed class ScanServiceTests : IDisposable
     [Fact]
     public async Task Queued_run_reuses_unchanged_content_when_nobody_asked_for_full()
     {
+        FixSections("p1", "p2", "p3");
         reader.Gate = new SemaphoreSlim(0);
         var first = service.RunAsync(state, false);
         var second = service.RunAsync(state, false);
@@ -168,6 +171,60 @@ public sealed class ScanServiceTests : IDisposable
         Assert.Equal(TargetCount, reader.ReadCalls);
         Assert.Equal(TargetCount, (await second).Content.Reused);
     }
+
+    private void FixSections(params string[] names)
+    {
+        foreach (var name in names)
+            state.Packages[new PackageName(name)] = new PackageState(false) { Section = Category.Scenery };
+    }
+
+    [Fact]
+    public async Task Packages_without_a_fixed_section_are_read_again_on_every_run()
+    {
+        await Bounded(service.RunAsync(state, false));
+        var afterFirst = reader.ReadCalls;
+
+        await Bounded(service.RunAsync(state, false));
+
+        // p1-p3 have no section and are read again; the Sim-managed Package is reused.
+        Assert.Equal(3, reader.ReadCalls - afterFirst);
+    }
+
+    [Fact]
+    public async Task Packages_with_a_fixed_section_are_reused()
+    {
+        FixSections("p1", "p2", "p3");
+        await Bounded(service.RunAsync(state, false));
+        var afterFirst = reader.ReadCalls;
+
+        var second = await Bounded(service.RunAsync(state, false));
+
+        Assert.Equal(afterFirst, reader.ReadCalls);
+        Assert.Equal(TargetCount, second.Content.Reused);
+    }
+
+    [Fact]
+    public async Task A_carded_package_outside_every_library_is_present_while_its_folder_exists()
+    {
+        var outside = Package("elsewhere", "away");
+        var inside = Path.Combine(LibPath("lib"), "p1");
+        state.Packages[new PackageName("away")] = new PackageState(true) { CardId = 1, Memo = MemoAt(outside) };
+        state.Packages[new PackageName("p1")] = new PackageState(true) { CardId = 2, Memo = MemoAt(inside) };
+        state.Packages[new PackageName("no-card")] = new PackageState(true) { Memo = MemoAt(outside) };
+        state.Packages[new PackageName("gone")] = new PackageState(true) { CardId = 3, Memo = MemoAt(Path.Combine(temp.Root, "missing", "gone")) };
+
+        var present = (await Bounded(service.RunAsync(state, false))).Discovery.PresentOutsideLibraries;
+
+        Assert.Equal([Key(outside)], present);
+
+        Directory.Delete(outside, recursive: true);
+        var after = (await Bounded(service.RunAsync(state, false))).Discovery.PresentOutsideLibraries;
+
+        Assert.Empty(after);
+    }
+
+    private static PackageMemo MemoAt(string path)
+        => new(path, PackageSource.Library, "x", null, null, null, BglPlacement.None, [], [], AircraftRole.None, []);
 
     [Fact]
     public async Task A_call_after_the_run_finished_starts_a_new_run()
@@ -339,19 +396,21 @@ public sealed class ScanServiceTests : IDisposable
         reader.Airports["ehamscen"] = [new AirportRecord(Code("EHAM"), "Schiphol", null)];
 
         ContentAnalysis? firstCached = null;
-        await Bounded(service.RunAsync(state, false, new ScanCallbacks(OnCached: a => firstCached = a)));
+        await Bounded(service.RunAsync(state, false, new ScanCallbacks(OnCached: (_, a) => firstCached = a)));
         Assert.NotNull(firstCached);
         Assert.Empty(firstCached.Airports);   // nothing cached yet
 
         var seq = 0;
         int cachedAt = 0, discoveredAt = 0;
         ContentAnalysis? cached = null;
+        IReadOnlyList<PackageContent>? cachedContents = null;
         await Bounded(service.RunAsync(state, false, new ScanCallbacks(
-            OnCached: a => { cached = a; cachedAt = ++seq; },
+            OnCached: (c, a) => { cachedContents = c; cached = a; cachedAt = ++seq; },
             OnDiscovered: _ => discoveredAt = ++seq)));
 
         Assert.True(cachedAt > 0 && cachedAt < discoveredAt);
         Assert.True(cached!.Airports.ContainsKey(Code("EHAM")));
+        Assert.Contains(cachedContents!, c => c.Name.Value == "ehamscen");
     }
 
     [Fact]
@@ -363,7 +422,7 @@ public sealed class ScanServiceTests : IDisposable
 
         ContentAnalysis? cached = null;
         state.Content.RemoveExclusionPattern("neofly-*");
-        await Bounded(service.RunAsync(state, false, new ScanCallbacks(OnCached: a => cached = a)));
+        await Bounded(service.RunAsync(state, false, new ScanCallbacks(OnCached: (_, a) => cached = a)));
 
         Assert.Empty(cached!.Excluded);
     }
@@ -392,7 +451,7 @@ public sealed class ScanServiceTests : IDisposable
 
         var kept = await Bounded(service.RunAsync(both, false));
         Assert.Contains("offline-pkg", Names(kept));
-        Assert.Equal([new LibraryRoot(LibPath("libB"))], kept.Discovery.Index.Unreachable);
+        Assert.Equal([new LibraryRoot(LibPath("libB"), LibraryRoot.AllSections)], kept.Discovery.Index.Unreachable);
 
         // Once the Library is no longer registered its content goes.
         var gone = await Bounded(service.RunAsync(StateWith(LibPath("lib")), false));
@@ -412,6 +471,23 @@ public sealed class ScanServiceTests : IDisposable
         Assert.DoesNotContain("doomed", Names(outcome));
     }
 
+    // Every user row, as text, so the test sees whether a run changed what a save would write.
+    private static string Dump(UserDataDatabase db)
+        => db.Read(c =>
+        {
+            var text = new System.Text.StringBuilder();
+            foreach (var table in new[] { "library", "card", "card_code", "package", "pending", "snapshot_entry", "setting" })
+            {
+                using var cmd = c.CreateCommand();
+                cmd.CommandText = $"SELECT * FROM {table}";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    text.Append(table).Append(':').AppendJoin('|', Enumerable.Range(0, reader.FieldCount).Select(i => reader.GetValue(i))).AppendLine();
+            }
+
+            return text.ToString();
+        });
+
     [Fact]
     public async Task User_state_is_not_saved_and_community_is_unchanged()
     {
@@ -419,16 +495,16 @@ public sealed class ScanServiceTests : IDisposable
         Directory.CreateDirectory(Path.Combine(community, "fixed-pkg"));
         File.WriteAllText(Path.Combine(community, "fixed-pkg", "manifest.json"), "{}");
         new JunctionFileSystem().CreateJunction(Path.Combine(community, "p1"), Path.Combine(LibPath("lib"), "p1"));
-        var stateFile = Path.Combine(temp.Root, "state.json");
-        var store = new JsonUserStateStore(stateFile);
+        using var userData = UserDataDatabase.Open(Path.Combine(temp.Root, "state.db"));
+        var store = new SqliteUserStateStore(userData);
         store.Save(state);
-        var stateBefore = File.ReadAllText(stateFile);
+        var stateBefore = Dump(userData);
         var communityBefore = Describe(community);
 
         await Bounded(service.RunAsync(state, true));
 
         store.Save(state);
-        Assert.Equal(stateBefore, File.ReadAllText(stateFile));
+        Assert.Equal(stateBefore, Dump(userData));
         Assert.Null(state.Snapshot);
         Assert.Empty(state.Packages);
         Assert.Equal(communityBefore, Describe(community));
@@ -487,6 +563,36 @@ public sealed class ScanServiceTests : IDisposable
         service.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => { _ = service.RunAsync(state, false); });
+    }
+
+    [Fact]
+    public async Task A_link_into_a_folder_discovery_could_not_list_is_offline_in_the_outcome()
+    {
+        var hidden = Package(@"lib\closed", "hidden");
+        new JunctionFileSystem().CreateJunction(Path.Combine(community, "hidden"), hidden);
+        var closed = new DirectoryInfo(Path.GetDirectoryName(hidden)!);
+        var user = System.Security.Principal.WindowsIdentity.GetCurrent().User!;
+        var deny = new System.Security.AccessControl.FileSystemAccessRule(
+            user,
+            System.Security.AccessControl.FileSystemRights.ListDirectory,
+            System.Security.AccessControl.AccessControlType.Deny);
+        var security = closed.GetAccessControl();
+        security.AddAccessRule(deny);
+        closed.SetAccessControl(security);
+
+        try
+        {
+            var outcome = await Bounded(service.RunAsync(state, false));
+
+            Assert.Equal([Key(closed.FullName)], outcome.Discovery.Inaccessible);
+            Assert.Equal(EntryClass.Offline, outcome.Discovery.Community.Single(e => e.Entry.Name == "hidden").Class);
+        }
+        finally
+        {
+            security = closed.GetAccessControl();
+            security.RemoveAccessRule(deny);
+            closed.SetAccessControl(security);
+        }
     }
 
     private static string Describe(string folder)

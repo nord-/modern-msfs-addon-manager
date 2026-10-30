@@ -27,6 +27,7 @@ public sealed class CommunityReaderTests : IDisposable
         Assert.Equal(new CommunityEntryInfo("pkg", EntryKind.Junction, pkg, true, true), entries["pkg"]);
         Assert.Equal(EntryKind.Directory, entries["fixed"].Kind);
         Assert.True(entries["fixed"].HasManifest);
+        Assert.Equal(C("fixed"), entries["fixed"].Path);
         Assert.False(entries["ignored"].HasManifest);
         Assert.Equal(EntryKind.File, entries["UNINSTALL.exe"].Kind);
     }

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
-using AddonManager.Core.FirstRun;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Infrastructure;
@@ -64,13 +63,17 @@ public sealed class LocalInstallTests(ITestOutputHelper output) : IDisposable
     public async Task Incremental_scan_without_changes_takes_under_two_seconds()
     {
         var (paths, state) = Prepare();
-        var cacheFile = Path.Combine(temp.Root, "scan-cache.db");
+        var cacheFile = Path.Combine(temp.Root, "userdata.db");
 
         var first = await RunAsync(paths, cacheFile, state, full: true);
-        output.WriteLine($"full: {first.Elapsed}, read {first.Content.Read}, reused {first.Content.Reused}, failed {first.Content.Failed}, {first.Content.Contents.Count} Packages");
+        output.WriteLine($"full: {first.Elapsed}, read {first.Content.Read}, reused {first.Content.Reused}, failed {first.Content.FailedCount}, {first.Content.Contents.Count} Packages");
+
+        // A Package without a fixed section is always read again, so give every scanned Package one first.
+        foreach (var content in first.Content.Contents)
+            state.Packages[content.Name] = (state.Packages.GetValueOrDefault(content.Name) ?? new PackageState(false)) with { Section = Category.Scenery };
 
         var second = await RunAsync(paths, cacheFile, state, full: false);
-        output.WriteLine($"incremental: {second.Elapsed}, read {second.Content.Read}, reused {second.Content.Reused}, failed {second.Content.Failed}");
+        output.WriteLine($"incremental: {second.Elapsed}, read {second.Content.Read}, reused {second.Content.Reused}, failed {second.Content.FailedCount}");
         Assert.True(second.Elapsed < TimeSpan.FromSeconds(2), $"Incremental scan took {second.Elapsed}.");
     }
 
@@ -78,17 +81,17 @@ public sealed class LocalInstallTests(ITestOutputHelper output) : IDisposable
     public async Task Cached_startup_load_and_analysis_takes_under_one_second()
     {
         var (paths, state) = Prepare();
-        var cacheFile = Path.Combine(temp.Root, "scan-cache.db");
+        var cacheFile = Path.Combine(temp.Root, "userdata.db");
 
         var first = await RunAsync(paths, cacheFile, state, full: true);
         output.WriteLine($"full: {first.Elapsed}, {first.Content.Contents.Count} Packages");
 
         // A fresh service and cache instance, as on app start.
-        using var cache = new SqliteScanCache(cacheFile);
-        using var service = NewService(paths, cache);
+        using var db = UserDataDatabase.Open(cacheFile);
+        using var service = NewService(paths, new SqliteScanCache(db));
         var stopwatch = Stopwatch.StartNew();
         TimeSpan? cached = null;
-        var run = service.RunAsync(state, full: false, new ScanCallbacks(OnCached: _ => cached = stopwatch.Elapsed));
+        var run = service.RunAsync(state, full: false, new ScanCallbacks(OnCached: (_, _) => cached = stopwatch.Elapsed));
         await run;
 
         Assert.True(cached is not null, "OnCached never fired.");
@@ -108,35 +111,42 @@ public sealed class LocalInstallTests(ITestOutputHelper output) : IDisposable
         return paths;
     }
 
-    /// <summary>The install plus the saved user data, or the proposed Libraries when none are saved. Read-only: nothing is saved.</summary>
+    /// <summary>The install plus the saved user data, with Libraries from MSFS_LIBRARIES when set, else the stored ones. Read-only: nothing is saved.</summary>
     private static (SimPaths Paths, UserState State) Prepare()
     {
         var paths = RequireInstall();
-        var state = new JsonUserStateStore(AppPaths.UserDataFile).Load();
-        if (state.Libraries.Count == 0)
-        {
-            var entries = new CommunityReader(paths.CommunityPath).Read();
-            state.Libraries = LibraryProposer.Propose(entries, new DiskFolderTree()).Select(p => new LibraryRoot(p.Path)).ToList();
-        }
+        var state = LoadStoredState();
+        var fromEnvironment = SimFactAttribute.EnvironmentLibraries();
+        if (fromEnvironment.Count > 0)
+            state.Libraries = fromEnvironment;
 
         return (paths, state);
     }
 
-    private static ScanService NewService(SimPaths paths, SqliteScanCache cache)
+    private static UserState LoadStoredState()
+    {
+        if (!File.Exists(AppPaths.DatabaseFile))
+            return new UserState();
+
+        using var db = UserDataDatabase.Open(AppPaths.DatabaseFile, UserDataAccess.CacheOnly);
+        return new SqliteUserStateStore(db).Load();
+    }
+
+    private static ScanService NewService(SimPaths paths, IScanCache cache)
         => new(new PackageContentReader(new AirportNames(paths.OfficialPath)), cache, paths.CommunityPath, new OfficialPackages(paths.OfficialPath));
 
     /// <summary>One run with a new cache and service instance on <paramref name="cacheFile"/>.</summary>
     private static async Task<ScanOutcome> RunAsync(SimPaths paths, string cacheFile, UserState state, bool full)
     {
-        using var cache = new SqliteScanCache(cacheFile);
-        using var service = NewService(paths, cache);
+        using var db = UserDataDatabase.Open(cacheFile);
+        using var service = NewService(paths, new SqliteScanCache(db));
         return await service.RunAsync(state, full);
     }
 
     private async Task<ScanOutcome> ScanAsync()
     {
         var (paths, state) = Prepare();
-        var outcome = await RunAsync(paths, Path.Combine(temp.Root, "scan-cache.db"), state, full: true);
+        var outcome = await RunAsync(paths, Path.Combine(temp.Root, "userdata.db"), state, full: true);
         output.WriteLine($"scan: {outcome.Elapsed}, {outcome.Content.Contents.Count} Packages");
         return outcome;
     }

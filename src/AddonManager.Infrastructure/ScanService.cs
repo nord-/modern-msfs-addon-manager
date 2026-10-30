@@ -12,7 +12,9 @@ namespace AddonManager.Infrastructure;
 /// </summary>
 public sealed class ScanService(IPackageContentReader reader, IScanCache cache, string communityPath, ISimManagedPackages simManaged) : IDisposable
 {
-    private sealed record Snapshot(IReadOnlyList<LibraryRoot> Libraries, ContentSettings Settings);
+    /// <param name="FixedSections">The names of Packages whose menu section is fixed; every other Package is read again on each run.</param>
+    /// <param name="CardedPaths">The memo paths of the Packages that are on a card.</param>
+    private sealed record Snapshot(IReadOnlyList<LibraryRoot> Libraries, ContentSettings Settings, IReadOnlySet<PackageName> FixedSections, IReadOnlyList<string> CardedPaths);
 
     private sealed class Request(bool full, Snapshot snapshot, ScanCallbacks callbacks)
     {
@@ -41,7 +43,11 @@ public sealed class ScanService(IPackageContentReader reader, IScanCache cache, 
     /// </summary>
     public Task<ScanOutcome> RunAsync(UserState state, bool full, ScanCallbacks? callbacks = null, CancellationToken cancellationToken = default)
     {
-        var snapshot = new Snapshot([.. state.Libraries], state.Content.Clone());
+        var snapshot = new Snapshot(
+            [.. state.Libraries],
+            state.Content.Clone(),
+            state.Packages.Where(p => p.Value.Section is not null).Select(p => p.Key).ToHashSet(),
+            [.. state.Packages.Values.Where(p => p.CardId is not null && p.Memo is not null).Select(p => p.Memo!.Path)]);
         var request = new Request(full, snapshot, callbacks ?? NoCallbacks);
         Task<ScanOutcome> task;
 
@@ -142,26 +148,48 @@ public sealed class ScanService(IPackageContentReader reader, IScanCache cache, 
     private ScanOutcome Run(Request request, CancellationToken cancellationToken)
     {
         var watch = Stopwatch.StartNew();
-        var (libraries, settings) = request.Snapshot;
+        var (libraries, settings, fixedSections, cardedPaths) = request.Snapshot;
         var callbacks = request.Callbacks;
 
         // The only cache read of the run: startup results, provisional categories and the scan all use these rows.
         var cached = cache.LoadAll();
         if (callbacks.OnCached is { } onCached)
-            onCached(ContentAnalyzer.Analyze(cached, settings));
+            onCached(cached, ContentAnalyzer.Analyze(cached, settings));
         cancellationToken.ThrowIfCancellationRequested();
 
         var discovered = LibraryScanner.Discover(libraries);
-        var index = new PackageIndex(discovered.Packages, libraries, discovered.Unreachable);
+        var index = new PackageIndex(discovered.Packages, libraries, discovered.Unreachable, discovered.Inaccessible);
         var community = CommunityClassifier.Classify(new CommunityReader(communityPath).Read(), index);
         var targets = ScanTargetCollector.Collect(community, communityPath, index, simManaged);
-        var discovery = new DiscoveryOutcome(index, community, targets, ProvisionalCategories(targets, cached, cancellationToken));
+        var discovery = new DiscoveryOutcome(
+            index, community, targets, ProvisionalCategories(targets, cached, cancellationToken),
+            PresentOutside(cardedPaths, libraries, cancellationToken), discovered.Inaccessible);
         callbacks.OnDiscovered?.Invoke(discovery);
 
+        // A Package without a fixed section may still be settling, or has never been read settled: read it again every run. Sim-managed Packages never get a section.
+        var forceRead = targets
+            .Where(t => t.Source != PackageSource.SimManaged && !fixedSections.Contains(t.Name))
+            .Select(t => t.Path)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var scanner = new ContentScanner(reader, cache);
-        var content = scanner.Scan(targets, cached, [.. discovered.Unreachable.Select(l => l.Path)], request.Full, callbacks.Progress, cancellationToken);
+        var content = scanner.Scan(targets, cached, [.. discovered.Unreachable.Select(l => l.Path)], request.Full, forceRead, callbacks.Progress, cancellationToken);
         var analysis = ContentAnalyzer.Analyze(content.Contents, settings);
         return new ScanOutcome(discovery, content, analysis, watch.Elapsed);
+    }
+
+    // Paths under any registered Library (also an offline one) are the Library's business; the rest are checked on disk.
+    private static SortedSet<string> PresentOutside(IReadOnlyList<string> cardedPaths, IReadOnlyList<LibraryRoot> libraries, CancellationToken cancellationToken)
+    {
+        var present = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in cardedPaths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var normalised = PathNormalizer.Normalize(path);
+            if (!libraries.Any(l => PathNormalizer.IsUnder(normalised, l.Path)) && Directory.Exists(normalised))
+                present.Add(normalised);
+        }
+
+        return present;
     }
 
     // Sim-managed Packages are never switched, so their provisional Category isn't needed.

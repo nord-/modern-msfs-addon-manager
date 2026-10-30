@@ -8,7 +8,7 @@ namespace AddonManager.Cli;
 /// <summary>Runs a scan and writes the content fixture. Writes only the scan cache and the explicit --out file.</summary>
 internal static class ExportContentCommand
 {
-    public const string Usage = "Usage: AddonManager.Cli export-content --out <file>";
+    public const string Usage = "Usage: AddonManager.Cli export-content --out <file> [--library <path>[=sections]]";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -20,13 +20,19 @@ internal static class ExportContentCommand
 
     public static int Run(string[] args, TextWriter output, TextWriter error)
     {
-        if (args is not ["--out", var outFile])
+        if (!LibraryOptions.TryParse(args, out var libraries, out var rest, out var libraryError))
+        {
+            error.WriteLine(libraryError);
+            return 2;
+        }
+
+        if (rest is not ["--out", var outFile])
         {
             error.WriteLine(Usage);
             return 2;
         }
 
-        var run = ScanCommand.Execute(full: false, output, out var exitCode);
+        var run = ScanCommand.Execute(full: false, libraries, output, out var exitCode);
         if (run is null)
             return exitCode;
 

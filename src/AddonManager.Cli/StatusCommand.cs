@@ -10,8 +10,22 @@ namespace AddonManager.Cli;
 /// <summary>Shows what the engine sees on this machine. Never creates, removes or saves anything.</summary>
 internal static class StatusCommand
 {
-    public static int Run(TextWriter output)
+    public const string Usage = "Usage: AddonManager.Cli status [--library <path>[=sections]]";
+
+    public static int Run(string[] args, TextWriter output, TextWriter error)
     {
+        if (!LibraryOptions.TryParse(args, out var libraryArgs, out var rest, out var libraryError))
+        {
+            error.WriteLine(libraryError);
+            return 2;
+        }
+
+        if (rest.Length > 0)
+        {
+            error.WriteLine(Usage);
+            return 2;
+        }
+
         var paths = InstallLocator.Locate(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify));
@@ -25,33 +39,51 @@ internal static class StatusCommand
         output.WriteLine($"Packages:     {paths.PackagesPath}");
         output.WriteLine($"Community:    {paths.CommunityPath}");
         output.WriteLine($"Official:     {paths.OfficialPath ?? "(not found)"}");
-        output.WriteLine($"User data:    {AppPaths.UserDataFile}");
+        output.WriteLine($"User data:    {AppPaths.DatabaseFile}");
         output.WriteLine();
 
+        // A missing file means first run: status never creates it.
         Core.State.UserState state;
         try
         {
-            state = new JsonUserStateStore(AppPaths.UserDataFile).Load();
+            // Opening an existing file CacheOnly may touch only the cache tables and side files, never the user tables.
+            if (File.Exists(AppPaths.DatabaseFile))
+            {
+                using var db = UserDataDatabase.Open(AppPaths.DatabaseFile, UserDataAccess.CacheOnly);
+                state = new SqliteUserStateStore(db).Load();
+            }
+            else
+            {
+                state = new Core.State.UserState();
+            }
         }
-        catch (UserStateCorruptException ex)
+        catch (UserDataException ex)
         {
-            output.WriteLine($"User data is corrupt and was left untouched: {ex.Message}");
+            output.WriteLine($"User data cannot be used and was left untouched: {ex.Message}");
             return 1;
         }
 
         var entries = new CommunityReader(paths.CommunityPath).Read();
 
-        // Without saved Libraries every junction would show as External, so use the proposal instead.
-        IReadOnlyList<LibraryRoot> libraries = state.Libraries;
-        var label = "Libraries:";
+        // --library replaces the stored Libraries for this run; nothing is saved.
+        IReadOnlyList<LibraryRoot> libraries = libraryArgs.Count > 0 ? libraryArgs : state.Libraries;
         if (libraries.Count == 0)
         {
-            libraries = LibraryProposer.Propose(entries, new DiskFolderTree()).Select(p => new LibraryRoot(p.Path)).ToList();
-            label = "Libraries (proposed):";
+            output.WriteLine(LibraryOptions.NoneRegistered);
         }
-        output.WriteLine(label);
-        foreach (var library in libraries)
-            output.WriteLine($"  {library.Path}{(library.ManagedElsewhere ? "  [managed elsewhere]" : "")}");
+        else
+        {
+            output.WriteLine("Libraries:");
+            foreach (var library in libraries)
+                output.WriteLine($"  {library.Path}  [{string.Join(", ", library.Sections)}]");
+        }
+        output.WriteLine();
+
+        var coverage = LinkCoverage.Measure(entries, libraries);
+        output.WriteLine($"Links covered: {coverage.Covered} of {coverage.Counted}");
+        output.WriteLine($"Not counted (made by other tools): {coverage.NotCounted.Count}");
+        foreach (var entry in coverage.NotCounted)
+            output.WriteLine($"  {entry.Name}");
         output.WriteLine();
 
         var discovery = LibraryScanner.Discover(libraries);
@@ -89,7 +121,8 @@ internal static class StatusCommand
         }
         else
         {
-            var rows = Reconciler.Diff(state, classified, index);
+            // `status` has no content scan, so it knows no Not found or Not shown Packages.
+            var rows = Reconciler.Diff(state, classified, index, new HashSet<PackageName>(), new HashSet<PackageName>());
             output.WriteLine($"Sync rows: {rows.Count}");
             foreach (var row in rows)
                 output.WriteLine($"  {row.Package}: {row.Reason}{(row.NewTarget is null ? "" : " -> " + row.NewTarget)} (default {row.DefaultChoice})");

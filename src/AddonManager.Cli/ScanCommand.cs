@@ -12,40 +12,46 @@ using AddonManager.Sim2020.Content;
 namespace AddonManager.Cli;
 
 /// <summary>The result of one real scan: the outcome plus the settings it ran with.</summary>
-internal sealed record ScanRun(ScanOutcome Outcome, ContentSettings Settings);
+internal sealed record ScanRun(ScanOutcome Outcome, UserState State);
 
 /// <summary>Runs a content scan against the real machine. Writes only the scan cache (and the explicit --token-links file).</summary>
 internal static class ScanCommand
 {
-    public const string Usage = "Usage: AddonManager.Cli scan [--full] [--token-links <file>]";
+    public const string Usage = "Usage: AddonManager.Cli scan [--full] [--token-links <file>] [--library <path>[=sections]]";
 
     /// <summary>One collapsed Token link: a Package name and code with the source ("name" or "title") that produced it.</summary>
     internal sealed record TokenRow(string Package, AirportCode Code, string Source);
 
     public static int Run(string[] args, TextWriter output, TextWriter error)
     {
+        if (!LibraryOptions.TryParse(args, out var libraries, out var rest, out var libraryError))
+        {
+            error.WriteLine(libraryError);
+            return 2;
+        }
+
         var full = false;
         string? tokenLinks = null;
-        for (var i = 0; i < args.Length; i++)
+        for (var i = 0; i < rest.Length; i++)
         {
-            switch (args[i])
+            switch (rest[i])
             {
                 case "--full": full = true; break;
-                case "--token-links" when i + 1 < args.Length: tokenLinks = args[++i]; break;
+                case "--token-links" when i + 1 < rest.Length: tokenLinks = rest[++i]; break;
                 default:
                     error.WriteLine(Usage);
                     return 2;
             }
         }
 
-        var run = Execute(full, output, out var exitCode);
+        var run = Execute(full, libraries, output, out var exitCode);
         if (run is null)
             return exitCode;
 
         Report(run, output);
         if (tokenLinks is not null)
         {
-            var rows = TokenRows(run.Outcome.Content.Contents, run.Settings);
+            var rows = TokenRows(run.Outcome.Content.Contents, run.State.Content);
             WriteText(tokenLinks, string.Concat(rows.Select(r => $"{r.Package}\t{r.Code}\t{r.Source}\t?\r\n")));
             output.WriteLine($"Wrote {rows.Count} Token links to {tokenLinks}");
         }
@@ -53,8 +59,8 @@ internal static class ScanCommand
         return 0;
     }
 
-    /// <summary>Locates the install, loads user data and Libraries (or the proposal) and runs the scan. Null when it cannot run.</summary>
-    public static ScanRun? Execute(bool full, TextWriter output, out int exitCode)
+    /// <summary>Locates the install, loads user data and runs the scan with the stored Libraries, or <paramref name="libraryArgs"/> when given. Null when it cannot run. <paramref name="listLibraries"/> false leaves the Libraries and cache listing to the caller.</summary>
+    public static ScanRun? Execute(bool full, IReadOnlyList<LibraryRoot> libraryArgs, TextWriter output, out int exitCode, bool listLibraries = true)
     {
         exitCode = 1;
         var paths = InstallLocator.Locate(
@@ -66,41 +72,63 @@ internal static class ScanCommand
             return null;
         }
 
+        // One instance for the cache and the user data: a second connection would look like another program holding the lock.
+        UserDataDatabase db;
         UserState state;
         try
         {
-            state = new JsonUserStateStore(AppPaths.UserDataFile).Load();
+            db = UserDataDatabase.Open(AppPaths.DatabaseFile, UserDataAccess.CacheOnly);
+            try
+            {
+                state = new SqliteUserStateStore(db).Load();
+            }
+            catch
+            {
+                db.Dispose();
+                throw;
+            }
         }
-        catch (UserStateCorruptException ex)
+        catch (UserDataException ex)
         {
-            output.WriteLine($"User data is corrupt and was left untouched: {ex.Message}");
+            output.WriteLine($"User data cannot be used and was left untouched: {ex.Message}");
             return null;
         }
 
-        // Without saved Libraries use the proposal, as status does.
+        using var owned = db;
+
+        // --library replaces the stored Libraries for this run; nothing is saved.
+        if (libraryArgs.Count > 0)
+            state.Libraries = [.. libraryArgs];
         if (state.Libraries.Count == 0)
         {
-            var entries = new CommunityReader(paths.CommunityPath).Read();
-            state.Libraries = LibraryProposer.Propose(entries, new DiskFolderTree()).Select(p => new LibraryRoot(p.Path)).ToList();
-            output.WriteLine("Libraries (proposed, none saved):");
+            output.WriteLine(LibraryOptions.NoneRegistered);
+            return null;
         }
-        else
+
+        if (listLibraries)
         {
             output.WriteLine("Libraries:");
+            foreach (var library in state.Libraries)
+                output.WriteLine($"  {library.Path}  [{string.Join(", ", library.Sections)}]");
+            output.WriteLine($"Database: {AppPaths.DatabaseFile}");
+            output.WriteLine();
         }
 
-        foreach (var library in state.Libraries)
-            output.WriteLine($"  {library.Path}");
-        output.WriteLine($"Scan cache: {AppPaths.ScanCacheFile}");
-        output.WriteLine();
-
-        Directory.CreateDirectory(AppPaths.CacheDirectory);
-        using var cache = new SqliteScanCache(AppPaths.ScanCacheFile);
+        var cache = new SqliteScanCache(db);
         var reader = new PackageContentReader(new AirportNames(paths.OfficialPath));
         using var service = new ScanService(reader, cache, paths.CommunityPath, new OfficialPackages(paths.OfficialPath));
-        var outcome = service.RunAsync(state, full).GetAwaiter().GetResult();
-        exitCode = 0;
-        return new ScanRun(outcome, state.Content);
+        try
+        {
+            var outcome = service.RunAsync(state, full).GetAwaiter().GetResult();
+            exitCode = 0;
+            return new ScanRun(outcome, state);
+        }
+        catch (UserDataException ex)
+        {
+            // Another program took the file mid-run: say so and fail, without a stack trace.
+            output.WriteLine($"The scan stopped and user data was left untouched: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>Distinct (Package name, code) Token links from <see cref="AirportLinker.TokenCandidates"/>, name before title, sorted by Package then code.</summary>
@@ -131,22 +159,32 @@ internal static class ScanCommand
     internal static string Label(AirportCode code, IReadOnlyDictionary<AirportCode, Airport> airports)
         => airports.TryGetValue(code, out var airport) && !string.IsNullOrWhiteSpace(airport.Name) ? $"{code}  {airport.Name}" : code.Value;
 
+    /// <summary>Names the registered Libraries that can't be read (a mistyped path or an unplugged drive), so a wall of locked cards has its explanation.</summary>
+    internal static void WriteUnreachable(PackageIndex index, TextWriter o)
+    {
+        o.WriteLine($"Unreachable Libraries: {index.Unreachable.Count}");
+        foreach (var library in index.Unreachable)
+            o.WriteLine($"  {library.Path}");
+    }
+
     internal static void WriteText(string file, string text)
         => File.WriteAllText(file, text, new UTF8Encoding(false));
 
     private static void Report(ScanRun run, TextWriter o)
     {
-        var (outcome, settings) = run;
+        var (outcome, state) = run;
+        var settings = state.Content;
         var contents = outcome.Content.Contents;
         var analysis = outcome.Analysis;
         var airports = analysis.Airports;
         var comparer = StringComparer.OrdinalIgnoreCase;
 
         o.WriteLine($"Elapsed: {outcome.Elapsed.TotalSeconds:F1} s");
+        WriteUnreachable(outcome.Discovery.Index, o);
         o.WriteLine("Targets:");
         foreach (var group in outcome.Discovery.Targets.GroupBy(t => t.Source).OrderBy(g => g.Key))
             o.WriteLine($"  {group.Key,-10} {group.Count()}");
-        o.WriteLine($"Read {outcome.Content.Read}, reused {outcome.Content.Reused}, failed {outcome.Content.Failed}");
+        o.WriteLine($"Read {outcome.Content.Read}, reused {outcome.Content.Reused}, failed {outcome.Content.FailedCount}");
         o.WriteLine($"Unreadable BGL files: {contents.Sum(c => c.UnreadableBglCount)} in {contents.Count(c => c.UnreadableBglCount > 0)} Packages");
         o.WriteLine();
 

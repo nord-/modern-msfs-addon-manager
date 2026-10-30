@@ -1,0 +1,47 @@
+{
+  "exported": "2026-10-30",
+  "packages": [
+    {
+      "name": "epkk-orbx",
+      "path": "C:\\Sim\\Addons\\Scenery\\epkk-orbx",
+      "source": "Library",
+      "title": "EPKK",
+      "creator": "Acme",
+      "contentType": "SCENERY",
+      "packageVersion": "1.0.0",
+      "dependencies": [],
+      "hasBgl": true,
+      "bglSectionTypes": [
+        37
+      ],
+      "unreadableBgl": 0,
+      "airports": [
+        {
+          "code": "EPKK",
+          "name": "Krakow",
+          "lat": 50.07,
+          "lon": 19.78
+        }
+      ],
+      "isAirTraffic": false,
+      "aircraft": [],
+      "airplaneFolders": [],
+      "encryptedAirplaneFolders": [],
+      "hasThumbnail": false,
+      "gsxFiles": [
+        "GSX-Profile-EPKK\\epkk-x.ini",
+        "GSX-Profile-EPKK\\epkk-x.py"
+      ]
+    }
+  ],
+  "gsxFolder": {
+    "found": true,
+    "files": [
+      "gsx.cfg",
+      "essa-orbx.py",
+      "LPMA.ini",
+      "lpma.off",
+      "YALR1.ini"
+    ]
+  }
+}

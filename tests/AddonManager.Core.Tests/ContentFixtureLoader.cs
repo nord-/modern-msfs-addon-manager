@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 
 namespace AddonManager.Core.Tests;
@@ -19,11 +20,17 @@ internal static class ContentFixtureLoader
         Converters = { new JsonStringEnumConverter() },
     };
 
-    public static IReadOnlyList<PackageContent> Load(string name)
-    {
-        var file = JsonSerializer.Deserialize<FixtureFile>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", name + ".json")), Options)!;
-        return file.Packages.Select(ToContent).ToList();
-    }
+    // The GSX folder of the exporting machine is never in a fixture (names only); this stands in for it, like UserProfile does for paths.
+    private const string GsxFolder = @"C:\Users\user\AppData\Roaming\Virtuali\GSX\MSFS";
+
+    public static IReadOnlyList<PackageContent> Load(string name) => Read(name).Packages.Select(ToContent).ToList();
+
+    /// <summary>The GSX folder the fixture was exported with, rebuilt by the same pairing code the reader runs; missing when it was not found or the fixture has none.</summary>
+    public static GsxFolderContent LoadGsx(string name)
+        => Read(name).GsxFolder is { Found: true } folder ? GsxFolderContent.FromFiles(GsxFolder, folder.Files) : GsxFolderContent.Missing;
+
+    private static FixtureFile Read(string name)
+        => JsonSerializer.Deserialize<FixtureFile>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", name + ".json")), Options)!;
 
     private static PackageContent ToContent(PackageDto p)
     {
@@ -49,13 +56,18 @@ internal static class ContentFixtureLoader
             p.Aircraft,
             p.AirplaneFolders,
             p.EncryptedAirplaneFolders,
-            p.HasThumbnail ? Path.Combine(path, "ContentInfo", p.Name, "Thumbnail.jpg") : null);
+            p.HasThumbnail ? Path.Combine(path, "ContentInfo", p.Name, "Thumbnail.jpg") : null)
+        {
+            GsxFiles = p.GsxFiles ?? [],
+        };
     }
 
     private static AirportCode Code(string text)
         => AirportCode.TryParse(text, out var code) ? code : throw new InvalidDataException($"Bad airport code in fixture: {text}");
 
-    private sealed record FixtureFile(List<PackageDto> Packages);
+    private sealed record FixtureFile(List<PackageDto> Packages, GsxFolderDto? GsxFolder = null);
+
+    private sealed record GsxFolderDto(bool Found, List<string> Files);
 
     private sealed record AirportDto(string Code, string? Name, double? Lat, double? Lon);
 
@@ -77,5 +89,6 @@ internal static class ContentFixtureLoader
         List<AircraftConfig> Aircraft,
         List<string> AirplaneFolders,
         List<string> EncryptedAirplaneFolders,
-        bool HasThumbnail);
+        bool HasThumbnail,
+        List<string>? GsxFiles = null);
 }

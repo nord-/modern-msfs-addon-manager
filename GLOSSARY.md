@@ -49,6 +49,15 @@ _Avoid_: Addon folder, repository, store, Library type
 **Library not found**:
 A registered Library whose root doesn't answer, such as an unplugged drive. Nothing changes while it is gone: its Packages keep their cards, choices and links.
 
+**Shipped profile**:
+A GSX profile (`.ini`, with the `.py` files of its ICAO code in the same folder) that a scenery Package carries inside its own folder. It is part of that Package, not a Package of its own, never counts for the Airport's GSX status, and can be copied into the GSX folder.
+
+**Two profiles**:
+The GSX status of an Airport that has two or more active profiles in the GSX folder for its ICAO code. The card gets one warning per such ICAO code.
+
+**GSX files not recognised**:
+Files in the GSX folder that the app can't tie to an Airport: no ICAO code in the name, or an unknown 3-character ICAO code. They are listed, never made Packages.
+
 **Community**:
 The sim's Community folder. A Package is loaded from here when an entry in Community points to it.
 

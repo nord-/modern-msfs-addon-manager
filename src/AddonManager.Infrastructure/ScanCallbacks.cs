@@ -1,5 +1,6 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 
 namespace AddonManager.Infrastructure;
@@ -17,7 +18,11 @@ public sealed record DiscoveryOutcome(
     IReadOnlyList<string> Inaccessible);
 
 /// <param name="Elapsed">The wall time of the whole run, from its start (cache load included) until the analysis is done.</param>
-public sealed record ScanOutcome(DiscoveryOutcome Discovery, ContentScanResult Content, ContentAnalysis Analysis, TimeSpan Elapsed);
+public sealed record ScanOutcome(DiscoveryOutcome Discovery, ContentScanResult Content, ContentAnalysis Analysis, TimeSpan Elapsed)
+{
+    /// <summary>The GSX folder as read at the end of the run; never cached. <see cref="GsxFolderContent.Missing"/> when the service has no GSX folder.</summary>
+    public GsxFolderContent Gsx { get; init; } = GsxFolderContent.Missing;
+}
 
 /// <summary>Called on the scan thread. <c>OnCached</c> runs first, before discovery, with the cached contents and their analysis, so a caller can build a <c>BoardInput</c> and re-analyse it with the current cards.</summary>
 public sealed record ScanCallbacks(

@@ -66,6 +66,30 @@ public sealed class ScanServiceTests : IDisposable
     private static AirportCode Code(string text) => AirportCode.TryParse(text, out var code) ? code : throw new ArgumentException(text);
 
     [Fact]
+    public async Task A_run_reads_the_gsx_folder()
+    {
+        var gsx = Directory.CreateDirectory(Path.Combine(temp.Root, "gsx")).FullName;
+        File.WriteAllText(Path.Combine(gsx, "eham.ini"), "");
+        using var withGsx = new ScanService(reader, cache, community, new FakeSimManaged(simFolders), gsx);
+
+        var outcome = await Bounded(withGsx.RunAsync(state, false));
+
+        Assert.True(outcome.Gsx.Found);
+        Assert.Equal("eham", Assert.Single(outcome.Gsx.Profiles).Name.Value);
+    }
+
+    [Fact]
+    public async Task A_run_without_a_gsx_folder_reports_it_missing()
+    {
+        var withoutFolder = await Bounded(service.RunAsync(state, false));
+        using var absent = new ScanService(reader, cache, community, new FakeSimManaged(simFolders), Path.Combine(temp.Root, "nope"));
+        var withAbsentFolder = await Bounded(absent.RunAsync(state, false));
+
+        Assert.False(withoutFolder.Gsx.Found);
+        Assert.False(withAbsentFolder.Gsx.Found);
+    }
+
+    [Fact]
     public async Task Discovery_is_reported_before_content_is_read()
     {
         var markerCallsAtDiscovery = -1;

@@ -5,10 +5,11 @@ namespace AddonManager.Infrastructure;
 /// (buffer overflow), restarts one quiet-period timer, so a burst gives a single <see cref="RescanNeeded"/>.
 /// A watcher that fails (for example an unplugged drive) stays stopped; the owner recreates the watcher
 /// after each scan with the Libraries that are reachable then. Events run on a timer thread, so handlers must not
-/// throw. <see cref="Dispose"/> waits for an in-flight raise to finish; after it returns no event is raised, so a handler
+/// throw. The GSX folder, when given and present, is watched like a Library but not recursively, and its events never raise
+/// <see cref="CommunityChanged"/>. <see cref="Dispose"/> waits for an in-flight raise to finish; after it returns no event is raised, so a handler
 /// must not block on a thread that may be calling <see cref="Dispose"/> (marshal with <c>InvokeAsync</c>, not <c>Invoke</c>).
 /// </summary>
-public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> libraryPaths, TimeSpan quietPeriod) : IDisposable
+public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> libraryPaths, TimeSpan quietPeriod, string? gsxFolder = null) : IDisposable
 {
     private const int BufferSize = 65536;
 
@@ -42,6 +43,10 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
             foreach (var library in libraryPaths)
                 AddWatcher(library, isCommunity: false, recursive: true,
                     NotifyFilters.DirectoryName | NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size);
+            // Like a Library, a folder that does not exist now is not watched; the next scan picks it up.
+            if (gsxFolder is not null)
+                AddWatcher(gsxFolder, isCommunity: false, recursive: false,
+                    NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size);
         }
     }
 

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 
@@ -10,7 +11,7 @@ namespace AddonManager.Infrastructure;
 /// Runs discovery and the content scan as one operation (spec 7.2-7.3). At most one run is in progress; calls that arrive meanwhile
 /// share one queued follow-up run. Never saves <see cref="UserState"/> and never touches Community.
 /// </summary>
-public sealed class ScanService(IPackageContentReader reader, IScanCache cache, string communityPath, ISimManagedPackages simManaged) : IDisposable
+public sealed class ScanService(IPackageContentReader reader, IScanCache cache, string communityPath, ISimManagedPackages simManaged, string? gsxFolder = null) : IDisposable
 {
     /// <param name="FixedSections">The names of Packages whose menu section is fixed; every other Package is read again on each run.</param>
     /// <param name="CardedPaths">The memo paths of the Packages that are on a card.</param>
@@ -174,7 +175,10 @@ public sealed class ScanService(IPackageContentReader reader, IScanCache cache, 
         var scanner = new ContentScanner(reader, cache);
         var content = scanner.Scan(targets, cached, [.. discovered.Unreachable.Select(l => l.Path)], request.Full, forceRead, callbacks.Progress, cancellationToken);
         var analysis = ContentAnalyzer.Analyze(content.Contents, settings);
-        return new ScanOutcome(discovery, content, analysis, watch.Elapsed);
+
+        // Read last, so a profile copied while the run was scanning is seen by the next run's board and not lost between two reads (plan 4, D2).
+        var gsx = gsxFolder is null ? GsxFolderContent.Missing : GsxFolderReader.Read(gsxFolder);
+        return new ScanOutcome(discovery, content, analysis, watch.Elapsed) { Gsx = gsx };
     }
 
     // Paths under any registered Library (also an offline one) are the Library's business; the rest are checked on disk.

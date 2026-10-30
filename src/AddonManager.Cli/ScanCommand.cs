@@ -116,7 +116,7 @@ internal static class ScanCommand
 
         var cache = new SqliteScanCache(db);
         var reader = new PackageContentReader(new AirportNames(paths.OfficialPath));
-        using var service = new ScanService(reader, cache, paths.CommunityPath, new OfficialPackages(paths.OfficialPath));
+        using var service = new ScanService(reader, cache, paths.CommunityPath, new OfficialPackages(paths.OfficialPath), AppPaths.GsxProfileFolder);
         try
         {
             var outcome = service.RunAsync(state, full).GetAwaiter().GetResult();

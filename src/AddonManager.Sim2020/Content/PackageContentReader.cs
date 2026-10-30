@@ -1,4 +1,5 @@
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Sim2020.Bgl;
 
@@ -39,9 +40,12 @@ public sealed class PackageContentReader(AirportNames airportNames) : IPackageCo
             return null;
 
         List<string> files;
+        List<string> gsxFiles;
         try
         {
             files = [.. LayoutReader.ListFiles(target.Path).Order(StringComparer.OrdinalIgnoreCase)];
+            // Orbx ships profiles (GSX-Profile-EPKK\, GSX-PROFILE\) that its layout.json does not list, so the disk is walked for them too.
+            gsxFiles = [.. files.Concat(LayoutReader.ListDiskFiles(target.Path)).Where(IsShippedGsxFile).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
         }
         catch (DirectoryNotFoundException)
         {
@@ -68,8 +72,15 @@ public sealed class PackageContentReader(AirportNames airportNames) : IPackageCo
             airplanes.Configs,
             airplanes.Folders,
             airplanes.EncryptedFolders,
-            ThumbnailOf(target.Path, files));
+            ThumbnailOf(target.Path, files))
+        {
+            GsxFiles = gsxFiles,
+        };
     }
+
+    /// <summary>A <c>.ini</c> or <c>.py</c> whose name yields an ICAO code (<c>.off</c> files are not shipped profiles), matched on the file's own name.</summary>
+    private static bool IsShippedGsxFile(string file)
+        => GsxFileName.TryParse(Path.GetFileName(file), out var kind, out var code) && kind != GsxFileKind.Disabled && code != default;
 
     public DateTimeOffset? NewestWrite(string packagePath)
     {

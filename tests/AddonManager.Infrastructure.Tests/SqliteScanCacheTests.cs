@@ -84,6 +84,30 @@ public sealed class SqliteScanCacheTests : IDisposable
     }
 
     [Fact]
+    public void Gsx_files_round_trip()
+    {
+        var content = Sample() with { GsxFiles = [@"GSX\essa-orbx.py", @"GSX\essa-x.ini"] };
+        using (var db = UserDataDatabase.Open(DbFile))
+        {
+            new SqliteScanCache(db).Upsert([content]);
+        }
+
+        using var reopened = UserDataDatabase.Open(DbFile);
+        Assert.Equal(content.GsxFiles, new SqliteScanCache(reopened).LoadAll().Single().GsxFiles);
+    }
+
+    [Fact]
+    public void A_row_without_gsx_files_loads_with_an_empty_list()
+    {
+        using var db = UserDataDatabase.Open(DbFile);
+        var cache = new SqliteScanCache(db);
+        cache.Upsert([Sample() with { GsxFiles = ["a.ini"] }]);
+        Exec(db, "UPDATE scan_package SET content = json_remove(content, '$.GsxFiles')");
+
+        Assert.Empty(Assert.Single(cache.LoadAll()).GsxFiles);
+    }
+
+    [Fact]
     public void Round_trips_content_whose_optional_members_are_null()
     {
         var content = Sample() with
@@ -192,6 +216,8 @@ public sealed class SqliteScanCacheTests : IDisposable
     [InlineData("UPDATE scan_package SET content = json_set(content, '$.AircraftConfigs', json('[null]'))")]
     [InlineData("UPDATE scan_package SET content = json_set(content, '$.AirplaneFolders', json('[null]'))")]
     [InlineData("UPDATE scan_package SET content = json_set(content, '$.Manifest.Dependencies', json('[null]'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.GsxFiles', json('null'))")]
+    [InlineData("UPDATE scan_package SET content = json_set(content, '$.GsxFiles', json('[null]'))")]
     public void Row_that_is_not_valid_content_rebuilds_the_cache(string sql)
     {
         using var db = UserDataDatabase.Open(DbFile);

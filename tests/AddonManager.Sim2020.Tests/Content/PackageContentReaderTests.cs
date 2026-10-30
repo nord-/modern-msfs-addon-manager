@@ -50,6 +50,46 @@ public sealed class PackageContentReaderTests : IDisposable
             "{\"content\":[" + string.Join(",", paths.Select(p => "{\"path\":\"" + p.Replace("\\", "/") + "\"}")) + "]}");
 
     [Fact]
+    public void Lists_gsx_files_that_yield_an_icao_code()
+    {
+        var pkg = Package(
+            "gsx1",
+            (@"GSX-Profile-EPKK\epkk-x.ini", [1]),
+            (@"GSX\essa-orbx.py", [1]),
+            (@"GSX\essa-orbx.off", [1]),
+            (@"GSX\panel.ini", [1]),
+            (@"Data\GSX\gsx.cfg", [1]),
+            (@"scenery\x.bgl", [1]));
+
+        var content = _reader.Read(Target(pkg), new ChangeMarker(1, 1, null, null))!;
+
+        Assert.Equal([@"GSX-Profile-EPKK\epkk-x.ini", @"GSX\essa-orbx.py"], content.GsxFiles);
+    }
+
+    [Fact]
+    public void A_profile_listed_in_layout_json_is_found()
+    {
+        var pkg = Package("gsx2");
+        WriteLayout(pkg, "GSX/lpma-x.ini", "scenery/x.txt");
+
+        var content = _reader.Read(Target(pkg), new ChangeMarker(1, 1, 1, 1))!;
+
+        Assert.Equal([@"GSX\lpma-x.ini"], content.GsxFiles);
+    }
+
+    [Fact]
+    public void A_profile_missing_from_layout_json_is_found_on_disk()
+    {
+        // Orbx ships GSX-Profile-EPKK\epkk-papadelta.ini without listing it in layout.json.
+        var pkg = Package("gsx3", (@"GSX-Profile-EPKK\epkk-x.ini", [1]), (@"GSX-Profile-EPKK\epkk-x.py", [1]), (@"scenery\x.txt", [1]));
+        WriteLayout(pkg, "scenery/x.txt");
+
+        var content = _reader.Read(Target(pkg), new ChangeMarker(1, 1, 1, 1))!;
+
+        Assert.Equal([@"GSX-Profile-EPKK\epkk-x.ini", @"GSX-Profile-EPKK\epkk-x.py"], content.GsxFiles);
+    }
+
+    [Fact]
     public void Newest_write_finds_the_newest_file_below_the_package()
     {
         var pkg = Package("nw1", ("scenery\\a.bgl", [1]), ("scenery\\deep\\b.bgl", [2]));

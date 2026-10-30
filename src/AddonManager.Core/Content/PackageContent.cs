@@ -21,6 +21,9 @@ public sealed record PackageContent(
     IReadOnlyList<string> EncryptedAirplaneFolders,
     string? ThumbnailPath)
 {
+    /// <summary>Package-relative paths (<c>\</c> separators, sorted) of the <c>.ini</c> and <c>.py</c> files whose names yield an Airport code: the GSX profiles the Package ships.</summary>
+    public IReadOnlyList<string> GsxFiles { get; init; } = [];
+
     /// <summary>
     /// The airport records that derivation uses (C6: the raw <c>Airports</c> stay as read). A record at exactly 0,0 is a
     /// template (SayIntentions ships one with code "ICAO") and is not an Airport; every rule reads records through here.

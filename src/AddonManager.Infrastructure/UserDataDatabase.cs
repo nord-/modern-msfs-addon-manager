@@ -19,7 +19,7 @@ internal sealed record UserMigration(int From, Action<SqliteConnection, SqliteTr
 public sealed class UserDataDatabase : IDisposable
 {
     public const int UserVersion = 1;
-    public const int CacheVersion = 3;
+    public const int CacheVersion = 4;
 
     private const int SqliteError = 1;
     private const int SqliteBusy = 5;

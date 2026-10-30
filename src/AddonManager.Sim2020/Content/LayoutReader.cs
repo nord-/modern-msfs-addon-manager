@@ -69,6 +69,12 @@ public static class LayoutReader
         if (Read(packagePath) is { } listed)
             return listed;
 
+        return ListDiskFiles(packagePath);
+    }
+
+    /// <summary>A recursive walk of the folder (reparse points skipped) as relative paths, whatever <c>layout.json</c> lists. Throws when the Package root can't be listed.</summary>
+    public static IReadOnlyList<string> ListDiskFiles(string packagePath)
+    {
         var files = new List<string>();
         Walk(new DirectoryInfo(packagePath), "", files, isRoot: true);
         return files;

@@ -93,6 +93,7 @@ public sealed class SqliteScanCache(UserDataDatabase db) : IScanCache
             || content.AircraftConfigs.Any(a => a is null)
             || content.AirplaneFolders.Any(f => f is null)
             || content.EncryptedAirplaneFolders.Any(f => f is null)
+            || content.GsxFiles.Any(f => f is null)
             || content.Manifest.Dependencies.Any(d => d is null);
 
     // SQLite's NOCASE folds ASCII only, while the in-memory index compares ordinal-ignore-case; the table is keyed on a folded copy instead.

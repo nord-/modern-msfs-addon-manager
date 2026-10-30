@@ -8,4 +8,8 @@ namespace AddonManager.Core.Cards;
 /// <param name="Code">The ICAO code the file name yields.</param>
 /// <param name="Path">The file's path.</param>
 /// <param name="Disabled">True for a <c>.off</c> file.</param>
-public sealed record GsxProfile(PackageName Name, AirportCode Code, string Path, bool Disabled);
+public sealed record GsxProfile(PackageName Name, AirportCode Code, string Path, bool Disabled)
+{
+    /// <summary>The <c>.off</c> file when both the <c>.ini</c> and the <c>.off</c> of one name exist.</summary>
+    public string? OffVariantPath { get; init; }
+}

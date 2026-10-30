@@ -14,7 +14,8 @@ public static class AirportCatalog
     public static IReadOnlyDictionary<AirportCode, Airport> Build(
         IReadOnlyList<PackageContent> contents,
         IReadOnlyList<AirportLink> links,
-        ContentSettings settings)
+        ContentSettings settings,
+        IReadOnlyList<AirportRecord>? remembered = null)
     {
         var real = RealLinks(links, settings);
         var linkedPairs = links.Select(l => (l.Package.Path, l.Code)).ToHashSet(PairComparer);
@@ -41,15 +42,18 @@ public static class AirportCatalog
             .ThenBy(r => r.Package.Path, StringComparer.OrdinalIgnoreCase)
             .ToLookup(r => r.Record.Code);
 
-        var codes = new HashSet<AirportCode>(AirportLinker.KnownCodes(contents, settings));
+        var codes = new HashSet<AirportCode>(AirportLinker.KnownCodes(contents, settings, remembered));
         codes.UnionWith(links.Select(l => l.Code));
+
+        // A remembered record speaks only for what no content record gives: name and position each fall back to it on their own (spec 11).
+        var rememberedByCode = (remembered ?? []).ToLookup(r => r.Code);
 
         var result = new Dictionary<AirportCode, Airport>();
         foreach (var code in codes)
         {
             string? name = null;
             GeoPoint? position = null;
-            foreach (var (record, _, _) in byCode[code])
+            foreach (var record in byCode[code].Select(r => r.Record).Concat(rememberedByCode[code]))
             {
                 name ??= IsUsableName(record.Name) ? record.Name : null;
                 position ??= record.Position;
@@ -117,7 +121,7 @@ public static class AirportCatalog
     }
 
     /// <summary>Links from Packages that aren't excluded (C4), plus Manual links.</summary>
-    private static ILookup<AirportCode, AirportLink> RealLinks(IReadOnlyList<AirportLink> links, ContentSettings settings)
+    public static ILookup<AirportCode, AirportLink> RealLinks(IReadOnlyList<AirportLink> links, ContentSettings settings)
         => links
             .Where(l => l.Reason == AirportLinkReason.Manual || !AirportLinker.IsExcluded(l.Package, settings))
             .ToLookup(l => l.Code);

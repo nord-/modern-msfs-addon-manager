@@ -14,6 +14,7 @@ internal sealed class FakeContentReader : IPackageContentReader
     private readonly HashSet<string> vanishOnRead = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Exception> readFailures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Exception> markerFailures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DateTimeOffset?> newestWrites = new(StringComparer.OrdinalIgnoreCase);
     private int reads;
 
     /// <summary>The <c>UnreadableBglCount</c> of every package that is read from now on.</summary>
@@ -24,6 +25,11 @@ internal sealed class FakeContentReader : IPackageContentReader
 
     /// <summary>Runs at the start of every <see cref="Read"/>, with the number of reads so far including this one.</summary>
     public Action<int>? OnRead { get; set; }
+
+    /// <summary>The newest write time per package name; a package not set here is quiet (<see cref="DateTimeOffset.UnixEpoch"/>).</summary>
+    public IDictionary<string, DateTimeOffset?> NewestWrites => newestWrites;
+
+    public Exception? NewestWriteFailure { get; set; }
 
     public void Touch(string name) => versions[name] = versions.GetValueOrDefault(name) + 1;
 
@@ -43,6 +49,13 @@ internal sealed class FakeContentReader : IPackageContentReader
         if (markerFailures.TryGetValue(name, out var failure))
             throw failure;
         return vanished.Contains(name) ? null : new ChangeMarker(versions.GetValueOrDefault(name), 0, null, null);
+    }
+
+    public DateTimeOffset? NewestWrite(string packagePath)
+    {
+        if (NewestWriteFailure is not null)
+            throw NewestWriteFailure;
+        return newestWrites.TryGetValue(NameOf(packagePath), out var t) ? t : DateTimeOffset.UnixEpoch;
     }
 
     public bool? HasBgl(string packagePath) => null;

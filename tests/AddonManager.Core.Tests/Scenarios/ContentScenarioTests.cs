@@ -88,8 +88,13 @@ public class ContentScenarioTests
     {
         Assert.Equal(Category.Other, Cat("fsdreamteam-gsx-pro"));
         Assert.Equal(Category.Other, Cat("neofly-neofly-smokes"));
-        Assert.Equal(Category.Other, Cat("fsltl-traffic-base"));
     }
+
+    [Theory, InlineData("pms50-instrument-gtn750-pro"), InlineData("sky4sim-os"), InlineData("orbx-volanta-aerocaches")]
+    public void These_are_aircraft(string name) => Assert.Equal(Category.Aircraft, Cat(name));
+
+    [Fact]
+    public void Air_traffic_stays_other() => Assert.Equal(Category.Other, Cat("fsltl-traffic-base"));
 
     [Fact]
     public void Sal1800_packages_share_one_group()

@@ -14,16 +14,24 @@ public sealed record ContentAnalysis(
 /// <summary>The single entry point that turns scanned content into categories, Airport links, Airports and the aircraft index.</summary>
 public static class ContentAnalyzer
 {
-    public static ContentAnalysis Analyze(IReadOnlyList<PackageContent> contents, ContentSettings settings)
+    /// <summary>
+    /// <paramref name="overrides"/> and <paramref name="remembered"/> come from the cards (<c>CardLinks</c>); a scan knows neither,
+    /// so callers that build a board re-analyse with the current cards (<c>BoardInput.Reanalyze</c>).
+    /// </summary>
+    public static ContentAnalysis Analyze(
+        IReadOnlyList<PackageContent> contents,
+        ContentSettings settings,
+        AirportLinkOverrides? overrides = null,
+        IReadOnlyList<AirportRecord>? remembered = null)
     {
         var aircraft = AircraftIndex.Build(contents);
-        var links = AirportLinker.Link(contents, settings);
-        var airports = AirportCatalog.Build(contents, links, settings);
+        var links = AirportLinker.Link(contents, settings, overrides ?? AirportLinkOverrides.None, remembered);
+        var airports = AirportCatalog.Build(contents, links, settings, remembered);
 
         var categories = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
         foreach (var c in contents)
         {
-            categories[c.Path] = CategoryRules.Final(c.Manifest.ContentType, c.HasBgl, c.IsAirTraffic, aircraft.RoleOf(c) != AircraftRole.None);
+            categories[c.Path] = CategoryRules.Final(c.Manifest.ContentType, c.HasBgl, c.IsAirTraffic);
         }
 
         var excluded = contents

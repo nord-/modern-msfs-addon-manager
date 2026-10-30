@@ -11,7 +11,7 @@ public enum LinkOpKind { Create, Remove, Repoint }
 
 public sealed record LinkOp(LinkOpKind Kind, PackageName Package, string LinkPath, string? TargetPath);
 
-public enum RejectReason { NameTaken, Locked, NotInLibrary, Offline }
+public enum RejectReason { NameTaken, NotInLibrary, Offline }
 
 /// <param name="HeldBy">For <see cref="RejectReason.NameTaken"/>: the class of the entry holding the name.</param>
 public sealed record Rejection(PackageName Package, RejectReason Reason, EntryClass? HeldBy = null);
@@ -30,18 +30,19 @@ public static class LinkPlanner
 
         foreach (var (name, want) in desired)
         {
-            // Rule 1 (E3): checked before the lock, so a pending change on an unplugged Library stays pending
-            // even when a reachable duplicate sits in a Managed elsewhere Library.
-            if (PackageFacts.IsOffline(state, name, index, community, want.CopyPath))
+            // Rule 1 (E3): checked first, so a pending change on an unplugged Library stays pending.
+            if (PackageFacts.IsLibraryNotFound(state, name, index, community, want.CopyPath))
             {
                 rejections.Add(new Rejection(name, RejectReason.Offline));
                 continue;
             }
 
-            // Rule 2 (E10): locked Packages are never changed, not even their active copy.
-            if (PackageFacts.IsLocked(state, name, index, community))
+            var entry = PackageFacts.EntryFor(community, name);
+
+            // Rule 2 (spec 6.1): while a Fixed or External entry holds the name, no Library copy can be made active.
+            if (want.CopyPath is not null && entry?.Class is EntryClass.Fixed or EntryClass.External)
             {
-                rejections.Add(new Rejection(name, RejectReason.Locked));
+                rejections.Add(new Rejection(name, RejectReason.NameTaken, entry.Class));
                 continue;
             }
 
@@ -54,8 +55,6 @@ public static class LinkPlanner
             }
 
             var linkPath = Path.Combine(communityPath, name.Value);
-            var entry = PackageFacts.EntryFor(community, name);
-
             switch (entry?.Class)
             {
                 // Rule 4.

@@ -4,7 +4,7 @@ using AddonManager.Core.Packages;
 
 namespace AddonManager.Core.Content;
 
-/// <summary>The user's content-scan choices: exclusions, stop words and Package-level Airport link inputs (plan 2).</summary>
+/// <summary>The user's content-scan choices: exclusions, stop words and opted-in Packages (plan 2). Airport links live on the cards.</summary>
 public sealed class ContentSettings
 {
     public static readonly IReadOnlyList<string> DefaultExclusionPatterns =
@@ -32,10 +32,6 @@ public sealed class ContentSettings
     public HashSet<string> RemovedStopWords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public HashSet<PackageName> OptedIn { get; set; } = [];
-
-    public Dictionary<PackageName, HashSet<AirportCode>> ManualAirportLinks { get; set; } = [];
-
-    public Dictionary<PackageName, HashSet<AirportCode>> RemovedAirportLinks { get; set; } = [];
 
     [JsonIgnore]
     public IReadOnlyList<string> ExclusionPatterns => Effective(DefaultExclusionPatterns, AddedExclusionPatterns, RemovedExclusionPatterns);
@@ -78,18 +74,6 @@ public sealed class ContentSettings
 
     public bool IsStopWord(string token) => StopList.Contains(token, StringComparer.OrdinalIgnoreCase);
 
-    public void LinkManually(PackageName name, AirportCode code)
-    {
-        Include(ManualAirportLinks, name, code);
-        Exclude(RemovedAirportLinks, name, code);
-    }
-
-    public void RemoveLink(PackageName name, AirportCode code)
-    {
-        Include(RemovedAirportLinks, name, code);
-        Exclude(ManualAirportLinks, name, code);
-    }
-
     public ContentSettings Clone() => new()
     {
         AirportThreshold = AirportThreshold,
@@ -98,16 +82,12 @@ public sealed class ContentSettings
         AddedStopWords = new(AddedStopWords, StringComparer.OrdinalIgnoreCase),
         RemovedStopWords = new(RemovedStopWords, StringComparer.OrdinalIgnoreCase),
         OptedIn = [.. OptedIn],
-        ManualAirportLinks = CloneLinks(ManualAirportLinks),
-        RemovedAirportLinks = CloneLinks(RemovedAirportLinks),
     };
 
     /// <summary>Drops the settings of a Package that is gone, so a later Package with the same name starts clean (spec 6.1).</summary>
     public void Forget(PackageName name)
     {
         OptedIn.Remove(name);
-        ManualAirportLinks.Remove(name);
-        RemovedAirportLinks.Remove(name);
     }
 
     private static List<string> Effective(IReadOnlyList<string> defaults, HashSet<string> added, HashSet<string> removed)
@@ -139,24 +119,4 @@ public sealed class ContentSettings
 
     private static bool IsDefault(string value, IReadOnlyList<string> defaults) => defaults.Contains(value, StringComparer.OrdinalIgnoreCase);
 
-    private static void Include(Dictionary<PackageName, HashSet<AirportCode>> map, PackageName name, AirportCode code)
-    {
-        if (!map.TryGetValue(name, out var set))
-        {
-            map[name] = set = [];
-        }
-
-        set.Add(code);
-    }
-
-    private static void Exclude(Dictionary<PackageName, HashSet<AirportCode>> map, PackageName name, AirportCode code)
-    {
-        if (map.TryGetValue(name, out var set) && set.Remove(code) && set.Count == 0)
-        {
-            map.Remove(name);
-        }
-    }
-
-    private static Dictionary<PackageName, HashSet<AirportCode>> CloneLinks(Dictionary<PackageName, HashSet<AirportCode>> map)
-        => map.ToDictionary(kv => kv.Key, kv => new HashSet<AirportCode>(kv.Value));
 }

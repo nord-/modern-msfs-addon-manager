@@ -15,7 +15,8 @@ public sealed record ApplyResult(
 
 /// <summary>
 /// The one apply path for every link change (spec 6.8): the link is changed first, then choice and snapshot
-/// are saved in one write. While the sim runs, nothing is written to Community and the change is Pending.
+/// are saved in one write. While the sim runs, nothing is written to Community and the change is Pending. Every entry point that saves
+/// opens <see cref="IUserStateStore.BeginChange"/> first, so a locked file refuses the change before any link is touched.
 /// </summary>
 public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community, IUserStateStore store, ISimProcessMonitor sim, string communityPath)
 {
@@ -48,6 +49,7 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
         if (sim.IsRunning)
             return ApplyResult.DeferredEmpty;
 
+        using var change = store.BeginChange();
         var name = new PackageName(entryName);
         var entry = CommunityClassifier.Classify(community.Read(), index).FirstOrDefault(e => e.Name == name);
         if (entry?.Class != EntryClass.Broken)
@@ -62,6 +64,7 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
     /// <summary>Replaces the whole snapshot with the current Community and saves.</summary>
     public void AcceptSnapshot(UserState state)
     {
+        using var change = store.BeginChange();
         state.Snapshot = SnapshotEntry.From(community.Read());
         store.Save(state);
     }
@@ -69,6 +72,7 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
     /// <summary>Accepts the current Community only for the named Packages and saves; every other entry keeps its accepted state.</summary>
     public void AcceptSnapshot(UserState state, IReadOnlyCollection<PackageName> packages)
     {
+        using var change = store.BeginChange();
         UpdateSnapshot(state, packages);
         store.Save(state);
     }
@@ -77,6 +81,8 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
 
     private ApplyResult Apply(UserState state, PackageIndex index, Dictionary<PackageName, DesiredLink> desired, Mode mode)
     {
+        // Before any link or state change: a locked file refuses the whole change here.
+        using var change = store.BeginChange();
         var current = CommunityClassifier.Classify(community.Read(), index);
         var plan = LinkPlanner.Plan(desired, state, index, current, communityPath);
 

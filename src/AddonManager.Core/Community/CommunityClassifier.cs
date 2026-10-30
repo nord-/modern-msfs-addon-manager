@@ -31,6 +31,10 @@ public static class CommunityClassifier
 
         var name = new PackageName(e.Name);
 
+        // A folder discovery could not read says nothing about what is inside: the link is neither Broken nor External, and never offered for removal.
+        if (index.IsInaccessible(e.Target))
+            return new(e, EntryClass.Offline, null);
+
         if (e.TargetExists)
         {
             // E1: a link is Managed only when its name is the Package's own name.

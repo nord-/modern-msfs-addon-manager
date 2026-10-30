@@ -12,6 +12,19 @@ public static class ContentBuilder
         return code;
     }
 
+    /// <summary>Manual links and removals per Package name, from (name, ICAO code) pairs.</summary>
+    public static AirportLinkOverrides Overrides(
+        IEnumerable<(string Package, string Code)>? manual = null,
+        IEnumerable<(string Package, string Code)>? removed = null)
+    {
+        static IReadOnlyDictionary<PackageName, IReadOnlySet<AirportCode>> Group(IEnumerable<(string Package, string Code)>? pairs)
+            => (pairs ?? [])
+                .GroupBy(p => new PackageName(p.Package))
+                .ToDictionary(g => g.Key, g => (IReadOnlySet<AirportCode>)g.Select(p => Code(p.Code)).ToHashSet());
+
+        return new AirportLinkOverrides(Group(manual), Group(removed));
+    }
+
     /// <summary>A full airport record; the position is set when both <paramref name="lat"/> and <paramref name="lon"/> are given.</summary>
     public static AirportRecord Rec(string code, string? name = null, double? lat = null, double? lon = null)
         => new(Code(code), name, lat is { } la && lon is { } lo ? new GeoPoint(la, lo) : null);

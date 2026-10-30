@@ -4,21 +4,32 @@ namespace AddonManager.Core.Content;
 
 public sealed record ScanProgress(int Done, int Total, string? Current);
 
-public sealed record ContentScanResult(IReadOnlyList<PackageContent> Contents, int Read, int Reused, int Failed);
+/// <param name="Unsettled">Normalised paths read this run that were still being written: returned but not cached.</param>
+/// <param name="SettleAt">When the last unsettled Package will have been quiet for <see cref="ContentScanner.QuietPeriod"/>; null when none is unsettled.</param>
+/// <param name="FailedPaths">Normalised paths whose read threw this run; their cached row, if any, is still in <c>Contents</c>.</param>
+public sealed record ContentScanResult(IReadOnlyList<PackageContent> Contents, int Read, int Reused, int FailedCount,
+    IReadOnlySet<string> Unsettled, DateTimeOffset? SettleAt, IReadOnlySet<string> FailedPaths);
 
 /// <summary>Scans Packages incrementally: a Package whose change marker is unchanged keeps its cached content (spec 7.3, content rule C2).</summary>
-public sealed class ContentScanner(IPackageContentReader reader, IScanCache cache)
+public sealed class ContentScanner(IPackageContentReader reader, IScanCache cache, TimeProvider? clock = null)
 {
+    /// <summary>A Package written to within this period is still being unpacked: it is read but neither cached nor settled.</summary>
+    public static readonly TimeSpan QuietPeriod = TimeSpan.FromSeconds(10);
+
+    private readonly TimeProvider clock = clock ?? TimeProvider.System;
+
     private const int BatchSize = 50;
 
     /// <param name="targets">Must have distinct normalised paths.</param>
     /// <param name="cached">What the caller loaded with <c>cache.LoadAll()</c>; the scanner only writes to the cache.</param>
+    /// <param name="forceRead">Normalised paths that are read even when their marker is unchanged (Packages that were unsettled last time).</param>
     /// <param name="keepUnder">Roots that are unreachable right now (offline Libraries): cached content under them is kept and returned.</param>
     public ContentScanResult Scan(
         IReadOnlyList<ScanTarget> targets,
         IReadOnlyList<PackageContent> cached,
         IReadOnlyList<string> keepUnder,
         bool full,
+        IReadOnlySet<string> forceRead,
         IProgress<ScanProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -30,6 +41,9 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
         var batch = new List<PackageContent>();
         var targetPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         int read = 0, reused = 0, failed = 0;
+        var unsettled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var failedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        DateTimeOffset? settleAt = null;
 
         try
         {
@@ -41,7 +55,7 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
                 targetPaths.Add(path);
                 cachedByPath.TryGetValue(path, out var old);
 
-                var (kind, content) = ScanOne(target, path, old, full);
+                var (kind, content) = ScanOne(target, path, old, full, forceRead, out var newest);
                 switch (kind)
                 {
                     case Outcome.Reused:
@@ -62,6 +76,15 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
                         if (batch.Count >= BatchSize)
                             Flush(batch);
                         break;
+                    case Outcome.ReadUnsettled:
+                        // Still being written: returned for this run, but not cached, so the next scan reads it again.
+                        read++;
+                        contents.Add(content!);
+                        unsettled.Add(path);
+                        var due = newest!.Value + QuietPeriod;
+                        if (settleAt is null || due > settleAt)
+                            settleAt = due;
+                        break;
                     case Outcome.Vanished:
                         failed++;
                         if (old is not null)
@@ -69,6 +92,7 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
                         break;
                     case Outcome.Unreadable:
                         failed++;
+                        failedPaths.Add(path);
                         if (old is not null)
                             contents.Add(Adopt(old, target, path));
                         break;
@@ -98,11 +122,12 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
         if (stale.Count > 0)
             cache.Remove(stale);
 
-        return new ContentScanResult(contents, read, reused, failed);
+        return new ContentScanResult(contents, read, reused, failed, unsettled, settleAt, failedPaths);
     }
 
-    private (Outcome Kind, PackageContent? Content) ScanOne(ScanTarget target, string path, PackageContent? old, bool full)
+    private (Outcome Kind, PackageContent? Content) ScanOne(ScanTarget target, string path, PackageContent? old, bool full, IReadOnlySet<string> forceRead, out DateTimeOffset? newest)
     {
+        newest = null;
         try
         {
             var marker = reader.ReadMarker(target.Path);
@@ -110,13 +135,19 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
                 return (Outcome.Vanished, null);
             // A row with unreadable BGLs may have been read while the Package was still being written (a missing file counts as unreadable)
             // and the marker only covers the manifest and layout, so such a row is read again.
-            if (!full && old is not null && old.Marker == marker && old.UnreadableBglCount == 0)
+            if (!full && !forceRead.Contains(path) && old is not null && old.Marker == marker && old.UnreadableBglCount == 0)
                 return (Outcome.Reused, Adopt(old, target, path));
 
             var content = reader.Read(target, marker);
             if (content is null)
                 return (Outcome.Vanished, null);
-            return (Outcome.Read, content.Path == path ? content : content with { Path = path });
+            content = content.Path == path ? content : content with { Path = path };
+
+            // Checked after the read: whatever was written while reading is then seen too.
+            newest = reader.NewestWrite(target.Path);
+            if (newest is null)
+                return (Outcome.Vanished, null);
+            return newest > clock.GetUtcNow() - QuietPeriod ? (Outcome.ReadUnsettled, content) : (Outcome.Read, content);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -151,5 +182,5 @@ public sealed class ContentScanner(IPackageContentReader reader, IScanCache cach
         cache.Upsert(rows);
     }
 
-    private enum Outcome { Reused, Read, Vanished, Unreadable }
+    private enum Outcome { Reused, Read, ReadUnsettled, Vanished, Unreadable }
 }

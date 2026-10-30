@@ -9,8 +9,8 @@ namespace AddonManager.Core.Tests.Linking;
 public class LinkPlannerTests
 {
     private const string CommunityPath = @"C:\MSFS\Community";
-    private static readonly LibraryRoot Unplugged = new(@"E:\Addons");
-    private static readonly LibraryRoot Fsdt = new(@"C:\Sim\FSDT Addon Manager\MSFS", ManagedElsewhere: true);
+    private static readonly LibraryRoot Unplugged = new(@"E:\Addons", LibraryRoot.AllSections);
+    private static readonly LibraryRoot Fsdt = new(@"C:\Sim\FSDT Addon Manager\MSFS", LibraryRoot.AllSections);
 
     private static readonly PackageName X = new("x");
 
@@ -19,7 +19,7 @@ public class LinkPlannerTests
     private readonly UserState state = new();
     private readonly List<CommunityEntryInfo> community = [];
 
-    public LinkPlannerTests() => index = new PackageIndex([x, xNeofly, locked], [Addons, Neofly, Fsdt, Unplugged], [Unplugged]);
+    public LinkPlannerTests() => index = new PackageIndex([x, xNeofly, locked], [SimAddons, Neofly, Fsdt, Unplugged], [Unplugged]);
 
     private static CommunityEntryInfo J(string name, string target, bool exists = true) => new(name, EntryKind.Junction, target, exists, exists);
 
@@ -102,12 +102,25 @@ public class LinkPlannerTests
     }
 
     [Fact]
-    public void Locked_packages_are_rejected_also_for_a_copy_override()
+    public void A_package_in_a_library_another_tool_also_links_from_can_be_switched()
     {
         var lk = new PackageName("lk");
+        community.Add(J("lk", locked.Path));
 
-        Assert.Equal(RejectReason.Locked, Plan(lk, true).Rejections.Single().Reason);
-        Assert.Equal(RejectReason.Locked, Plan(new() { [lk] = new DesiredLink(true, locked.Path) }).Rejections.Single().Reason);
+        var plan = Plan(lk, false);
+
+        Assert.Equal([new LinkOp(LinkOpKind.Remove, lk, @"C:\MSFS\Community\lk", null)], plan.Ops);
+        Assert.Empty(plan.Rejections);
+    }
+
+    [Fact]
+    public void A_copy_override_for_a_name_held_by_an_external_entry_is_rejected_also_when_off()
+    {
+        community.Add(J("x", @"C:\Elsewhere\x"));
+
+        var rejection = Plan(new() { [X] = new DesiredLink(false, xNeofly.Path) }).Rejections.Single();
+
+        Assert.Equal(new Rejection(X, RejectReason.NameTaken, EntryClass.External), rejection);
     }
 
     [Fact]
@@ -116,7 +129,7 @@ public class LinkPlannerTests
         state.SetOn(X, true, @"E:\Addons\x");
         Assert.Equal(RejectReason.Offline, Plan(X, false).Rejections.Single().Reason);
 
-        state.Forget(X);
+        state.Forget(PackageKey.Folder(X));
         community.Add(J("x", @"E:\Addons\x", exists: false));
         Assert.Equal(RejectReason.Offline, Plan(X, true).Rejections.Single().Reason);
     }
@@ -135,9 +148,9 @@ public class LinkPlannerTests
     }
 
     [Fact]
-    public void Offline_wins_over_locked_so_a_pending_change_waits_for_the_library()
+    public void Offline_wins_over_a_reachable_duplicate_so_a_pending_change_waits_for_the_library()
     {
-        // The stored copy is on the unplugged drive; the only reachable copy sits in a Managed elsewhere Library.
+        // The stored copy is on the unplugged drive; a reachable duplicate in another Library must not be linked instead.
         var lk = new PackageName("lk");
         state.SetOn(lk, true, @"E:\Addons\lk");
 

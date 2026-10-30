@@ -11,20 +11,15 @@ public static class CategoryRules
             return hasBgl == false ? Category.Other : Category.Scenery;
         }
 
-        return IsAircraftType(contentType) ? Category.Aircraft : Category.Other;
+        return IsAircraftType(contentType) || IsInstruments(contentType) ? Category.Aircraft : Category.Other;
     }
 
-    /// <summary>The category after the content pass. Air traffic is always Other; aircraft that are no aircraft member are Other.</summary>
-    public static Category Final(string? contentType, bool hasBgl, bool isAirTraffic, bool isAircraftMember)
-    {
-        if (isAirTraffic)
-        {
-            return Category.Other;
-        }
+    /// <summary>The category after the content pass. Air traffic is always Other.</summary>
+    public static Category Final(string? contentType, bool hasBgl, bool isAirTraffic)
+        => isAirTraffic ? Category.Other : Provisional(contentType, hasBgl);
 
-        var category = Provisional(contentType, hasBgl);
-        return category == Category.Aircraft && !isAircraftMember ? Category.Other : category;
-    }
+    /// <summary>True for <c>INSTRUMENTS</c>: shown under Aircraft, but never part of Livery or attachment matching.</summary>
+    public static bool IsInstruments(string? contentType) => IsType(contentType, "INSTRUMENTS");
 
     /// <summary>True for <c>AIRCRAFT</c> and <c>LIVERY</c>.</summary>
     public static bool IsAircraftType(string? contentType) => IsType(contentType, "AIRCRAFT") || IsType(contentType, "LIVERY");

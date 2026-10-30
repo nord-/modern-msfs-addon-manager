@@ -21,6 +21,15 @@ public class AircraftIndexTests
     }
 
     [Fact]
+    public void Instruments_never_join_an_aircraft_group()
+    {
+        var official = Aircraft("asobo-aircraft-c172", airplaneFolders: ["Asobo_C172"], source: SimManaged);
+        var instruments = Aircraft("pms50", contentType: "INSTRUMENTS", airplaneFolders: ["Asobo_C172"]);
+
+        Assert.Equal(AircraftRole.None, AircraftIndex.Build([official, instruments]).RoleOf(instruments));
+    }
+
+    [Fact]
     public void Group_with_only_a_locked_base_is_spelled_as_the_locked_base()
     {
         var official = Aircraft("asobo-aircraft-c152", airplaneFolders: ["Asobo_C152"], source: SimManaged);

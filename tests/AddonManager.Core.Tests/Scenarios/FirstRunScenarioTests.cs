@@ -9,10 +9,11 @@ public class FirstRunScenarioTests
 {
     private static readonly LibraryRoot[] Libraries =
     [
-        new(@"C:\Sim\Addons"), new(@"C:\Sim\FSDT Addon Manager\MSFS"), new(@"C:\Sim\Neofly\addons"), new(@"C:\Sim\Orbx Library\msfs"),
+        new(@"C:\Sim\Addons", LibraryRoot.AllSections), new(@"C:\Sim\FSDT Addon Manager\MSFS", LibraryRoot.AllSections),
+        new(@"C:\Sim\Neofly\addons", LibraryRoot.AllSections), new(@"C:\Sim\Orbx Library\msfs", LibraryRoot.AllSections),
     ];
 
-    private readonly (IReadOnlyList<CommunityEntryInfo> Community, Fakes.InMemoryFolderTree Tree, IReadOnlyList<PackageCopy> Packages) f
+    private readonly (IReadOnlyList<CommunityEntryInfo> Community, IReadOnlyList<PackageCopy> Packages) f
         = FixtureLoader.Load("rickard-2026-10");
 
     private readonly PackageIndex index;
@@ -23,13 +24,13 @@ public class FirstRunScenarioTests
         => f.Community.SingleOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase))?.Target;
 
     [Fact]
-    public void Proposes_the_three_real_library_roots_and_not_the_fsdt_folder()
-        => Assert.Equal(
-            [
-                new LibraryProposal(@"C:\Sim\Addons", false),
-                new LibraryProposal(@"C:\Sim\Neofly\addons", true), new LibraryProposal(@"C:\Sim\Orbx Library\msfs", true),
-            ],
-            LibraryProposer.Propose(f.Community, f.Tree));
+    public void Coverage_of_the_real_community_with_addons_and_orbx_registered()
+    {
+        var report = LinkCoverage.Measure(f.Community, [new(@"C:\Sim\Addons", LibraryRoot.AllSections), new(@"C:\Sim\Orbx Library\msfs", LibraryRoot.AllSections)]);
+
+        Assert.Equal((87, 91), (report.Covered, report.Counted));   // the 4 Neofly junctions are not covered
+        Assert.Equal(7, report.NotCounted.Count);                    // 4 FSDT junctions + 3 SayIntentions symlinks (one broken)
+    }
 
     [Fact]
     public void Classifies_the_real_community()

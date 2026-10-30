@@ -1,3 +1,4 @@
+using AddonManager.Core.Community;
 using AddonManager.Core.Linking;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
@@ -9,8 +10,8 @@ namespace AddonManager.Core.Tests.Linking;
 public class ChangeApplierTests
 {
     private const string CommunityPath = @"C:\MSFS\Community";
-    private static readonly LibraryRoot Unplugged = new(@"E:\Addons");
-    private static readonly LibraryRoot Fsdt = new(@"C:\Sim\FSDT Addon Manager\MSFS", ManagedElsewhere: true);
+    private static readonly LibraryRoot Unplugged = new(@"E:\Addons", LibraryRoot.AllSections);
+    private static readonly LibraryRoot Fsdt = new(@"C:\Sim\FSDT Addon Manager\MSFS", LibraryRoot.AllSections);
 
     private static readonly PackageName Pkg = new("pkg");
 
@@ -28,7 +29,7 @@ public class ChangeApplierTests
     public ChangeApplierTests()
     {
         fs = new FakeLinkFileSystem(community);
-        index = new PackageIndex([pkgCopy, pkgNeofly, bad, good, other, lockedCopy], [Addons, Neofly, Fsdt, Unplugged], [Unplugged]);
+        index = new PackageIndex([pkgCopy, pkgNeofly, bad, good, other, lockedCopy], [SimAddons, Neofly, Fsdt, Unplugged], [Unplugged]);
         applier = NewApplier();
     }
 
@@ -39,6 +40,20 @@ public class ChangeApplierTests
     private static Dictionary<PackageName, bool> On(params string[] names) => names.ToDictionary(n => new PackageName(n), _ => true);
 
     private static Dictionary<PackageName, bool> Off(params string[] names) => names.ToDictionary(n => new PackageName(n), _ => false);
+
+    [Fact]
+    public void A_store_that_refuses_the_change_leaves_every_link_untouched()
+    {
+        store.RefuseWith = new IOException("locked");
+
+        Assert.Throws<IOException>(() => applier.SetChoices(state, index, On("pkg")));
+        Assert.Throws<IOException>(() => applier.AcceptSnapshot(state));
+
+        Assert.Empty(fs.Calls);
+        Assert.False(state.IsOn(Pkg));
+        Assert.Empty(state.Snapshot!);
+        Assert.Equal(0, store.SaveCount);
+    }
 
     [Fact]
     public void Turning_on_creates_a_junction_then_saves_choice_copy_and_snapshot_once()
@@ -94,16 +109,20 @@ public class ChangeApplierTests
     }
 
     [Fact]
-    public void Locked_package_is_skipped_by_every_action()
+    public void The_active_copy_cannot_change_while_an_entry_holds_the_name()
     {
-        var lk = new PackageName("lk");
-        state.SetOn(lk, true);
+        var name = new PackageName("neofly-neofly-cargo");
+        var libraryCopy = Copy("neofly-neofly-cargo", lib: Neofly);
+        var idx = new PackageIndex([libraryCopy], [SimAddons, Neofly]);
+        community.AddJunction("neofly-neofly-cargo", @"C:\Elsewhere\neofly-neofly-cargo");
 
-        Assert.Equal(RejectReason.Locked, applier.SetChoices(state, index, Off("lk")).Rejected.Single().Reason);
-        Assert.Equal(RejectReason.Locked, applier.Relink(state, index, [lk]).Rejected.Single().Reason);
-        Assert.Equal(RejectReason.Locked, applier.SetActiveCopy(state, index, lk, lockedCopy.Path).Rejected.Single().Reason);
+        var result = applier.SetActiveCopy(state, idx, name, libraryCopy.Path);
+
+        var rejected = result.Rejected.Single();
+        Assert.Equal(RejectReason.NameTaken, rejected.Reason);
+        Assert.Equal(EntryClass.External, rejected.HeldBy);
+        Assert.Null(state.Packages.GetValueOrDefault(name)?.ActiveCopyPath);
         Assert.Empty(fs.Calls);
-        Assert.True(state.IsOn(lk));
     }
 
     [Fact]
@@ -289,6 +308,23 @@ public class ChangeApplierTests
         Assert.DoesNotContain(state.Snapshot!, s => s.Name == "gone");
         Assert.Throws<InvalidOperationException>(() => applier.RemoveBrokenLink(state, index, "pkg"));
         Assert.Throws<InvalidOperationException>(() => applier.RemoveBrokenLink(state, index, "missing"));
+    }
+
+    [Fact]
+    public void Removing_a_not_found_packages_broken_link_keeps_its_stored_choice()
+    {
+        var vanished = new PackageName("orbx-eham-1-3");
+        var target = @"C:\Sim\Addons\orbx-eham-1-3";
+        state.SetOn(vanished, true, target);
+        community.AddJunction("orbx-eham-1-3", target, targetExists: false);
+        state.Snapshot = SnapshotEntry.From(community.Read());
+
+        applier.RemoveBrokenLink(state, index, "orbx-eham-1-3");
+
+        Assert.False(community.Has("orbx-eham-1-3"));
+        Assert.True(state.IsOn(vanished));
+        Assert.Equal(target, state.Packages[vanished].ActiveCopyPath);
+        Assert.True(store.Load().IsOn(vanished));
     }
 
     [Fact]

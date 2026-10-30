@@ -8,7 +8,9 @@ public class AirportLinkerTests
 {
     private readonly ContentSettings settings = new();
 
-    private IReadOnlyList<AirportLink> Link(params PackageContent[] contents) => AirportLinker.Link(contents, settings);
+    private IReadOnlyList<AirportLink> Link(params PackageContent[] contents) => AirportLinker.Link(contents, settings, AirportLinkOverrides.None);
+
+    private IReadOnlyList<AirportLink> Link(AirportLinkOverrides overrides, params PackageContent[] contents) => AirportLinker.Link(contents, settings, overrides);
 
     private static string[] Codes(IEnumerable<AirportLink> links) => links.Select(l => l.Code.Value).ToArray();
 
@@ -135,15 +137,13 @@ public class AirportLinkerTests
     public void Manual_links_win_over_removal_and_removal_drops_automatic_links()
     {
         var a = Scenery("a-scenery", records: ["EHAM", "ESGJ"]);
-        settings.RemoveLink(a.Name, Code("EHAM"));
-        Assert.Equal(["ESGJ"], Codes(Link(a)));
+        Assert.Equal(["ESGJ"], Codes(Link(Overrides(removed: [("a-scenery", "EHAM")]), a)));
 
-        settings.LinkManually(a.Name, Code("EHAM"));
-        Assert.Equal([("EHAM", AirportLinkReason.Manual), ("ESGJ", AirportLinkReason.Record)], Pairs(Link(a)));
+        Assert.Equal([("EHAM", AirportLinkReason.Manual), ("ESGJ", AirportLinkReason.Record)], Pairs(Link(Overrides(manual: [("a-scenery", "EHAM")]), a)));
 
-        // A removal entry written next to a manual one still lets the manual link through.
-        settings.RemovedAirportLinks[a.Name] = [Code("EHAM")];
-        Assert.Equal([("EHAM", AirportLinkReason.Manual), ("ESGJ", AirportLinkReason.Record)], Pairs(Link(a)));
+        // A removal next to a manual link for the same ICAO code still lets the manual link through.
+        var both = Overrides(manual: [("a-scenery", "EHAM")], removed: [("a-scenery", "EHAM")]);
+        Assert.Equal([("EHAM", AirportLinkReason.Manual), ("ESGJ", AirportLinkReason.Record)], Pairs(Link(both, a)));
     }
 
     [Fact]
@@ -152,16 +152,14 @@ public class AirportLinkerTests
         var eddf = Scenery("asobo-airport-eddf-frankfurt", hasBgl: false, source: PackageSource.SimManaged);
         var generic = Scenery("fs-base-genericairports", records: [.. Many(11), "EDDF"], source: PackageSource.SimManaged);
         Assert.Equal(["EDDF"], Codes(Link(generic, eddf)));
-        settings.RemoveLink(eddf.Name, Code("EDDF"));
-        Assert.Empty(Link(generic, eddf));
+        Assert.Empty(Link(Overrides(removed: [("asobo-airport-eddf-frankfurt", "EDDF")]), generic, eddf));
     }
 
     [Fact]
     public void Manual_links_apply_to_sim_managed_packages()
     {
         var mkt = Scenery("somedev-lowi-innsbruck", hasBgl: true, source: PackageSource.SimManaged);
-        settings.LinkManually(mkt.Name, Code("LOWI"));
-        Assert.Equal([("LOWI", AirportLinkReason.Manual)], Pairs(Link(mkt)));
+        Assert.Equal([("LOWI", AirportLinkReason.Manual)], Pairs(Link(Overrides(manual: [("somedev-lowi-innsbruck", "LOWI")]), mkt)));
     }
 
     [Fact]
@@ -169,8 +167,7 @@ public class AirportLinkerTests
     {
         var one = Scenery("dup") with { Path = @"C:\A\dup" };
         var two = Scenery("dup") with { Path = @"C:\B\dup" };
-        settings.LinkManually(one.Name, Code("EHAM"));
-        Assert.Equal([@"C:\A\dup", @"C:\B\dup"], Link(two, one).Select(l => l.Package.Path).ToArray());
+        Assert.Equal([@"C:\A\dup", @"C:\B\dup"], Link(Overrides(manual: [("dup", "EHAM")]), two, one).Select(l => l.Package.Path).ToArray());
     }
 
     [Fact]
@@ -196,6 +193,13 @@ public class AirportLinkerTests
     [Fact]
     public void Real_cases_without_record_or_token_stay_unlinked()
         => Assert.Empty(Link(Scenery("005builds-lszrsceneryv11", hasBgl: true), Scenery("grancanaria", hasBgl: true)));
+
+    [Fact]
+    public void Link_results_are_unchanged()
+    {
+        var c = Scenery("sltcreations-airport-yq05-mount-mulligan", records: ["YQ05", "YMUZ"]);
+        Assert.Equal([("YMUZ", AirportLinkReason.Record), ("YQ05", AirportLinkReason.Record)], Pairs(Link(c)));
+    }
 
     [Fact]
     public void Token_candidates_report_why_a_known_code_is_not_linked()

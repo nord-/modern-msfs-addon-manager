@@ -1,9 +1,9 @@
 {
-  "exported": "2026-10-27",
+  "exported": "2026-10-30",
   "packages": [
     {
       "name": "005builds-lszrsceneryv11",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\005builds-lszrsceneryv11",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\005builds-lszrsceneryv11",
       "source": "Library",
       "title": "LSZRsceneryV11",
       "creator": "Marc Strobl",
@@ -25,7 +25,7 @@
     },
     {
       "name": "a-puf-we-love-vfr-region1",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\a-puf-we-love-vfr-region1",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\a-puf-we-love-vfr-region1",
       "source": "Library",
       "title": "We Love VFR - Region 1",
       "creator": "Puffin Flight",
@@ -49,7 +49,7 @@
     },
     {
       "name": "a-puf-we-love-vfr-region2",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\a-puf-we-love-vfr-region2",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\a-puf-we-love-vfr-region2",
       "source": "Library",
       "title": "We Love VFR - Region 2",
       "creator": "Puffin Flight",
@@ -74,7 +74,7 @@
     },
     {
       "name": "a-puf-we-love-vfr-region3",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\a-puf-we-love-vfr-region3",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\a-puf-we-love-vfr-region3",
       "source": "Library",
       "title": "We Love VFR - Region 3",
       "creator": "Puffin Flight",
@@ -99,7 +99,7 @@
     },
     {
       "name": "aerosoft-crj",
-      "path": "C:\\Sim\\Addons\\Group 02\\aerosoft-crj",
+      "path": "C:\\Sim\\Addons\\Aircraft\\aerosoft-crj",
       "source": "Library",
       "title": "CRJ",
       "creator": "Aerosoft",
@@ -114,19 +114,23 @@
       "aircraft": [
         {
           "container": "Aerosoft_CRJ_1000",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CRJX"
         },
         {
           "container": "Aerosoft_CRJ_550",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CRJ7"
         },
         {
           "container": "Aerosoft_CRJ_700",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CRJ7"
         },
         {
           "container": "Aerosoft_CRJ_900",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CRJ9"
         }
       ],
       "airplaneFolders": [
@@ -141,8 +145,8 @@
     },
     {
       "name": "aig-aitraffic-effects",
-      "path": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-effects",
-      "source": "Community",
+      "path": "C:\\Sim\\Addons\\AIG\\aig-aitraffic-effects",
+      "source": "Library",
       "title": "Effect Library",
       "creator": "Alpha India Group",
       "contentType": "MISC",
@@ -159,8 +163,27 @@
       "hasThumbnail": true
     },
     {
+      "name": "aig-aitraffic-modelbehavior",
+      "path": "%USERPROFILE%\\AppData\\Roaming\\Microsoft Flight Simulator\\Packages\\Community\\aig-aitraffic-modelbehavior",
+      "source": "Community",
+      "title": "Model Behavior Library",
+      "creator": "Alpha India Group",
+      "contentType": "MISC",
+      "packageVersion": "0.6.2",
+      "dependencies": [],
+      "hasBgl": false,
+      "bglSectionTypes": [],
+      "unreadableBgl": 0,
+      "airports": [],
+      "isAirTraffic": false,
+      "aircraft": [],
+      "airplaneFolders": [],
+      "encryptedAirplaneFolders": [],
+      "hasThumbnail": true
+    },
+    {
       "name": "aig-aitraffic-oci",
-      "path": "C:\\Sim\\Addons\\Group 01\\aig-aitraffic-oci",
+      "path": "C:\\Sim\\Addons\\AIG\\aig-aitraffic-oci",
       "source": "Library",
       "title": "AIGAIM AI Traffic",
       "creator": "AIGTech",
@@ -283,6 +306,8 @@
         "AIGAIM_FAIB_A321-200neo_LR_CFM",
         "AIGAIM_FAIB_A321-200neo_LR_PW",
         "AIGAIM_FAIB_A321-200neo_PW",
+        "AIGAIM_FAIB_A321-200neo_XLR_CFM",
+        "AIGAIM_FAIB_A321-200neo_XLR_PW",
         "AIGAIM_FAIB_A321-200P2F_CFM",
         "AIGAIM_FAIB_A321-200P2F_IAE",
         "AIGAIM_FAIB_A321-200SL_CFM",
@@ -318,6 +343,7 @@
         "AIGAIM_FAIB_B737-900SSW",
         "AIGAIM_FAIB_B737-900WL",
         "AIGAIM_FAIB_B737-900",
+        "AIGAIM_FAIB_B747-200F_GE",
         "AIGAIM_FAIB_B747-200_PW",
         "AIGAIM_FAIB_B747-200_RR",
         "AIGAIM_FAIB_B747-400ERF_GE",
@@ -364,6 +390,7 @@
         "AIGAIM_HTAI_BN-2_Islander",
         "AIGAIM_HTAI_C152",
         "AIGAIM_HTAI_C172RG",
+        "AIGAIM_HTAI_C172",
         "AIGAIM_HTAI_C172_Skyhawk",
         "AIGAIM_HTAI_C177RG_Cardinal",
         "AIGAIM_HTAI_C177_Cardinal",
@@ -393,10 +420,10 @@
         "AIGAIM_HTAI_Hawker800",
         "AIGAIM_HTAI_Hawker850XP",
         "AIGAIM_HTAI_Hawker900XP",
-        "AIGAIM_HTAI_L-100-30",
         "AIGAIM_HTAI_Learjet31",
         "AIGAIM_HTAI_Learjet35",
         "AIGAIM_HTAI_Learjet36",
+        "AIGAIM_HTAI_P210_Centurion",
         "AIGAIM_HTAI_R182_Skylane",
         "AIGAIM_HTAI_SD3-60",
         "AIGAIM_JBAI_Challenger601-3A",
@@ -1124,7 +1151,7 @@
     },
     {
       "name": "ase05-airport-ldsp",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ase05-airport-ldsp",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ase05-airport-ldsp",
       "source": "Library",
       "title": "LDSP Split scenery",
       "creator": "Atte",
@@ -1199,11 +1226,13 @@
       "aircraft": [
         {
           "container": "C208B_GRAND_CARAVAN_AsF_F-OJJC",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         },
         {
           "container": "C208B_GRAND_CARAVAN_AsF_F-OJJD",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1249,7 +1278,8 @@
       "aircraft": [
         {
           "container": "Asobo_103Solo_SmallWheels_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_103Solo_SmallWheels"
+          "baseContainer": "Asobo_103Solo_SmallWheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1277,7 +1307,8 @@
       "aircraft": [
         {
           "container": "Asobo_208B_GRAND_CARAVAN_EX",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C208"
         }
       ],
       "airplaneFolders": [
@@ -1303,7 +1334,8 @@
       "aircraft": [
         {
           "container": "Asobo_208B_GRAND_CARAVAN_EX_Livery_01",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1329,7 +1361,8 @@
       "aircraft": [
         {
           "container": "Asobo_208B_GRAND_CARAVAN_EX_LiveryAviators",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1355,7 +1388,8 @@
       "aircraft": [
         {
           "container": "Asobo_208B_GRAND_CARAVAN_EX_Livery_Emerald",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1381,7 +1415,8 @@
       "aircraft": [
         {
           "container": "Asobo_208B_GRAND_CARAVAN_EX_Livery_Global",
-          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX"
+          "baseContainer": "Asobo_208B_GRAND_CARAVAN_EX",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1409,7 +1444,8 @@
       "aircraft": [
         {
           "container": "Asobo_B787_10",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "B78X"
         }
       ],
       "airplaneFolders": [
@@ -1435,7 +1471,8 @@
       "aircraft": [
         {
           "container": "Asobo_B787_10_Livery_KLM",
-          "baseContainer": "Asobo_B787_10"
+          "baseContainer": "Asobo_B787_10",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1463,7 +1500,8 @@
       "aircraft": [
         {
           "container": "Asobo_Baron_G58",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "BE58"
         }
       ],
       "airplaneFolders": [
@@ -1489,7 +1527,8 @@
       "aircraft": [
         {
           "container": "Asobo_Baron_G58_Livery_01",
-          "baseContainer": "Asobo_Baron_G58"
+          "baseContainer": "Asobo_Baron_G58",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1515,7 +1554,8 @@
       "aircraft": [
         {
           "container": "Asobo_Baron_G58_LiveryAviators",
-          "baseContainer": "Asobo_Baron_G58"
+          "baseContainer": "Asobo_Baron_G58",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1541,7 +1581,8 @@
       "aircraft": [
         {
           "container": "Asobo_Baron_G58_Livery_Kenmore",
-          "baseContainer": "Asobo_Baron_G58"
+          "baseContainer": "Asobo_Baron_G58",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1567,7 +1608,8 @@
       "aircraft": [
         {
           "container": "Asobo_Baron_G58_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Baron_G58"
+          "baseContainer": "Asobo_Baron_G58",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1595,7 +1637,8 @@
       "aircraft": [
         {
           "container": "Asobo_Bonanza_G36",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "BE36"
         }
       ],
       "airplaneFolders": [
@@ -1621,7 +1664,8 @@
       "aircraft": [
         {
           "container": "Asobo_Bonanza_G36_Livery_01",
-          "baseContainer": "Asobo_Bonanza_G36"
+          "baseContainer": "Asobo_Bonanza_G36",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1647,7 +1691,8 @@
       "aircraft": [
         {
           "container": "Asobo_Bonanza_G36_LiveryAviators",
-          "baseContainer": "Asobo_Bonanza_G36"
+          "baseContainer": "Asobo_Bonanza_G36",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1673,7 +1718,8 @@
       "aircraft": [
         {
           "container": "Asobo_Bonanza_G36_Livery_Kenmore",
-          "baseContainer": "Asobo_Bonanza_G36"
+          "baseContainer": "Asobo_Bonanza_G36",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1699,7 +1745,8 @@
       "aircraft": [
         {
           "container": "Asobo_Bonanza_G36_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Bonanza_G36"
+          "baseContainer": "Asobo_Bonanza_G36",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1727,7 +1774,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C152"
         }
       ],
       "airplaneFolders": [
@@ -1755,7 +1803,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Aerobat",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C152"
         }
       ],
       "airplaneFolders": [
@@ -1781,7 +1830,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Aerobat_Livery_01",
-          "baseContainer": "Asobo_C152_Aerobat"
+          "baseContainer": "Asobo_C152_Aerobat",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1807,7 +1857,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Aerobat_LiveryAviators",
-          "baseContainer": "Asobo_C152_Aerobat"
+          "baseContainer": "Asobo_C152_Aerobat",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1833,7 +1884,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Aerobat_Livery_Kenmore",
-          "baseContainer": "Asobo_C152_Aerobat"
+          "baseContainer": "Asobo_C152_Aerobat",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1859,7 +1911,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Aerobat_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_C152_Aerobat"
+          "baseContainer": "Asobo_C152_Aerobat",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1885,7 +1938,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Livery_01",
-          "baseContainer": "Asobo_C152"
+          "baseContainer": "Asobo_C152",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1911,7 +1965,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_LiveryAviators",
-          "baseContainer": "Asobo_C152"
+          "baseContainer": "Asobo_C152",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1937,7 +1992,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Livery_Kenmore",
-          "baseContainer": "Asobo_C152"
+          "baseContainer": "Asobo_C152",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -1963,7 +2019,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_C152"
+          "baseContainer": "Asobo_C152",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2015,7 +2072,8 @@
       "aircraft": [
         {
           "container": "Asobo_C172SP_AS1000_Livery_01",
-          "baseContainer": "Asobo_C172SP_AS1000"
+          "baseContainer": "Asobo_C172SP_AS1000",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2041,7 +2099,8 @@
       "aircraft": [
         {
           "container": "Asobo_C172SP_AS1000_LiveryAviators",
-          "baseContainer": "Asobo_C172SP_AS1000"
+          "baseContainer": "Asobo_C172SP_AS1000",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2069,15 +2128,18 @@
       "aircraft": [
         {
           "container": "Asobo_C172sp_classic",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C172"
         },
         {
           "container": "Asobo_C172SP_Classic_Floats",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C172"
         },
         {
           "container": "Asobo_C172SP_Classic_Skis",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C172"
         }
       ],
       "airplaneFolders": [
@@ -2105,7 +2167,8 @@
       "aircraft": [
         {
           "container": "Asobo_C172SP_Classic_Livery_01",
-          "baseContainer": "Asobo_C172SP_Classic"
+          "baseContainer": "Asobo_C172SP_Classic",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2131,7 +2194,8 @@
       "aircraft": [
         {
           "container": "Asobo_C172SP_Classic_LiveryAviators",
-          "baseContainer": "Asobo_C172SP_Classic"
+          "baseContainer": "Asobo_C172SP_Classic",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2159,7 +2223,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cabri_G2",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "Cabri"
         }
       ],
       "airplaneFolders": [
@@ -2187,7 +2252,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cap10C",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CP10"
         }
       ],
       "airplaneFolders": [
@@ -2213,7 +2279,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cap10C_Livery_01",
-          "baseContainer": "Asobo_Cap10C"
+          "baseContainer": "Asobo_Cap10C",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2239,7 +2306,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cap10C_LiveryAviators",
-          "baseContainer": "Asobo_Cap10C"
+          "baseContainer": "Asobo_Cap10C",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2265,7 +2333,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cap10C_Livery_Kenmore",
-          "baseContainer": "Asobo_Cap10C"
+          "baseContainer": "Asobo_Cap10C",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2291,7 +2360,8 @@
       "aircraft": [
         {
           "container": "Asobo_Cap10C_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Cap10C"
+          "baseContainer": "Asobo_Cap10C",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2319,7 +2389,8 @@
       "aircraft": [
         {
           "container": "Asobo_CJ4",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C25C"
         }
       ],
       "airplaneFolders": [
@@ -2345,7 +2416,8 @@
       "aircraft": [
         {
           "container": "Asobo_CJ4_Livery_01",
-          "baseContainer": "Asobo_CJ4"
+          "baseContainer": "Asobo_CJ4",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2371,7 +2443,8 @@
       "aircraft": [
         {
           "container": "Asobo_CJ4_LiveryAviators",
-          "baseContainer": "Asobo_CJ4"
+          "baseContainer": "Asobo_CJ4",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2397,7 +2470,8 @@
       "aircraft": [
         {
           "container": "Asobo_CJ4_Livery_Global",
-          "baseContainer": "Asobo_CJ4"
+          "baseContainer": "Asobo_CJ4",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2423,7 +2497,8 @@
       "aircraft": [
         {
           "container": "Asobo_CJ4_Livery_Orbit",
-          "baseContainer": "Asobo_CJ4"
+          "baseContainer": "Asobo_CJ4",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2451,7 +2526,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA40_NG",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DA40"
         }
       ],
       "airplaneFolders": [
@@ -2477,7 +2553,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA40_NG_LiveryAviators",
-          "baseContainer": "Asobo_DA40_NG"
+          "baseContainer": "Asobo_DA40_NG",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2505,7 +2582,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA40_TDI",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DA40"
         }
       ],
       "airplaneFolders": [
@@ -2531,7 +2609,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA40_TDI_LiveryAviators",
-          "baseContainer": "Asobo_DA40_TDI"
+          "baseContainer": "Asobo_DA40_TDI",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2559,7 +2638,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA62",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DA62"
         }
       ],
       "airplaneFolders": [
@@ -2585,7 +2665,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA62_Livery_01",
-          "baseContainer": "Asobo_DA62"
+          "baseContainer": "Asobo_DA62",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2611,7 +2692,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA62_LiveryAviators",
-          "baseContainer": "Asobo_DA62"
+          "baseContainer": "Asobo_DA62",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2640,7 +2722,8 @@
       "aircraft": [
         {
           "container": "Asobo_DG1001E_Neo",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DGF"
         }
       ],
       "airplaneFolders": [
@@ -2666,7 +2749,8 @@
       "aircraft": [
         {
           "container": "Asobo_DG1001E_Neo_Livery_Aviators",
-          "baseContainer": "Asobo_DG1001E_Neo"
+          "baseContainer": "Asobo_DG1001E_Neo",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2692,7 +2776,8 @@
       "aircraft": [
         {
           "container": "Asobo_DG1001E_Neo_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_DG1001E_Neo"
+          "baseContainer": "Asobo_DG1001E_Neo",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2720,7 +2805,8 @@
       "aircraft": [
         {
           "container": "Asobo_DR400",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DR40"
         }
       ],
       "airplaneFolders": [
@@ -2746,7 +2832,8 @@
       "aircraft": [
         {
           "container": "Asobo_DR400_Livery_01",
-          "baseContainer": "Asobo_DR400"
+          "baseContainer": "Asobo_DR400",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2772,7 +2859,8 @@
       "aircraft": [
         {
           "container": "Asobo_DR400_LiveryAviators",
-          "baseContainer": "Asobo_DR400"
+          "baseContainer": "Asobo_DR400",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2798,7 +2886,8 @@
       "aircraft": [
         {
           "container": "Asobo_DR400_Livery_Kenmore",
-          "baseContainer": "Asobo_DR400"
+          "baseContainer": "Asobo_DR400",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2824,7 +2913,8 @@
       "aircraft": [
         {
           "container": "Asobo_DR400_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_DR400"
+          "baseContainer": "Asobo_DR400",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2852,7 +2942,8 @@
       "aircraft": [
         {
           "container": "Asobo_DV20",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DV20"
         }
       ],
       "airplaneFolders": [
@@ -2878,7 +2969,8 @@
       "aircraft": [
         {
           "container": "Asobo_DV20_Livery_01",
-          "baseContainer": "Asobo_DV20"
+          "baseContainer": "Asobo_DV20",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2904,7 +2996,8 @@
       "aircraft": [
         {
           "container": "Asobo_DV20_LiveryAviators",
-          "baseContainer": "Asobo_DV20"
+          "baseContainer": "Asobo_DV20",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2930,7 +3023,8 @@
       "aircraft": [
         {
           "container": "Asobo_DV20_Livery_Kenmore",
-          "baseContainer": "Asobo_DV20"
+          "baseContainer": "Asobo_DV20",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2956,7 +3050,8 @@
       "aircraft": [
         {
           "container": "Asobo_DV20_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_DV20"
+          "baseContainer": "Asobo_DV20",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -2984,7 +3079,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "E300"
         }
       ],
       "airplaneFolders": [
@@ -3010,7 +3106,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330_Livery_01",
-          "baseContainer": "Asobo_E330"
+          "baseContainer": "Asobo_E330",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3036,7 +3133,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330_LiveryAviators",
-          "baseContainer": "Asobo_E330"
+          "baseContainer": "Asobo_E330",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3062,7 +3160,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330_Livery_Kenmore",
-          "baseContainer": "Asobo_E330"
+          "baseContainer": "Asobo_E330",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3088,7 +3187,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330_Livery_MicrosoftWindows11",
-          "baseContainer": "Asobo_E330"
+          "baseContainer": "Asobo_E330",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3114,7 +3214,8 @@
       "aircraft": [
         {
           "container": "Asobo_E330_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_E330"
+          "baseContainer": "Asobo_E330",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3140,7 +3241,8 @@
       "aircraft": [
         {
           "container": "Asobo_FA18E",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "FA18E"
         }
       ],
       "airplaneFolders": [
@@ -3166,7 +3268,8 @@
       "aircraft": [
         {
           "container": "Asobo_FA18E_LiveryAviators",
-          "baseContainer": "Asobo_FA18E"
+          "baseContainer": "Asobo_FA18E",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3192,7 +3295,8 @@
       "aircraft": [
         {
           "container": "Asobo_FA18E_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_FA18E"
+          "baseContainer": "Asobo_FA18E",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3220,7 +3324,8 @@
       "aircraft": [
         {
           "container": "Asobo_FlightDesignCT",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "FDCT"
         }
       ],
       "airplaneFolders": [
@@ -3246,7 +3351,8 @@
       "aircraft": [
         {
           "container": "Asobo_FlightDesignCT_Livery_01",
-          "baseContainer": "Asobo_FlightDesignCT"
+          "baseContainer": "Asobo_FlightDesignCT",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3272,7 +3378,8 @@
       "aircraft": [
         {
           "container": "Asobo_FlightDesignCT_LiveryAviators",
-          "baseContainer": "Asobo_FlightDesignCT"
+          "baseContainer": "Asobo_FlightDesignCT",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3298,7 +3405,8 @@
       "aircraft": [
         {
           "container": "Asobo_FlightDesignCT_Livery_Kenmore",
-          "baseContainer": "Asobo_FlightDesignCT"
+          "baseContainer": "Asobo_FlightDesignCT",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3324,7 +3432,8 @@
       "aircraft": [
         {
           "container": "Asobo_FlightDesignCT_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_FlightDesignCT"
+          "baseContainer": "Asobo_FlightDesignCT",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3522,7 +3631,8 @@
       "aircraft": [
         {
           "container": "Asobo_Icon",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A5"
         }
       ],
       "airplaneFolders": [
@@ -3548,7 +3658,8 @@
       "aircraft": [
         {
           "container": "Asobo_Icon_Livery_01",
-          "baseContainer": "Asobo_Icon"
+          "baseContainer": "Asobo_Icon",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3574,7 +3685,8 @@
       "aircraft": [
         {
           "container": "Asobo_Icon_LiveryAviators",
-          "baseContainer": "Asobo_Icon"
+          "baseContainer": "Asobo_Icon",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3600,7 +3712,8 @@
       "aircraft": [
         {
           "container": "Asobo_Icon_Livery_Kenmore",
-          "baseContainer": "Asobo_Icon"
+          "baseContainer": "Asobo_Icon",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3626,7 +3739,8 @@
       "aircraft": [
         {
           "container": "Asobo_Icon_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Icon"
+          "baseContainer": "Asobo_Icon",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3654,7 +3768,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "B350"
         }
       ],
       "airplaneFolders": [
@@ -3680,7 +3795,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_01",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3706,7 +3822,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_LiveryAviators",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3732,7 +3849,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Emerald",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3758,7 +3876,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Global",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3784,7 +3903,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Kenmore",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3810,7 +3930,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Orbit",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3836,7 +3957,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Pacifica",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3862,7 +3984,8 @@
       "aircraft": [
         {
           "container": "Asobo_KingAir350_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_KingAir350"
+          "baseContainer": "Asobo_KingAir350",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3911,7 +4034,8 @@
       "aircraft": [
         {
           "container": "Asobo_Longitude",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C700"
         }
       ],
       "airplaneFolders": [
@@ -3937,7 +4061,8 @@
       "aircraft": [
         {
           "container": "Asobo_Longitude_Livery_01",
-          "baseContainer": "Asobo_Longitude"
+          "baseContainer": "Asobo_Longitude",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3963,7 +4088,8 @@
       "aircraft": [
         {
           "container": "Asobo_Longitude_Livery_Global",
-          "baseContainer": "Asobo_Longitude"
+          "baseContainer": "Asobo_Longitude",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -3992,7 +4118,8 @@
       "aircraft": [
         {
           "container": "Asobo_LS8",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "MXS"
         }
       ],
       "airplaneFolders": [
@@ -4020,7 +4147,8 @@
       "aircraft": [
         {
           "container": "Asobo_LS8_Livery_Aviators",
-          "baseContainer": "Asobo_LS8"
+          "baseContainer": "Asobo_LS8",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4048,7 +4176,8 @@
       "aircraft": [
         {
           "container": "Asobo_LS8_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_LS8"
+          "baseContainer": "Asobo_LS8",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4076,7 +4205,8 @@
       "aircraft": [
         {
           "container": "Asobo_NXCub",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CC19"
         }
       ],
       "airplaneFolders": [
@@ -4104,7 +4234,8 @@
       "aircraft": [
         {
           "container": "Asobo_NXCub_LiveryAviators",
-          "baseContainer": "Asobo_NXCub"
+          "baseContainer": "Asobo_NXCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4132,7 +4263,8 @@
       "aircraft": [
         {
           "container": "Asobo_NXCub_Livery_XBox_Aviators",
-          "baseContainer": "Asobo_NXCub"
+          "baseContainer": "Asobo_NXCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4183,7 +4315,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pipistrel",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PIVI"
         }
       ],
       "airplaneFolders": [
@@ -4209,7 +4342,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pipistrel_Livery_01",
-          "baseContainer": "Asobo_Pipistrel"
+          "baseContainer": "Asobo_Pipistrel",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4235,7 +4369,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pipistrel_LiveryAviators",
-          "baseContainer": "Asobo_Pipistrel"
+          "baseContainer": "Asobo_Pipistrel",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4261,7 +4396,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pipistrel_Livery_Kenmore",
-          "baseContainer": "Asobo_Pipistrel"
+          "baseContainer": "Asobo_Pipistrel",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4287,7 +4423,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pipistrel_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Pipistrel"
+          "baseContainer": "Asobo_Pipistrel",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4315,7 +4452,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PTS2"
         }
       ],
       "airplaneFolders": [
@@ -4341,7 +4479,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_LiveryAviators",
-          "baseContainer": "Asobo_Pitts"
+          "baseContainer": "Asobo_Pitts",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4367,7 +4506,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Pitts"
+          "baseContainer": "Asobo_Pitts",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4442,7 +4582,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_S1_Reno_LiveryAviators",
-          "baseContainer": "Asobo_Pitts_S1_Reno"
+          "baseContainer": "Asobo_Pitts_S1_Reno",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4471,7 +4612,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_S1_Reno_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Pitts_S1_Reno"
+          "baseContainer": "Asobo_Pitts_S1_Reno",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4497,7 +4639,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_S2_Livery_Kenmore",
-          "baseContainer": "Asobo_Pitts"
+          "baseContainer": "Asobo_Pitts",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4523,7 +4666,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_S2_Rufus",
-          "baseContainer": "Asobo_Pitts"
+          "baseContainer": "Asobo_Pitts",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4549,7 +4693,8 @@
       "aircraft": [
         {
           "container": "Asobo_Pitts_S2_Sam",
-          "baseContainer": "Asobo_Pitts"
+          "baseContainer": "Asobo_Pitts",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4577,7 +4722,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_Cub",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "SAVG"
         }
       ],
       "airplaneFolders": [
@@ -4603,7 +4749,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_Cub_Livery_01",
-          "baseContainer": "Asobo_Savage_Cub"
+          "baseContainer": "Asobo_Savage_Cub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4629,7 +4776,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_Cub_LiveryAviators",
-          "baseContainer": "Asobo_Savage_Cub"
+          "baseContainer": "Asobo_Savage_Cub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4655,7 +4803,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_Cub_Livery_Kenmore",
-          "baseContainer": "Asobo_Savage_Cub"
+          "baseContainer": "Asobo_Savage_Cub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4681,7 +4830,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_Cub_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Savage_Cub"
+          "baseContainer": "Asobo_Savage_Cub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4709,15 +4859,18 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_ShockUltra",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": null
         },
         {
           "container": "Asobo_Savage_ShockUltra_Floats",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": null
         },
         {
           "container": "Asobo_Savage_ShockUltra_Skis",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4745,7 +4898,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_ShockUltra_LiveryAviators",
-          "baseContainer": "Asobo_Savage_ShockUltra"
+          "baseContainer": "Asobo_Savage_ShockUltra",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4771,7 +4925,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_ShockUltra_Livery_Kenmore",
-          "baseContainer": "Asobo_Savage_ShockUltra"
+          "baseContainer": "Asobo_Savage_ShockUltra",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4797,7 +4952,8 @@
       "aircraft": [
         {
           "container": "Asobo_Savage_ShockUltra_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_Savage_ShockUltra"
+          "baseContainer": "Asobo_Savage_ShockUltra",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4825,7 +4981,8 @@
       "aircraft": [
         {
           "container": "Asobo_SR22",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "S22T"
         }
       ],
       "airplaneFolders": [
@@ -4851,7 +5008,8 @@
       "aircraft": [
         {
           "container": "Asobo_SR22_Livery_01",
-          "baseContainer": "Asobo_SR22"
+          "baseContainer": "Asobo_SR22",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4877,7 +5035,8 @@
       "aircraft": [
         {
           "container": "Asobo_SR22_LiveryAviators",
-          "baseContainer": "Asobo_SR22"
+          "baseContainer": "Asobo_SR22",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4903,7 +5062,8 @@
       "aircraft": [
         {
           "container": "Asobo_SR22_Livery_Kenmore",
-          "baseContainer": "Asobo_SR22"
+          "baseContainer": "Asobo_SR22",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4929,7 +5089,8 @@
       "aircraft": [
         {
           "container": "Asobo_SR22_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_SR22"
+          "baseContainer": "Asobo_SR22",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -4999,7 +5160,8 @@
       "aircraft": [
         {
           "container": "Asobo_TBM930_Livery_01",
-          "baseContainer": "Asobo_TBM930"
+          "baseContainer": "Asobo_TBM930",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5025,7 +5187,8 @@
       "aircraft": [
         {
           "container": "Asobo_TBM930_LiveryAviators",
-          "baseContainer": "Asobo_TBM930"
+          "baseContainer": "Asobo_TBM930",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5051,7 +5214,8 @@
       "aircraft": [
         {
           "container": "Asobo_TBM930_Livery_Kenmore",
-          "baseContainer": "Asobo_TBM930"
+          "baseContainer": "Asobo_TBM930",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5077,7 +5241,8 @@
       "aircraft": [
         {
           "container": "Asobo_TBM930_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_TBM930"
+          "baseContainer": "Asobo_TBM930",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5105,7 +5270,8 @@
       "aircraft": [
         {
           "container": "Asobo_VL3",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "VL3"
         }
       ],
       "airplaneFolders": [
@@ -5131,7 +5297,8 @@
       "aircraft": [
         {
           "container": "Asobo_VL3_Livery_01",
-          "baseContainer": "Asobo_VL3"
+          "baseContainer": "Asobo_VL3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5157,7 +5324,8 @@
       "aircraft": [
         {
           "container": "Asobo_VL3_LiveryAviators",
-          "baseContainer": "Asobo_VL3"
+          "baseContainer": "Asobo_VL3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5183,7 +5351,8 @@
       "aircraft": [
         {
           "container": "Asobo_VL3_Livery_Kenmore",
-          "baseContainer": "Asobo_VL3"
+          "baseContainer": "Asobo_VL3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5209,7 +5378,8 @@
       "aircraft": [
         {
           "container": "Asobo_VL3_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_VL3"
+          "baseContainer": "Asobo_VL3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5237,15 +5407,18 @@
       "aircraft": [
         {
           "container": "Asobo_XCub",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CC19"
         },
         {
           "container": "Asobo_XCub_Floats",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CC19"
         },
         {
           "container": "Asobo_XCub_Skis",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "CC19"
         }
       ],
       "airplaneFolders": [
@@ -5273,7 +5446,8 @@
       "aircraft": [
         {
           "container": "Asobo_XCub_Livery_01",
-          "baseContainer": "Asobo_XCub"
+          "baseContainer": "Asobo_XCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5299,7 +5473,8 @@
       "aircraft": [
         {
           "container": "Asobo_XCub_LiveryAviators",
-          "baseContainer": "Asobo_XCub"
+          "baseContainer": "Asobo_XCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5325,7 +5500,8 @@
       "aircraft": [
         {
           "container": "Asobo_XCub_Livery_Kenmore",
-          "baseContainer": "Asobo_XCub"
+          "baseContainer": "Asobo_XCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -5351,7 +5527,8 @@
       "aircraft": [
         {
           "container": "Asobo_XCub_Livery_Xbox_Aviators",
-          "baseContainer": "Asobo_XCub"
+          "baseContainer": "Asobo_XCub",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -9652,7 +9829,7 @@
     },
     {
       "name": "AS_CRJ_900_SAS_New_EIGEH",
-      "path": "C:\\Sim\\Addons\\Group 02\\AS_CRJ_900_SAS_New_EIGEH",
+      "path": "C:\\Sim\\Addons\\Aircraft\\AS_CRJ_900_SAS_New_EIGEH",
       "source": "Library",
       "title": "CRJ 900 Scandinavian Airlines EI-GEH",
       "creator": "AAgun",
@@ -9667,7 +9844,8 @@
       "aircraft": [
         {
           "container": "Aerosoft_CRJ_900_SASNC_EIGEH",
-          "baseContainer": "Aerosoft_CRJ_900"
+          "baseContainer": "Aerosoft_CRJ_900",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -9712,7 +9890,7 @@
     },
     {
       "name": "ba-airport-esgf-falkenberg",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-airport-esgf-falkenberg",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-airport-esgf-falkenberg",
       "source": "Library",
       "title": "ESGF-Falkenberg",
       "creator": "BA",
@@ -9746,7 +9924,7 @@
     },
     {
       "name": "ba-esav-scenery",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esav-scenery",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-esav-scenery",
       "source": "Library",
       "title": "ESAV",
       "creator": "BA",
@@ -9783,7 +9961,7 @@
     },
     {
       "name": "ba-esgascenery",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgascenery",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-esgascenery",
       "source": "Library",
       "title": "ESGA-scenery",
       "creator": "BA",
@@ -9820,7 +9998,7 @@
     },
     {
       "name": "ba-esgr-airport",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgr-airport",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-esgr-airport",
       "source": "Library",
       "title": "esgr-airport",
       "creator": "ba",
@@ -9855,7 +10033,7 @@
     },
     {
       "name": "ba-esgt-simple",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-esgt-simple",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-esgt-simple",
       "source": "Library",
       "title": "ESGT",
       "creator": "BA",
@@ -9891,7 +10069,7 @@
     },
     {
       "name": "ba-estf-scenery",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-estf-scenery",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-estf-scenery",
       "source": "Library",
       "title": "ESTF-airport",
       "creator": "BA",
@@ -9928,7 +10106,7 @@
     },
     {
       "name": "ba-sceneryesge",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesge",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-sceneryesge",
       "source": "Library",
       "title": "esge",
       "creator": "ba",
@@ -9966,7 +10144,7 @@
     },
     {
       "name": "ba-sceneryesgi",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\ba-sceneryesgi",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ba-sceneryesgi",
       "source": "Library",
       "title": "ESGI",
       "creator": "BA",
@@ -10003,7 +10181,7 @@
     },
     {
       "name": "baddweapon-airport-3u2-johnsoncreekairport-v1-1",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\baddweapon-airport-3u2-johnsoncreekairport-v1-1",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\baddweapon-airport-3u2-johnsoncreekairport-v1-1",
       "source": "Library",
       "title": "Johnson Creek Airport v1.1",
       "creator": "baddweapon",
@@ -10038,7 +10216,7 @@
     },
     {
       "name": "bagolu-c152-neoflybannertow",
-      "path": "C:\\Sim\\Addons\\Group 02\\bagolu-c152-neoflybannertow",
+      "path": "C:\\Sim\\Addons\\Aircraft\\bagolu-c152-neoflybannertow",
       "source": "Library",
       "title": "Cessna 152 Neofly banner tow",
       "creator": "bagolu",
@@ -10053,7 +10231,8 @@
       "aircraft": [
         {
           "container": "bagolu-c152-neoflybannertow",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C152"
         }
       ],
       "airplaneFolders": [
@@ -10079,7 +10258,8 @@
       "aircraft": [
         {
           "container": "bagolu-c152-neoflybannertow",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C152"
         }
       ],
       "airplaneFolders": [
@@ -10090,7 +10270,7 @@
     },
     {
       "name": "beyondatc-toolbar",
-      "path": "C:\\Sim\\Addons\\Group 13\\beyondatc-toolbar",
+      "path": "C:\\Sim\\Addons\\Tools\\beyondatc-toolbar",
       "source": "Library",
       "title": "BeyondATC",
       "creator": "Skirmish Mode Games, Inc",
@@ -10147,7 +10327,7 @@
     },
     {
       "name": "BGGH - Nuuk Airport",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\BGGH - Nuuk Airport",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\BGGH - Nuuk Airport",
       "source": "Library",
       "title": "Nuuk Airport",
       "creator": "declinous",
@@ -10186,7 +10366,7 @@
     },
     {
       "name": "bksq-aircraft-bonanzapro",
-      "path": "C:\\Sim\\Addons\\Group 02\\bksq-aircraft-bonanzapro",
+      "path": "C:\\Sim\\Addons\\Aircraft\\bksq-aircraft-bonanzapro",
       "source": "Library",
       "title": "Bonanza Professional",
       "creator": "Black Square",
@@ -10201,15 +10381,18 @@
       "aircraft": [
         {
           "container": "bksq-aircraft-bonanzaproturbine",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "B36T"
         },
         {
           "container": "bksq-aircraft-bonanzaproturbo",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "BT36"
         },
         {
           "container": "bksq-aircraft-bonanzapro",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "BE36"
         }
       ],
       "airplaneFolders": [
@@ -10222,7 +10405,7 @@
     },
     {
       "name": "bmw-lfbz-biarritz",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\bmw-lfbz-biarritz",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\bmw-lfbz-biarritz",
       "source": "Library",
       "title": "Biarritz",
       "creator": "Alex",
@@ -10260,7 +10443,7 @@
     },
     {
       "name": "brickbybrickdesign-airport-eham-amsterdam",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\brickbybrickdesign-airport-eham-amsterdam",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\brickbybrickdesign-airport-eham-amsterdam",
       "source": "Library",
       "title": "EHAM-Enhanced",
       "creator": "Noobbricks",
@@ -10343,7 +10526,8 @@
       "aircraft": [
         {
           "container": "Carenado_PA28_Archer_II",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PA28"
         }
       ],
       "airplaneFolders": [
@@ -10354,7 +10538,7 @@
     },
     {
       "name": "cottagecreations-airport-u70-cascade",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\cottagecreations-airport-u70-cascade",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\cottagecreations-airport-u70-cascade",
       "source": "Library",
       "title": "Cascade",
       "creator": "Steve",
@@ -10425,7 +10609,7 @@
     },
     {
       "name": "duijffmedia-airport-eham-amsterdam",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-airport-eham-amsterdam",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\duijffmedia-airport-eham-amsterdam",
       "source": "Library",
       "title": "Schiphol",
       "creator": "Sven Duijff",
@@ -10460,7 +10644,7 @@
     },
     {
       "name": "duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\duijffmedia-schiphol-amsterdam-mega-enhancement-lighting",
       "source": "Library",
       "title": "Schiphol Amsterdam Mega Enhancement Lighting",
       "creator": "Sven Duijff",
@@ -10492,7 +10676,7 @@
     },
     {
       "name": "eddh-hamburg",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\eddh-hamburg",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\eddh-hamburg",
       "source": "Library",
       "title": "EDDH-upgrade",
       "creator": "cs",
@@ -10527,7 +10711,7 @@
     },
     {
       "name": "efhk-helsinki",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\efhk-helsinki",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\efhk-helsinki",
       "source": "Library",
       "title": "Helsinki Airport ",
       "creator": "epixeri",
@@ -10562,7 +10746,7 @@
     },
     {
       "name": "egcc-manchester",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\egcc-manchester",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\egcc-manchester",
       "source": "Library",
       "title": "Manchester_Intl",
       "creator": "nsajid",
@@ -10596,7 +10780,7 @@
     },
     {
       "name": "epwa",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\epwa",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\epwa",
       "source": "Library",
       "title": "",
       "creator": "Sebol1990",
@@ -10630,7 +10814,7 @@
     },
     {
       "name": "esd-modellib-eolib",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\esd-modellib-eolib",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\esd-modellib-eolib",
       "source": "Library",
       "title": "Emerald Object Library",
       "creator": "Emerald Scenery Design",
@@ -10652,7 +10836,7 @@
     },
     {
       "name": "esgu-airport",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\esgu-airport",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\esgu-airport",
       "source": "Library",
       "title": "ESGU",
       "creator": "BA",
@@ -10689,7 +10873,7 @@
     },
     {
       "name": "esnu-airport-esnu-umea-airport",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\esnu-airport-esnu-umea-airport",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\esnu-airport-esnu-umea-airport",
       "source": "Library",
       "title": "Umeå Airport",
       "creator": "freddeliv",
@@ -10728,7 +10912,7 @@
     },
     {
       "name": "euroscene-airport-lepa-palma-de-mallorca",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\euroscene-airport-lepa-palma-de-mallorca",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\euroscene-airport-lepa-palma-de-mallorca",
       "source": "Library",
       "title": "LEPA Palma de Mallorca",
       "creator": "EuroScene",
@@ -10765,7 +10949,7 @@
     },
     {
       "name": "FBW_A320neo_ROX",
-      "path": "C:\\Sim\\Addons\\Group 02\\FBW_A320neo_ROX",
+      "path": "C:\\Sim\\Addons\\Aircraft\\FBW_A320neo_ROX",
       "source": "Library",
       "title": "FlyByWire SAS SE-ROX",
       "creator": "S. Dikilitas",
@@ -10780,7 +10964,8 @@
       "aircraft": [
         {
           "container": "A320neo_ROX",
-          "baseContainer": "FlyByWire_A320_NEO"
+          "baseContainer": "FlyByWire_A320_NEO",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -10791,7 +10976,7 @@
     },
     {
       "name": "finland-airport-eftp-pirkkala",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\finland-airport-eftp-pirkkala",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\finland-airport-eftp-pirkkala",
       "source": "Library",
       "title": "Tampere-Pirkkala Airport",
       "creator": "WildLynxPilot, kuriiridesign",
@@ -10826,7 +11011,7 @@
     },
     {
       "name": "flybywire-aircraft-a320-neo",
-      "path": "C:\\Sim\\Addons\\Group 02\\flybywire-aircraft-a320-neo",
+      "path": "C:\\Sim\\Addons\\Aircraft\\flybywire-aircraft-a320-neo",
       "source": "Library",
       "title": "A32NX (branch fs2020-master)",
       "creator": "FlyByWire Simulations",
@@ -10844,11 +11029,13 @@
       "aircraft": [
         {
           "container": "FlyByWire_A320_NEO",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A20N"
         },
         {
           "container": "_FlyByWire_A320_NEO-LIVERY",
-          "baseContainer": "FlyByWire_A320_NEO"
+          "baseContainer": "FlyByWire_A320_NEO",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -10860,7 +11047,7 @@
     },
     {
       "name": "flybywire-externaltools-simbridge",
-      "path": "C:\\Sim\\Addons\\Group 13\\flybywire-externaltools-simbridge",
+      "path": "C:\\Sim\\Addons\\Tools\\flybywire-externaltools-simbridge",
       "source": "Library",
       "title": "SimBridge",
       "creator": "FlyByWire Simulations",
@@ -10879,7 +11066,7 @@
     },
     {
       "name": "flybywire_A320Neo_Cabin",
-      "path": "C:\\Sim\\Addons\\Group 02\\flybywire_A320Neo_Cabin",
+      "path": "C:\\Sim\\Addons\\Aircraft\\flybywire_A320Neo_Cabin",
       "source": "Library",
       "title": "Flybywire A320Neo Cabin",
       "creator": "TheRedFox",
@@ -76516,7 +76703,7 @@
     },
     {
       "name": "FS20_DA40-NGX",
-      "path": "C:\\Sim\\Addons\\Group 02\\FS20_DA40-NGX",
+      "path": "C:\\Sim\\Addons\\Aircraft\\FS20_DA40-NGX",
       "source": "Library",
       "title": "DA40NGX",
       "creator": "modded by MrTommymxr",
@@ -76533,7 +76720,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA40_NG",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DA40"
         }
       ],
       "airplaneFolders": [
@@ -76544,7 +76732,7 @@
     },
     {
       "name": "FS20_DA62X",
-      "path": "C:\\Sim\\Addons\\Group 02\\FS20_DA62X",
+      "path": "C:\\Sim\\Addons\\Aircraft\\FS20_DA62X",
       "source": "Library",
       "title": "DA62X",
       "creator": "MrTommymxr",
@@ -76561,7 +76749,8 @@
       "aircraft": [
         {
           "container": "Asobo_DA62",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DA62"
         }
       ],
       "airplaneFolders": [
@@ -77617,7 +77806,7 @@
     },
     {
       "name": "fsltl-traffic-base",
-      "path": "C:\\Sim\\Addons\\Group 05\\fsltl-traffic-base",
+      "path": "C:\\Sim\\Addons\\fsltl\\fsltl-traffic-base",
       "source": "Library",
       "title": "FSLTL Traffic Base",
       "creator": "FSLTL",
@@ -80225,7 +80414,7 @@
     },
     {
       "name": "gatwick",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\gatwick",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\gatwick",
       "source": "Library",
       "title": "Gatwick EGKK",
       "creator": "mkvy",
@@ -80262,7 +80451,7 @@
     },
     {
       "name": "grancanaria",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\grancanaria",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\grancanaria",
       "source": "Library",
       "title": "",
       "creator": "",
@@ -80283,7 +80472,7 @@
     },
     {
       "name": "headwindsim-aircraft-a330-900",
-      "path": "C:\\Sim\\Addons\\Group 02\\headwindsim-aircraft-a330-900",
+      "path": "C:\\Sim\\Addons\\Aircraft\\headwindsim-aircraft-a330-900",
       "source": "Library",
       "title": "A339X (branch HEAD)",
       "creator": "Headwind Simulations",
@@ -80301,11 +80490,13 @@
       "aircraft": [
         {
           "container": "Headwind_A330neo",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A339"
         },
         {
           "container": "_Headwind_A330neo-LIVERY",
-          "baseContainer": "Headwind_A330neo"
+          "baseContainer": "Headwind_A330neo",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -80317,7 +80508,7 @@
     },
     {
       "name": "human-library-animated",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\human-library-animated",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\human-library-animated",
       "source": "Library",
       "title": "human library animated",
       "creator": "Superspud",
@@ -80340,7 +80531,7 @@
     },
     {
       "name": "HWD-A339_SAS",
-      "path": "C:\\Sim\\Addons\\Group 02\\HWD-A339_SAS",
+      "path": "C:\\Sim\\Addons\\Aircraft\\HWD-A339_SAS",
       "source": "Library",
       "title": "Airbus A330-900 SAS - Scandinavian Airlines",
       "creator": "Headwind, F/O WhatzIt2Ya",
@@ -80355,7 +80546,8 @@
       "aircraft": [
         {
           "container": "HWD-A339_SASnew",
-          "baseContainer": "Headwind_A330neo"
+          "baseContainer": "Headwind_A330neo",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -80366,7 +80558,7 @@
     },
     {
       "name": "ingamepanels-sky4sim-ng",
-      "path": "C:\\Sim\\Addons\\Group 13\\ingamepanels-sky4sim-ng",
+      "path": "C:\\Sim\\Addons\\Tools\\ingamepanels-sky4sim-ng",
       "source": "Library",
       "title": "ingamepanels-sky4sim-ng",
       "creator": "Sbeuh",
@@ -80385,7 +80577,7 @@
     },
     {
       "name": "iniBuilds-a350-900-SAS_SE-RSA",
-      "path": "C:\\Sim\\Addons\\Group 02\\iniBuilds-a350-900-SAS_SE-RSA",
+      "path": "C:\\Sim\\Addons\\Aircraft\\iniBuilds-a350-900-SAS_SE-RSA",
       "source": "Library",
       "title": "iniBuilds A350-900 Scandinavian Airlines SE-RSA",
       "creator": "iniBuilds",
@@ -80400,7 +80592,8 @@
       "aircraft": [
         {
           "container": "iniBuilds-a350-900-SAS_SE-RSA",
-          "baseContainer": "inibuilds-aircraft-a350-900"
+          "baseContainer": "inibuilds-aircraft-a350-900",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -80411,7 +80604,7 @@
     },
     {
       "name": "inibuilds-aircraft-a350",
-      "path": "C:\\Sim\\Addons\\Group 02\\inibuilds-aircraft-a350",
+      "path": "C:\\Sim\\Addons\\Aircraft\\inibuilds-aircraft-a350",
       "source": "Library",
       "title": "A350 Airliner",
       "creator": "iniBuilds",
@@ -80426,15 +80619,18 @@
       "aircraft": [
         {
           "container": "inibuilds-aircraft-a350-1000",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A35K"
         },
         {
           "container": "inibuilds-aircraft-a350-900-ULR",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A359"
         },
         {
           "container": "inibuilds-aircraft-a350-900",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "A359"
         }
       ],
       "airplaneFolders": [
@@ -80447,7 +80643,7 @@
     },
     {
       "name": "jdot029-airport-lgsa-chania",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\jdot029-airport-lgsa-chania",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\jdot029-airport-lgsa-chania",
       "source": "Library",
       "title": "Chania Airport Ioannis Daskalogiannis",
       "creator": "scenery",
@@ -80482,7 +80678,7 @@
     },
     {
       "name": "kewr-newark-liberty-intl",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\kewr-newark-liberty-intl",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\kewr-newark-liberty-intl",
       "source": "Library",
       "title": "KEWR-upgrade",
       "creator": "cs",
@@ -80514,7 +80710,7 @@
     },
     {
       "name": "leal-alicante",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\leal-alicante",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\leal-alicante",
       "source": "Library",
       "title": "leal-alicante",
       "creator": "hergi1234",
@@ -80549,7 +80745,7 @@
     },
     {
       "name": "lennarts-halmstadv2-esmt",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-halmstadv2-esmt",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\lennarts-halmstadv2-esmt",
       "source": "Library",
       "title": "Halmstad ESMT",
       "creator": "Lennart",
@@ -80584,7 +80780,7 @@
     },
     {
       "name": "lennarts-jonkoping-esgj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-jonkoping-esgj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\lennarts-jonkoping-esgj",
       "source": "Library",
       "title": "",
       "creator": "",
@@ -80608,7 +80804,7 @@
     },
     {
       "name": "lennarts-varberg-esgv",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lennarts-varberg-esgv",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\lennarts-varberg-esgv",
       "source": "Library",
       "title": "",
       "creator": "",
@@ -80642,7 +80838,7 @@
     },
     {
       "name": "lfpg2025-msfs2020",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lfpg2025-msfs2020",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\lfpg2025-msfs2020",
       "source": "Library",
       "title": "lfpg2025",
       "creator": "XAVIOS",
@@ -80674,7 +80870,7 @@
     },
     {
       "name": "LGSK--V1.1",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\LGSK--V1.1",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\SKIATHOS V1.2\\LGSK--V1.1",
       "source": "Library",
       "title": "Simple Scenery",
       "creator": "My Company",
@@ -80696,7 +80892,7 @@
     },
     {
       "name": "lgsk-lgsk",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgsk-lgsk",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\SKIATHOS V1.2\\lgsk-lgsk",
       "source": "Library",
       "title": "Simple Scenery",
       "creator": "My Company",
@@ -80720,7 +80916,7 @@
     },
     {
       "name": "lgskv1",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Group 12\\lgskv1",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\SKIATHOS V1.2\\lgskv1",
       "source": "Library",
       "title": "Skiathos Airport",
       "creator": "Mick Hoffmann",
@@ -80754,7 +80950,7 @@
     },
     {
       "name": "library1v14-cbj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\library1v14-cbj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\library1v14-cbj",
       "source": "Library",
       "title": "library1v14-cbj",
       "creator": "cbj",
@@ -80776,7 +80972,7 @@
     },
     {
       "name": "library2v14-cbj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\library2v14-cbj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\library2v14-cbj",
       "source": "Library",
       "title": "library2v14-cbj",
       "creator": "Colin-Jeffery",
@@ -80798,7 +80994,7 @@
     },
     {
       "name": "lpma-madeira",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\lpma-madeira",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\lpma-madeira",
       "source": "Library",
       "title": "LPMA-upgrade",
       "creator": "Chack",
@@ -80833,7 +81029,7 @@
     },
     {
       "name": "mge-asobo-aircraft-c152",
-      "path": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c152",
+      "path": "C:\\Sim\\Addons\\Aircraft\\mge-asobo-aircraft-c152",
       "source": "Library",
       "title": "Cessna 152",
       "creator": "MG_Enterprises",
@@ -80850,7 +81046,8 @@
       "aircraft": [
         {
           "container": "Asobo_C152",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C152"
         }
       ],
       "airplaneFolders": [
@@ -80861,7 +81058,7 @@
     },
     {
       "name": "mge-asobo-aircraft-c172sp-as1000",
-      "path": "C:\\Sim\\Addons\\Group 02\\mge-asobo-aircraft-c172sp-as1000",
+      "path": "C:\\Sim\\Addons\\Aircraft\\mge-asobo-aircraft-c172sp-as1000",
       "source": "Library",
       "title": "Cessna 172 Skyhawk (G1000)",
       "creator": "MG_Enterprises",
@@ -80962,7 +81159,8 @@
       "aircraft": [
         {
           "container": "microsoft-aircraft-bell407",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "Bell 407"
         }
       ],
       "airplaneFolders": [
@@ -80988,7 +81186,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DC-3"
         }
       ],
       "airplaneFolders": [
@@ -81014,7 +81213,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-aviators",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81040,7 +81240,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-aviatorsXBOX",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81066,7 +81267,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-bluestripe",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81092,7 +81294,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-dcdirect",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81118,7 +81321,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-emerald",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81144,7 +81348,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-oledusty",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81170,7 +81375,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-PLmetal",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81196,7 +81402,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-redyellow",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81222,7 +81429,8 @@
       "aircraft": [
         {
           "container": "douglas-dc3-livery-worldtravel",
-          "baseContainer": "douglas-dc3"
+          "baseContainer": "douglas-dc3",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81248,11 +81456,13 @@
       "aircraft": [
         {
           "container": "BlackbirdSims_DHC2_Floats",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DHC2"
         },
         {
           "container": "BlackbirdSims_DHC2_Wheels",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "DHC2"
         }
       ],
       "airplaneFolders": [
@@ -81279,7 +81489,8 @@
       "aircraft": [
         {
           "container": "microsoft-aircraft-g-21",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "g-21"
         }
       ],
       "airplaneFolders": [
@@ -81305,7 +81516,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Hughes_H4_Hercules",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "H4"
         }
       ],
       "airplaneFolders": [
@@ -81331,7 +81543,8 @@
       "aircraft": [
         {
           "container": "microsoft-aircraft-jn4",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "JN4"
         }
       ],
       "airplaneFolders": [
@@ -81359,19 +81572,23 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_G950_Floats",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PC6"
         },
         {
           "container": "Microsoft_Pilatus_PC6_G950_Wheels",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PC6"
         },
         {
           "container": "Microsoft_Pilatus_PC6_Gauge_Skis",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PC6"
         },
         {
           "container": "Microsoft_Pilatus_PC6_Gauge_Wheels",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "PC6"
         }
       ],
       "airplaneFolders": [
@@ -81403,7 +81620,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_G950_Wheels_Livery_01",
-          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels"
+          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81431,7 +81649,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_G950_Wheels_Livery_Aviators",
-          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels"
+          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81459,7 +81678,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_G950_Wheels_Livery_Xbox_Aviators",
-          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels"
+          "baseContainer": "Microsoft_Pilatus_PC6_G950_Wheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81487,7 +81707,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_Gauge_Wheels_Livery_01",
-          "baseContainer": "Microsoft_Pilatus_PC6_Gauge_Wheels"
+          "baseContainer": "Microsoft_Pilatus_PC6_Gauge_Wheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81515,7 +81736,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Pilatus_PC6_Gauge_Wheels_Livery_02",
-          "baseContainer": "Microsoft_Pilatus_PC6_Gauge_Wheels"
+          "baseContainer": "Microsoft_Pilatus_PC6_Gauge_Wheels",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81541,7 +81763,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Spirit_of_StLouis",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "SpiritOfStLouis"
         }
       ],
       "airplaneFolders": [
@@ -81590,7 +81813,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Volocity_Livery_Aviators",
-          "baseContainer": "Microsoft_Volocity"
+          "baseContainer": "Microsoft_Volocity",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81616,7 +81840,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Volocity_Livery_Xbox_Aviators",
-          "baseContainer": "Microsoft_Volocity"
+          "baseContainer": "Microsoft_Volocity",
+          "typeDesignator": null
         }
       ],
       "airplaneFolders": [
@@ -81642,7 +81867,8 @@
       "aircraft": [
         {
           "container": "Microsoft_Wright_Flyer",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "W_Flyer"
         }
       ],
       "airplaneFolders": [
@@ -86654,7 +86880,7 @@
     },
     {
       "name": "mikeaat-assetpack",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\mikeaat-assetpack",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\mikeaat-assetpack",
       "source": "Library",
       "title": "Mikeaat Asset Pack",
       "creator": "Mikeaat",
@@ -104768,7 +104994,7 @@
     },
     {
       "name": "neofly-neofly-cargo",
-      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-cargo",
+      "path": "C:\\Sim\\Addons\\Tools\\neofly-neofly-cargo",
       "source": "Library",
       "title": "Neofly cargo",
       "creator": "Neofly",
@@ -104822,7 +105048,7 @@
     },
     {
       "name": "neofly-neofly-objects",
-      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-objects",
+      "path": "C:\\Sim\\Addons\\Tools\\neofly-neofly-objects",
       "source": "Library",
       "title": "Neofly Objects",
       "creator": "Neofly",
@@ -104860,7 +105086,7 @@
     },
     {
       "name": "neofly-neofly-smokes",
-      "path": "C:\\Sim\\Addons\\Group 13\\neofly-neofly-smokes",
+      "path": "C:\\Sim\\Addons\\Tools\\neofly-neofly-smokes",
       "source": "Library",
       "title": "Neofly Smokes",
       "creator": "Neofly",
@@ -104898,7 +105124,7 @@
     },
     {
       "name": "noolaero-module-vdgs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\noolaero-module-vdgs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\noolaero-module-vdgs",
       "source": "Library",
       "title": "Visual Docking Guidance System",
       "creator": "Nool Aerosystems",
@@ -105194,7 +105420,7 @@
     },
     {
       "name": "pgcompany-airport-epwa-warsaw",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\pgcompany-airport-epwa-warsaw",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\pgcompany-airport-epwa-warsaw",
       "source": "Library",
       "title": "EPWA Warsaw Chopin Airport",
       "creator": "piotr",
@@ -105229,7 +105455,7 @@
     },
     {
       "name": "pms50-instrument-gtn750-pro",
-      "path": "C:\\Sim\\Addons\\Group 02\\pms50-instrument-gtn750-pro",
+      "path": "C:\\Sim\\Addons\\Aircraft\\pms50-instrument-gtn750-pro",
       "source": "Library",
       "title": "GTN750 Avionics",
       "creator": "PMS50",
@@ -105283,7 +105509,7 @@
     },
     {
       "name": "reeledwh-airport-esib-satenas",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\reeledwh-airport-esib-satenas",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\reeledwh-airport-esib-satenas",
       "source": "Library",
       "title": "Satenas-airbase-esib",
       "creator": "Reeledwh",
@@ -105315,7 +105541,7 @@
     },
     {
       "name": "sal1800-cessna-170b-backcountry",
-      "path": "C:\\Sim\\Addons\\Group 02\\sal1800-cessna-170b-backcountry",
+      "path": "C:\\Sim\\Addons\\Aircraft\\sal1800-cessna-170b-backcountry",
       "source": "Library",
       "title": "Cessna 170B Backcountry",
       "creator": "Sal1800",
@@ -105330,11 +105556,13 @@
       "aircraft": [
         {
           "container": "Cessna-170B-Backcountry",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C170"
         },
         {
           "container": "Cessna-170B-Float",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C170"
         }
       ],
       "airplaneFolders": [
@@ -105346,7 +105574,7 @@
     },
     {
       "name": "sal1800-cessna-super-170b-OPTIONAL",
-      "path": "C:\\Sim\\Addons\\Group 02\\sal1800-cessna-super-170b-OPTIONAL",
+      "path": "C:\\Sim\\Addons\\Aircraft\\sal1800-cessna-super-170b-OPTIONAL",
       "source": "Library",
       "title": "Cessna Super 170B Backcountry",
       "creator": "Sal1800",
@@ -105361,11 +105589,13 @@
       "aircraft": [
         {
           "container": "Cessna-170B-Backcountry",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C170"
         },
         {
           "container": "Cessna-170B-Float",
-          "baseContainer": null
+          "baseContainer": null,
+          "typeDesignator": "C170"
         }
       ],
       "airplaneFolders": [
@@ -105377,7 +105607,7 @@
     },
     {
       "name": "San Francisco",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\San Francisco",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\San Francisco",
       "source": "Library",
       "title": "San Francisco International Airport",
       "creator": "Snoopy7412",
@@ -105463,7 +105693,7 @@
     },
     {
       "name": "simflight-C152-interior-navtablet",
-      "path": "C:\\Sim\\Addons\\Group 02\\simflight-C152-interior-navtablet",
+      "path": "C:\\Sim\\Addons\\Aircraft\\simflight-C152-interior-navtablet",
       "source": "Library",
       "title": "Cessna 152",
       "creator": "SimFlight",
@@ -105489,7 +105719,7 @@
     },
     {
       "name": "simnord-copenhagen",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\simnord-copenhagen",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\simnord-copenhagen",
       "source": "Library",
       "title": "EKCH Copenhagen Airport",
       "creator": "SimNord",
@@ -105524,7 +105754,7 @@
     },
     {
       "name": "sky4sim-os",
-      "path": "C:\\Sim\\Addons\\Group 13\\sky4sim-os",
+      "path": "C:\\Sim\\Addons\\Tools\\sky4sim-os",
       "source": "Library",
       "title": "Sky4Sim-OS",
       "creator": "sbeuh",
@@ -105543,7 +105773,7 @@
     },
     {
       "name": "skylinesimulations-airport-essv-visby",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-airport-essv-visby",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\skylinesimulations-airport-essv-visby",
       "source": "Library",
       "title": "Visby",
       "creator": "SkylineSimulations",
@@ -105578,7 +105808,7 @@
     },
     {
       "name": "skylinesimulations-esks-scandinavianmountains",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skylinesimulations-esks-scandinavianmountains",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\skylinesimulations-esks-scandinavianmountains",
       "source": "Library",
       "title": "ESKS Scandinavian",
       "creator": "Skyline Simulations",
@@ -105613,7 +105843,7 @@
     },
     {
       "name": "skytry-esgp",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\skytry-esgp",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\skytry-esgp",
       "source": "Library",
       "title": "Save Flygplats",
       "creator": "Daniel Martinsson",
@@ -105647,7 +105877,7 @@
     },
     {
       "name": "sltcreations-airport-yalr-aileron",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yalr-aileron",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yalr-aileron",
       "source": "Library",
       "title": "YALR Aileron",
       "creator": "Gunther",
@@ -105679,7 +105909,7 @@
     },
     {
       "name": "sltcreations-airport-yanl-anthony-lagoon",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yanl-anthony-lagoon",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yanl-anthony-lagoon",
       "source": "Library",
       "title": "YANL Anthony Lagoon",
       "creator": "Gunther",
@@ -105714,7 +105944,7 @@
     },
     {
       "name": "sltcreations-airport-yarp-arapunya",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yarp-arapunya",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yarp-arapunya",
       "source": "Library",
       "title": "YARP Arapunya",
       "creator": "Gunther",
@@ -105746,7 +105976,7 @@
     },
     {
       "name": "sltcreations-airport-ybes-beswick",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybes-beswick",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ybes-beswick",
       "source": "Library",
       "title": "YBES Beswick",
       "creator": "Gunther",
@@ -105778,7 +106008,7 @@
     },
     {
       "name": "sltcreations-airport-ybig-bing-bong",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybig-bing-bong",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ybig-bing-bong",
       "source": "Library",
       "title": "YBIG Bing Bong",
       "creator": "Gunther",
@@ -105810,7 +106040,7 @@
     },
     {
       "name": "sltcreations-airport-ybit-bullita",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ybit-bullita",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ybit-bullita",
       "source": "Library",
       "title": "YBIT Bullita",
       "creator": "Gunther",
@@ -105842,7 +106072,7 @@
     },
     {
       "name": "sltcreations-airport-ybwl-bramwell-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ybwl-bramwell-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-ybwl-bramwell-station",
       "source": "Library",
       "title": "YBWL Bramwell Station",
       "creator": "Gunther",
@@ -105874,7 +106104,7 @@
     },
     {
       "name": "sltcreations-airport-yccr-coomalie-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yccr-coomalie-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yccr-coomalie-creek",
       "source": "Library",
       "title": "YCCR Coomalie Creek",
       "creator": "Gunther",
@@ -105906,7 +106136,7 @@
     },
     {
       "name": "sltcreations-airport-ycdw-cardwell-dallachy",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ycdw-cardwell-dallachy",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-ycdw-cardwell-dallachy",
       "source": "Library",
       "title": "YCDW Cardwell-Dallachy",
       "creator": "Gunther",
@@ -105938,7 +106168,7 @@
     },
     {
       "name": "sltcreations-airport-ycnp-channel-point",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ycnp-channel-point",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ycnp-channel-point",
       "source": "Library",
       "title": "YCNP Channel Point",
       "creator": "Gunther",
@@ -105970,7 +106200,7 @@
     },
     {
       "name": "sltcreations-airport-ycns-coniston-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ycns-coniston-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ycns-coniston-station",
       "source": "Library",
       "title": "YCNS-Coniston-Station",
       "creator": "Gunther",
@@ -106002,7 +106232,7 @@
     },
     {
       "name": "sltcreations-airport-ycyt-crystalbrook-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ycyt-crystalbrook-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-ycyt-crystalbrook-station",
       "source": "Library",
       "title": "YCYT Crystalbrook Station",
       "creator": "Gunther",
@@ -106034,7 +106264,7 @@
     },
     {
       "name": "sltcreations-airport-ydld-delmore-downs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydld-delmore-downs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ydld-delmore-downs",
       "source": "Library",
       "title": "YDLD Delmore Downs",
       "creator": "Gunther",
@@ -106069,7 +106299,7 @@
     },
     {
       "name": "sltcreations-airport-ydpr-dneiper",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydpr-dneiper",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ydpr-dneiper",
       "source": "Library",
       "title": "YDPR Dneiper",
       "creator": "Gunther",
@@ -106101,7 +106331,7 @@
     },
     {
       "name": "sltcreations-airport-ydry-drysdale-island",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydry-drysdale-island",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ydry-drysdale-island",
       "source": "Library",
       "title": "YDRY Drysdale Island",
       "creator": "Gunther",
@@ -106133,7 +106363,7 @@
     },
     {
       "name": "sltcreations-airport-ydsv-dorisvale",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ydsv-dorisvale",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ydsv-dorisvale",
       "source": "Library",
       "title": "YDSV Dorisvale",
       "creator": "Gunther",
@@ -106165,7 +106395,7 @@
     },
     {
       "name": "sltcreations-airport-yelz-elizabeth-downs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yelz-elizabeth-downs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yelz-elizabeth-downs",
       "source": "Library",
       "title": "YELZ Elizabeth Downs",
       "creator": "Gunther",
@@ -106197,7 +106427,7 @@
     },
     {
       "name": "sltcreations-airport-yfsr-fisher",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yfsr-fisher",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yfsr-fisher",
       "source": "Library",
       "title": "YFSR Fisher",
       "creator": "Gunther",
@@ -106229,7 +106459,7 @@
     },
     {
       "name": "sltcreations-airport-ygor-gorrie-wwii",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ygor-gorrie-wwii",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ygor-gorrie-wwii",
       "source": "Library",
       "title": "YGOR Gorrie",
       "creator": "Gunther",
@@ -106261,7 +106491,7 @@
     },
     {
       "name": "sltcreations-airport-ygtc-gemtree-roadhouse",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ygtc-gemtree-roadhouse",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ygtc-gemtree-roadhouse",
       "source": "Library",
       "title": "YGTC Gemtree Roadhouse",
       "creator": "Gunther",
@@ -106293,7 +106523,7 @@
     },
     {
       "name": "sltcreations-airport-yhac-hayes-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhac-hayes-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yhac-hayes-creek",
       "source": "Library",
       "title": "YHAC Hayes Creek",
       "creator": "Gunther",
@@ -106325,7 +106555,7 @@
     },
     {
       "name": "sltcreations-airport-yhbp-homebush-park",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhbp-homebush-park",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yhbp-homebush-park",
       "source": "Library",
       "title": "YHBP Homebush Park",
       "creator": "Gunther",
@@ -106357,7 +106587,7 @@
     },
     {
       "name": "sltcreations-airport-yhov-hodgson-river",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhov-hodgson-river",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yhov-hodgson-river",
       "source": "Library",
       "title": "YHOV Hodgson River",
       "creator": "Gunther",
@@ -106392,7 +106622,7 @@
     },
     {
       "name": "sltcreations-airport-yhsb-horseshoe-bend",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yhsb-horseshoe-bend",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yhsb-horseshoe-bend",
       "source": "Library",
       "title": "YHSB Horseshoe Bend",
       "creator": "Gunther",
@@ -106424,7 +106654,7 @@
     },
     {
       "name": "sltcreations-airport-ykab-king-ash-bay",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ykab-king-ash-bay",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ykab-king-ash-bay",
       "source": "Library",
       "title": "YKAB King Ash Bay",
       "creator": "Gunther",
@@ -106456,7 +106686,7 @@
     },
     {
       "name": "sltcreations-airport-ykoh-koolpinyah",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ykoh-koolpinyah",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ykoh-koolpinyah",
       "source": "Library",
       "title": "YKOH Koolpinyah",
       "creator": "Gunther",
@@ -106488,7 +106718,7 @@
     },
     {
       "name": "sltcreations-airport-ylae-labelle-downs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ylae-labelle-downs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ylae-labelle-downs",
       "source": "Library",
       "title": "YLAE Labelle Downs",
       "creator": "Gunther",
@@ -106520,7 +106750,7 @@
     },
     {
       "name": "sltcreations-airport-ylit-litchfield-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ylit-litchfield-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ylit-litchfield-station",
       "source": "Library",
       "title": "YLIT Litchfield Station",
       "creator": "Gunther",
@@ -106552,7 +106782,7 @@
     },
     {
       "name": "sltcreations-airport-ylrs-new-laura",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ylrs-new-laura",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-ylrs-new-laura",
       "source": "Library",
       "title": "YLRS New Laura",
       "creator": "Gunther",
@@ -106584,7 +106814,7 @@
     },
     {
       "name": "sltcreations-airport-ymax-manbulloo-wwii",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymax-manbulloo-wwii",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ymax-manbulloo-wwii",
       "source": "Library",
       "title": "YMAX Manbulloo",
       "creator": "Gunther",
@@ -106616,7 +106846,7 @@
     },
     {
       "name": "sltcreations-airport-ymee-merlin-mine",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymee-merlin-mine",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ymee-merlin-mine",
       "source": "Library",
       "title": "YMEE Merlin Mine",
       "creator": "Gunther",
@@ -106648,7 +106878,7 @@
     },
     {
       "name": "sltcreations-airport-ymji-murranji",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymji-murranji",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ymji-murranji",
       "source": "Library",
       "title": "YMJI Murranji",
       "creator": "Gunther",
@@ -106680,7 +106910,7 @@
     },
     {
       "name": "sltcreations-airport-ymkc-mistake-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymkc-mistake-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ymkc-mistake-creek",
       "source": "Library",
       "title": "YMKC Mistake Creek",
       "creator": "Gunther",
@@ -106712,7 +106942,7 @@
     },
     {
       "name": "sltcreations-airport-ymyp-mayawunpirri",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ymyp-mayawunpirri",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ymyp-mayawunpirri",
       "source": "Library",
       "title": "YMYP Mayawunpirri",
       "creator": "Gunther",
@@ -106744,7 +106974,7 @@
     },
     {
       "name": "sltcreations-airport-yncw-newcastle-waters",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yncw-newcastle-waters",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yncw-newcastle-waters",
       "source": "Library",
       "title": "YNCW Newcastle Waters",
       "creator": "Gunther",
@@ -106777,7 +107007,7 @@
     },
     {
       "name": "sltcreations-airport-yq01-cannibal-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq01-cannibal-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq01-cannibal-creek",
       "source": "Library",
       "title": "YQ01 Cannibal Creek",
       "creator": "Gunther",
@@ -106809,7 +107039,7 @@
     },
     {
       "name": "sltcreations-airport-yq02-wonga-beach",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq02-wonga-beach",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq02-wonga-beach",
       "source": "Library",
       "title": "YQ02 Wonga Beach",
       "creator": "Gunther",
@@ -106841,7 +107071,7 @@
     },
     {
       "name": "sltcreations-airport-yq03-bustard-downs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq03-bustard-downs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq03-bustard-downs",
       "source": "Library",
       "title": "YQ03 Bustard Downs",
       "creator": "Gunther",
@@ -106873,7 +107103,7 @@
     },
     {
       "name": "sltcreations-airport-yq04-mount-dickson",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq04-mount-dickson",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq04-mount-dickson",
       "source": "Library",
       "title": "YQ04 Mount Dickson",
       "creator": "Gunther",
@@ -106905,7 +107135,7 @@
     },
     {
       "name": "sltcreations-airport-yq05-mount-mulligan",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq05-mount-mulligan",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq05-mount-mulligan",
       "source": "Library",
       "title": "YQ05 Mount Mulligan",
       "creator": "Gunther",
@@ -106943,7 +107173,7 @@
     },
     {
       "name": "sltcreations-airport-yq06-cabana-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq06-cabana-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq06-cabana-station",
       "source": "Library",
       "title": "YQ06 Cabana Station",
       "creator": "Gunther",
@@ -106975,7 +107205,7 @@
     },
     {
       "name": "sltcreations-airport-yq07-knox-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq07-knox-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq07-knox-creek",
       "source": "Library",
       "title": "YQ07 Knox Creek",
       "creator": "Gunther",
@@ -107007,7 +107237,7 @@
     },
     {
       "name": "sltcreations-airport-yq08-koah-private",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq08-koah-private",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq08-koah-private",
       "source": "Library",
       "title": "YQ08 Koah Private",
       "creator": "Gunther",
@@ -107039,7 +107269,7 @@
     },
     {
       "name": "sltcreations-airport-yq09-port-stewart",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq09-port-stewart",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq09-port-stewart",
       "source": "Library",
       "title": "YQ09 Port Stewart",
       "creator": "Gunther",
@@ -107071,7 +107301,7 @@
     },
     {
       "name": "sltcreations-airport-yq10-hurricane-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq10-hurricane-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq10-hurricane-station",
       "source": "Library",
       "title": "YQ10 Hurricane Station",
       "creator": "Gunther",
@@ -107103,7 +107333,7 @@
     },
     {
       "name": "sltcreations-airport-yq11-bathurst-head-outstation",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yq11-bathurst-head-outstation",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yq11-bathurst-head-outstation",
       "source": "Library",
       "title": "YQ11 Bathurst Head Outstation",
       "creator": "Gunther",
@@ -107135,7 +107365,7 @@
     },
     {
       "name": "sltcreations-airport-yrlh-riversleigh",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-yrlh-riversleigh",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-yrlh-riversleigh",
       "source": "Library",
       "title": "YRLH Riversleigh",
       "creator": "Gunther",
@@ -107167,7 +107397,7 @@
     },
     {
       "name": "sltcreations-airport-ywnr-woolner",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ywnr-woolner",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ywnr-woolner",
       "source": "Library",
       "title": "YWNR Woolner",
       "creator": "Gunther",
@@ -107199,7 +107429,7 @@
     },
     {
       "name": "sltcreations-airport-ywou-wombungi",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-ywou-wombungi",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-ywou-wombungi",
       "source": "Library",
       "title": "YWOU Wombungi",
       "creator": "Gunther",
@@ -107231,7 +107461,7 @@
     },
     {
       "name": "sltcreations-airport-ywsn-woodstock-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 10\\sltcreations-airport-ywsn-woodstock-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Queensland\\sltcreations-airport-ywsn-woodstock-station",
       "source": "Library",
       "title": "YWSN Woodstock Station",
       "creator": "Gunther",
@@ -107263,7 +107493,7 @@
     },
     {
       "name": "sltcreations-airport-yx01-dundee-beach",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx01-dundee-beach",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx01-dundee-beach",
       "source": "Library",
       "title": "YX01 Dundee Beach",
       "creator": "Gunther",
@@ -107295,7 +107525,7 @@
     },
     {
       "name": "sltcreations-airport-yx02-crab-claw-island",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx02-crab-claw-island",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx02-crab-claw-island",
       "source": "Library",
       "title": "YX02 Crab Claw Island",
       "creator": "Gunther",
@@ -107327,7 +107557,7 @@
     },
     {
       "name": "sltcreations-airport-yx04-kuwuma",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx04-kuwuma",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx04-kuwuma",
       "source": "Library",
       "title": "YX04 Kuwuma",
       "creator": "Gunther",
@@ -107359,7 +107589,7 @@
     },
     {
       "name": "sltcreations-airport-yx05-mary-river-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx05-mary-river-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx05-mary-river-station",
       "source": "Library",
       "title": "YX05 Mary River Station",
       "creator": "Gunther",
@@ -107391,7 +107621,7 @@
     },
     {
       "name": "sltcreations-airport-yx06-swim-creek-plains",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx06-swim-creek-plains",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx06-swim-creek-plains",
       "source": "Library",
       "title": "YX06 Swim Creek Plains",
       "creator": "Gunther",
@@ -107423,7 +107653,7 @@
     },
     {
       "name": "sltcreations-airport-yx07-cape-wessel",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx07-cape-wessel",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx07-cape-wessel",
       "source": "Library",
       "title": "YX07 Cape Wessel",
       "creator": "Gunther",
@@ -107455,7 +107685,7 @@
     },
     {
       "name": "sltcreations-airport-yx08-marrakai-road",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx08-marrakai-road",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx08-marrakai-road",
       "source": "Library",
       "title": "YX08 Marrakai Road",
       "creator": "Gunther",
@@ -107487,7 +107717,7 @@
     },
     {
       "name": "sltcreations-airport-yx09-adelaide-river-outstation",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx09-adelaide-river-outstation",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx09-adelaide-river-outstation",
       "source": "Library",
       "title": "YX09 Adelaide River OS",
       "creator": "Gunther",
@@ -107519,7 +107749,7 @@
     },
     {
       "name": "sltcreations-airport-yx12-colson-track",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx12-colson-track",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx12-colson-track",
       "source": "Library",
       "title": "YX12 Colson Track",
       "creator": "Gunther",
@@ -107551,7 +107781,7 @@
     },
     {
       "name": "sltcreations-airport-yx13-jinka-homestead",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx13-jinka-homestead",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx13-jinka-homestead",
       "source": "Library",
       "title": "YX13 Jinka Homestead",
       "creator": "Gunther",
@@ -107583,7 +107813,7 @@
     },
     {
       "name": "sltcreations-airport-yx14-redgum-store",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx14-redgum-store",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx14-redgum-store",
       "source": "Library",
       "title": "YX14 Redgum Store",
       "creator": "Gunther",
@@ -107615,7 +107845,7 @@
     },
     {
       "name": "sltcreations-airport-yx16-ilpurla",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx16-ilpurla",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx16-ilpurla",
       "source": "Library",
       "title": "YX16 Ilpurla",
       "creator": "Gunther",
@@ -107647,7 +107877,7 @@
     },
     {
       "name": "sltcreations-airport-yx17-mount-zeil-wp",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx17-mount-zeil-wp",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx17-mount-zeil-wp",
       "source": "Library",
       "title": "YX17 Mount Zeil WP",
       "creator": "Gunther",
@@ -107679,7 +107909,7 @@
     },
     {
       "name": "sltcreations-airport-yx18-milton-park-homestead",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx18-milton-park-homestead",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx18-milton-park-homestead",
       "source": "Library",
       "title": "YX18 Milton Park Homestead",
       "creator": "Gunther",
@@ -107711,7 +107941,7 @@
     },
     {
       "name": "sltcreations-airport-yx19-hamilton-downs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx19-hamilton-downs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx19-hamilton-downs",
       "source": "Library",
       "title": "YX19 Hamilton Downs",
       "creator": "Gunther",
@@ -107743,7 +107973,7 @@
     },
     {
       "name": "sltcreations-airport-yx21-dunmarra",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx21-dunmarra",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx21-dunmarra",
       "source": "Library",
       "title": "YX21 Dunmarra",
       "creator": "Gunther",
@@ -107775,7 +108005,7 @@
     },
     {
       "name": "sltcreations-airport-yx22-indiana-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx22-indiana-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx22-indiana-station",
       "source": "Library",
       "title": "YX22 Indiana Station",
       "creator": "Gunther",
@@ -107807,7 +108037,7 @@
     },
     {
       "name": "sltcreations-airport-yx23-beetaloo-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx23-beetaloo-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx23-beetaloo-station",
       "source": "Library",
       "title": "YX23 Beetaloo",
       "creator": "Gunther",
@@ -107839,7 +108069,7 @@
     },
     {
       "name": "sltcreations-airport-yx26-spirit-hills",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx26-spirit-hills",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx26-spirit-hills",
       "source": "Library",
       "title": "YX26 Spirit Hills",
       "creator": "Gunther",
@@ -107871,7 +108101,7 @@
     },
     {
       "name": "sltcreations-airport-yx27-yambah-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx27-yambah-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx27-yambah-station",
       "source": "Library",
       "title": "YX27 Yambah Station",
       "creator": "Gunther",
@@ -107903,7 +108133,7 @@
     },
     {
       "name": "sltcreations-airport-yx28-melaleuca-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx28-melaleuca-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx28-melaleuca-station",
       "source": "Library",
       "title": "YX28 Melaleuca Station",
       "creator": "Gunther",
@@ -107935,7 +108165,7 @@
     },
     {
       "name": "sltcreations-airport-yx29-fish-river-hs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx29-fish-river-hs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx29-fish-river-hs",
       "source": "Library",
       "title": "YX29 Fish River HS",
       "creator": "Gunther",
@@ -107967,7 +108197,7 @@
     },
     {
       "name": "sltcreations-airport-yx30-finnis-river-hs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx30-finnis-river-hs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx30-finnis-river-hs",
       "source": "Library",
       "title": "YX30 Finnis River HS",
       "creator": "Gunther",
@@ -107999,7 +108229,7 @@
     },
     {
       "name": "sltcreations-airport-yx31-warloch-ponds",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx31-warloch-ponds",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx31-warloch-ponds",
       "source": "Library",
       "title": "YX31 Warloch Ponds",
       "creator": "Gunther",
@@ -108031,7 +108261,7 @@
     },
     {
       "name": "sltcreations-airport-yx32-dundee-beach-pvt",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx32-dundee-beach-pvt",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx32-dundee-beach-pvt",
       "source": "Library",
       "title": "YX32 Dundee Beach Pvt",
       "creator": "Gunther",
@@ -108063,7 +108293,7 @@
     },
     {
       "name": "sltcreations-airport-yx33-atula-homestead",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx33-atula-homestead",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx33-atula-homestead",
       "source": "Library",
       "title": "YX33 Atula HS",
       "creator": "Gunther",
@@ -108095,7 +108325,7 @@
     },
     {
       "name": "sltcreations-airport-yx34-phillip-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx34-phillip-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx34-phillip-creek",
       "source": "Library",
       "title": "YX34 Phillip Creek",
       "creator": "Gunther",
@@ -108127,7 +108357,7 @@
     },
     {
       "name": "sltcreations-airport-yx35-dry-river-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx35-dry-river-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx35-dry-river-station",
       "source": "Library",
       "title": "YX35 Dry River Station",
       "creator": "Gunther",
@@ -108159,7 +108389,7 @@
     },
     {
       "name": "sltcreations-airport-yx36-deleye",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx36-deleye",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx36-deleye",
       "source": "Library",
       "title": "YX36 Deleye",
       "creator": "Gunther",
@@ -108191,7 +108421,7 @@
     },
     {
       "name": "sltcreations-airport-yx37-scott-creek-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx37-scott-creek-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx37-scott-creek-station",
       "source": "Library",
       "title": "YX37 Scott Creek Station",
       "creator": "Gunther",
@@ -108223,7 +108453,7 @@
     },
     {
       "name": "sltcreations-airport-yx38-fenton",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx38-fenton",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx38-fenton",
       "source": "Library",
       "title": "YX38 Fenton",
       "creator": "Gunther",
@@ -108255,7 +108485,7 @@
     },
     {
       "name": "sltcreations-airport-yx40-baroalba-hs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx40-baroalba-hs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx40-baroalba-hs",
       "source": "Library",
       "title": "YX40 Baroalba HS",
       "creator": "Gunther",
@@ -108287,7 +108517,7 @@
     },
     {
       "name": "sltcreations-airport-yx41-munmarlary-hs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx41-munmarlary-hs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx41-munmarlary-hs",
       "source": "Library",
       "title": "YX41 Munmarlary HS",
       "creator": "Gunther",
@@ -108319,7 +108549,7 @@
     },
     {
       "name": "sltcreations-airport-yx42-nourlangie-hs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx42-nourlangie-hs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx42-nourlangie-hs",
       "source": "Library",
       "title": "YX42 Nourlangie HS",
       "creator": "Gunther",
@@ -108351,7 +108581,7 @@
     },
     {
       "name": "sltcreations-airport-yx44-burrumburru",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx44-burrumburru",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx44-burrumburru",
       "source": "Library",
       "title": "YX44 Burrumburru",
       "creator": "Gunther",
@@ -108383,7 +108613,7 @@
     },
     {
       "name": "sltcreations-airport-yx45-redbank-wollogorang",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx45-redbank-wollogorang",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx45-redbank-wollogorang",
       "source": "Library",
       "title": "YX45 Redbank Wollogorang",
       "creator": "Gunther",
@@ -108415,7 +108645,7 @@
     },
     {
       "name": "sltcreations-airport-yx46-finnis-outstation",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx46-finnis-outstation",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx46-finnis-outstation",
       "source": "Library",
       "title": "YX46 Finnis Outstation",
       "creator": "Gunther",
@@ -108447,7 +108677,7 @@
     },
     {
       "name": "sltcreations-airport-yx47-vermelha",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx47-vermelha",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx47-vermelha",
       "source": "Library",
       "title": "YX47 Vermelha",
       "creator": "Gunther",
@@ -108479,7 +108709,7 @@
     },
     {
       "name": "sltcreations-airport-yx48-rombola-family-farms",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx48-rombola-family-farms",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx48-rombola-family-farms",
       "source": "Library",
       "title": "YX48 Rombola Family Farms",
       "creator": "Gunther",
@@ -108511,7 +108741,7 @@
     },
     {
       "name": "sltcreations-airport-yx49-mount-bundy-station",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx49-mount-bundy-station",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx49-mount-bundy-station",
       "source": "Library",
       "title": "YX49 Mount Bundy Station",
       "creator": "Gunther",
@@ -108543,7 +108773,7 @@
     },
     {
       "name": "sltcreations-airport-yx50-manbulloo",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx50-manbulloo",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx50-manbulloo",
       "source": "Library",
       "title": "YX50 Manbulloo",
       "creator": "Gunther",
@@ -108575,7 +108805,7 @@
     },
     {
       "name": "sltcreations-airport-yx51-emungalan",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx51-emungalan",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx51-emungalan",
       "source": "Library",
       "title": "YX51 Emungalan",
       "creator": "Gunther",
@@ -108607,7 +108837,7 @@
     },
     {
       "name": "sltcreations-airport-yx52-timber-creek-racetrack",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx52-timber-creek-racetrack",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx52-timber-creek-racetrack",
       "source": "Library",
       "title": "YX52 Timber Creek Racetrack",
       "creator": "Gunther",
@@ -108639,7 +108869,7 @@
     },
     {
       "name": "sltcreations-airport-yx53-cockatoo-lagoon",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx53-cockatoo-lagoon",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx53-cockatoo-lagoon",
       "source": "Library",
       "title": "YX53 Cockatoo Lagoon",
       "creator": "Gunther",
@@ -108671,7 +108901,7 @@
     },
     {
       "name": "sltcreations-airport-yx54-west-island",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx54-west-island",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx54-west-island",
       "source": "Library",
       "title": "YX54 West Island",
       "creator": "Gunther",
@@ -108703,7 +108933,7 @@
     },
     {
       "name": "sltcreations-airport-yx55-kalala-homestead",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx55-kalala-homestead",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx55-kalala-homestead",
       "source": "Library",
       "title": "YX55 Kalala HS",
       "creator": "Gunther",
@@ -108735,7 +108965,7 @@
     },
     {
       "name": "sltcreations-airport-yx56-western-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx56-western-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx56-western-creek",
       "source": "Library",
       "title": "YX56 Western Creek",
       "creator": "Gunther",
@@ -108767,7 +108997,7 @@
     },
     {
       "name": "sltcreations-airport-yx57-old-delamere",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx57-old-delamere",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx57-old-delamere",
       "source": "Library",
       "title": "YX57 Old Delamere",
       "creator": "Gunther",
@@ -108799,7 +109029,7 @@
     },
     {
       "name": "sltcreations-airport-yx58-broadmere",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx58-broadmere",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx58-broadmere",
       "source": "Library",
       "title": "YX58 Broadmere",
       "creator": "Gunther",
@@ -108831,7 +109061,7 @@
     },
     {
       "name": "sltcreations-airport-yx59-hughes",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx59-hughes",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx59-hughes",
       "source": "Library",
       "title": "YX59 Hughes",
       "creator": "Gunther",
@@ -108863,7 +109093,7 @@
     },
     {
       "name": "sltcreations-airport-yx60-macdonald",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx60-macdonald",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx60-macdonald",
       "source": "Library",
       "title": "YX60 MacDonald",
       "creator": "Gunther",
@@ -108895,7 +109125,7 @@
     },
     {
       "name": "sltcreations-airport-yx61-livingstone-wwii",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx61-livingstone-wwii",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx61-livingstone-wwii",
       "source": "Library",
       "title": "YX61 Livingstone WWII",
       "creator": "Gunther",
@@ -108927,7 +109157,7 @@
     },
     {
       "name": "sltcreations-airport-yx62-strauss-wwii",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 08\\sltcreations-airport-yx62-strauss-wwii",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\northern-territory\\sltcreations-airport-yx62-strauss-wwii",
       "source": "Library",
       "title": "YX62 Strauss",
       "creator": "Gunther",
@@ -108959,7 +109189,7 @@
     },
     {
       "name": "Sundbro",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Sundbro",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\Sundbro",
       "source": "Library",
       "title": "Sundbro airfield",
       "creator": "szcsongor",
@@ -109025,7 +109255,7 @@
     },
     {
       "name": "tag21-airport-ybas-alice-springs",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\tag21-airport-ybas-alice-springs",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\tag21-airport-ybas-alice-springs",
       "source": "Library",
       "title": "Alice Springs",
       "creator": "Tag21",
@@ -109063,7 +109293,7 @@
     },
     {
       "name": "Tree fix ESGJ",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\Tree fix ESGJ",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\Tree fix ESGJ",
       "source": "Library",
       "title": "Tree fix ESGJ",
       "creator": "Pilot05",
@@ -109087,7 +109317,7 @@
     },
     {
       "name": "tsr-windy-things",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\tsr-windy-things",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\tsr-windy-things",
       "source": "Library",
       "title": "Windy Things Library",
       "creator": "tsr",
@@ -109106,7 +109336,7 @@
     },
     {
       "name": "tsr-windy-things-AUS",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\tsr-windy-things-AUS",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\tsr-windy-things-AUS",
       "source": "Library",
       "title": "Windy Things Library",
       "creator": "tsr",
@@ -109125,7 +109355,7 @@
     },
     {
       "name": "u60-u60",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\u60-u60",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\u60-u60",
       "source": "Library",
       "title": "U60 Big Creek ID",
       "creator": "Milosanx",
@@ -109160,7 +109390,7 @@
     },
     {
       "name": "uddevallabron",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\uddevallabron",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\uddevallabron",
       "source": "Library",
       "title": "",
       "creator": "",
@@ -109184,7 +109414,7 @@
     },
     {
       "name": "us-firedeptpack",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 09\\us-firedeptpack",
+      "path": "C:\\Sim\\Addons\\Scenery\\Objects\\us-firedeptpack",
       "source": "Library",
       "title": "Fire Dept Pack USA",
       "creator": "68ponygt",
@@ -109206,7 +109436,7 @@
     },
     {
       "name": "vidandesign-bornholm",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\vidandesign-bornholm",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\vidandesign-bornholm",
       "source": "Library",
       "title": "EKRN Bornholm Airport",
       "creator": "SimNord",
@@ -109241,7 +109471,7 @@
     },
     {
       "name": "virtualfra-eddf",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\virtualfra-eddf",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\virtualfra-eddf",
       "source": "Library",
       "title": "virtualFRA-EDDF",
       "creator": "virtualFRA",
@@ -109276,7 +109506,7 @@
     },
     {
       "name": "vt-airport-lgrp",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\vt-airport-lgrp",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\vt-airport-lgrp",
       "source": "Library",
       "title": "LGRP-Diagoras",
       "creator": "Paolo Vittorini",
@@ -109310,7 +109540,7 @@
     },
     {
       "name": "wombiiactual-airport-enbr-fleslandfix",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\wombiiactual-airport-enbr-fleslandfix",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\wombiiactual-airport-enbr-fleslandfix",
       "source": "Library",
       "title": "Flesland",
       "creator": "WombiiActual",
@@ -109573,7 +109803,7 @@
     },
     {
       "name": "yara-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yara-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yara-cj",
       "source": "Library",
       "title": "YARA Ararat",
       "creator": "Colin Jeffery",
@@ -109608,7 +109838,7 @@
     },
     {
       "name": "yara-cj-aerial",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yara-cj-aerial",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yara-cj-aerial",
       "source": "Library",
       "title": "yara ground tile",
       "creator": "colin Jeffery",
@@ -109627,7 +109857,7 @@
     },
     {
       "name": "ybir-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ybir-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ybir-cj",
       "source": "Library",
       "title": "Birchip vic Aus",
       "creator": "Colin Jeffery",
@@ -109660,7 +109890,7 @@
     },
     {
       "name": "ybma-mountisa",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ybma-mountisa",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\ybma-mountisa",
       "source": "Library",
       "title": "Simple Scenery",
       "creator": "ybma-MountIsa",
@@ -109695,7 +109925,7 @@
     },
     {
       "name": "ybra-benambra-airport",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ybra-benambra-airport",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\ybra-benambra-airport",
       "source": "Library",
       "title": "benambra airstrip",
       "creator": "redbaron",
@@ -109727,7 +109957,7 @@
     },
     {
       "name": "yccy-cloncurry",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\yccy-cloncurry",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\yccy-cloncurry",
       "source": "Library",
       "title": "Simple Scenery",
       "creator": "yccy-Cloncurry",
@@ -109762,7 +109992,7 @@
     },
     {
       "name": "ycva-clare-valley-aerodrome",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ycva-clare-valley-aerodrome",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\ycva-clare-valley-aerodrome",
       "source": "Library",
       "title": "clare",
       "creator": "RDL",
@@ -109794,7 +110024,7 @@
     },
     {
       "name": "ydod-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ydod-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ydod-cj",
       "source": "Library",
       "title": "ydod Donald",
       "creator": "Colin Jeffery",
@@ -109827,7 +110057,7 @@
     },
     {
       "name": "yhpn-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhpn-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yhpn-cj",
       "source": "Library",
       "title": "YHPN-cj",
       "creator": "Colin Jeffery",
@@ -109860,7 +110090,7 @@
     },
     {
       "name": "yhsm-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yhsm-cj",
       "source": "Library",
       "title": "Horsham vic Aus",
       "creator": "Colin Jeffery",
@@ -109897,7 +110127,7 @@
     },
     {
       "name": "yhsm-txt-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-txt-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yhsm-txt-cj",
       "source": "Library",
       "title": "My Company Aerial",
       "creator": "Asobo Studio",
@@ -109916,7 +110146,7 @@
     },
     {
       "name": "yhsm-txt-e-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yhsm-txt-e-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yhsm-txt-e-cj",
       "source": "Library",
       "title": "My Company Aerial",
       "creator": "Asobo Studio",
@@ -109935,7 +110165,7 @@
     },
     {
       "name": "yker-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yker-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yker-cj",
       "source": "Library",
       "title": "YKER Kerang",
       "creator": "Colin Jeffery",
@@ -109968,7 +110198,7 @@
     },
     {
       "name": "ymbu-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ymbu-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ymbu-cj",
       "source": "Library",
       "title": "YMBU Maryborough",
       "creator": "Colin Jeffery",
@@ -110003,7 +110233,7 @@
     },
     {
       "name": "ynhl-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ynhl-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ynhl-cj",
       "source": "Library",
       "title": "Nhill vic aust",
       "creator": "Colin Jeffery",
@@ -110038,7 +110268,7 @@
     },
     {
       "name": "ypfa-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypfa-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ypfa-cj",
       "source": "Library",
       "title": "YPFA Port Fairy Vic Aus",
       "creator": "Colin Jeffery",
@@ -110072,7 +110302,7 @@
     },
     {
       "name": "ypod-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypod-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ypod-cj",
       "source": "Library",
       "title": "Simple Scenery",
       "creator": "My Company",
@@ -110107,7 +110337,7 @@
     },
     {
       "name": "ypoo-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ypoo-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ypoo-cj",
       "source": "Library",
       "title": "YPOO Pootnoura SA Aus",
       "creator": "Colin Jeffery",
@@ -110139,7 +110369,7 @@
     },
     {
       "name": "yslk-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yslk-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yslk-cj",
       "source": "Library",
       "title": "YSLK Sea Lake vic Aust",
       "creator": "Colin Jeffery",
@@ -110171,7 +110401,7 @@
     },
     {
       "name": "ysta-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ysta-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ysta-cj",
       "source": "Library",
       "title": "YSTA St Arnaud Victoria Australia",
       "creator": "Colin Jeffery",
@@ -110204,7 +110434,7 @@
     },
     {
       "name": "yswh-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yswh-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yswh-cj",
       "source": "Library",
       "title": "YSWH Swan Hill",
       "creator": "Colin Jeffery",
@@ -110237,7 +110467,7 @@
     },
     {
       "name": "yswl-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\yswl-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\yswl-cj",
       "source": "Library",
       "title": "YSWL Stawell",
       "creator": "Colin Jeffery",
@@ -110270,7 +110500,7 @@
     },
     {
       "name": "ytnk-tennant-creek",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\ytnk-tennant-creek",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\ytnk-tennant-creek",
       "source": "Library",
       "title": "tennant creek",
       "creator": "rdl",
@@ -110303,7 +110533,7 @@
     },
     {
       "name": "ywbl-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywbl-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ywbl-cj",
       "source": "Library",
       "title": "Warrnambool vic aus",
       "creator": "Colin Jeffery",
@@ -110338,7 +110568,7 @@
     },
     {
       "name": "ywbl-cj-aerial",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywbl-cj-aerial",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ywbl-cj-aerial",
       "source": "Library",
       "title": "Warrnambool aerial image",
       "creator": "Colin Jeffery",
@@ -110357,7 +110587,7 @@
     },
     {
       "name": "ywkb-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywkb-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ywkb-cj",
       "source": "Library",
       "title": "YWKB Warracknabeal",
       "creator": "Colin Jeffery",
@@ -110392,7 +110622,7 @@
     },
     {
       "name": "ywyf-cj",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 03\\Group 06\\ywyf-cj",
+      "path": "C:\\Sim\\Addons\\Scenery\\Australia\\Mid Western Victoria\\ywyf-cj",
       "source": "Library",
       "title": "YWYF Wycheproof",
       "creator": "Colin Jeffery",
@@ -110425,7 +110655,7 @@
     },
     {
       "name": "z-bggh-nuuk",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 07\\z-bggh-nuuk",
+      "path": "C:\\Sim\\Addons\\Scenery\\North America\\z-bggh-nuuk",
       "source": "Library",
       "title": "z-bggh-nuuk",
       "creator": "genix",
@@ -110457,7 +110687,7 @@
     },
     {
       "name": "z-genix-ldsp-ase05",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\z-genix-ldsp-ase05",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\z-genix-ldsp-ase05",
       "source": "Library",
       "title": "z-geniX-ldsp-ase05",
       "creator": "geniX",
@@ -110509,7 +110739,7 @@
     },
     {
       "name": "zzzpmg-airport-lfmn",
-      "path": "C:\\Sim\\Addons\\Group 11\\Group 04\\zzzpmg-airport-lfmn",
+      "path": "C:\\Sim\\Addons\\Scenery\\Europe\\zzzpmg-airport-lfmn",
       "source": "Library",
       "title": "LFMN - Nice-Cote d'Azur Int Airport",
       "creator": "JoeDiss",

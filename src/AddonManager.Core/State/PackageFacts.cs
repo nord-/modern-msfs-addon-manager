@@ -18,14 +18,11 @@ internal static class PackageFacts
         return ActiveCopySelector.Select(name, index, communityTarget, state.Packages.GetValueOrDefault(name)?.ActiveCopyPath);
     }
 
-    public static bool IsLocked(UserState state, PackageName name, PackageIndex index, IReadOnlyList<ClassifiedEntry> community)
-        => ActiveCopy(state, name, index, community) is { } copy && state.IsLocked(copy);
-
     /// <summary>
     /// E3: the Package's copy (<paramref name="copyPath"/>, else the stored one) lies under an unreachable Library,
     /// or its name is held by an Offline entry.
     /// </summary>
-    public static bool IsOffline(UserState state, PackageName name, PackageIndex index, IReadOnlyList<ClassifiedEntry> community, string? copyPath = null)
+    public static bool IsLibraryNotFound(UserState state, PackageName name, PackageIndex index, IReadOnlyList<ClassifiedEntry> community, string? copyPath = null)
     {
         var path = copyPath ?? state.Packages.GetValueOrDefault(name)?.ActiveCopyPath;
         return (path is not null && index.IsUnreachable(path)) || EntryFor(community, name)?.Class == EntryClass.Offline;

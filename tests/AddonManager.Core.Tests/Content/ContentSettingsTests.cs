@@ -60,40 +60,20 @@ public class ContentSettingsTests
     }
 
     [Fact]
-    public void Manual_link_undoes_a_removal_and_vice_versa()
-    {
-        var s = new ContentSettings();
-        var p = new PackageName("p");
-        s.RemoveLink(p, Code("LOWI"));
-        Assert.Contains(Code("LOWI"), s.RemovedAirportLinks[p]);
-
-        s.LinkManually(p, Code("lowi"));
-        Assert.Contains(Code("LOWI"), s.ManualAirportLinks[p]);
-        Assert.DoesNotContain(p, s.RemovedAirportLinks.Keys);
-
-        s.RemoveLink(p, Code("LOWI"));
-        Assert.Contains(Code("LOWI"), s.RemovedAirportLinks[p]);
-        Assert.DoesNotContain(p, s.ManualAirportLinks.Keys);
-    }
-
-    [Fact]
     public void Clone_is_deep_and_keeps_the_comparer()
     {
         var s = new ContentSettings { AirportThreshold = 3 };
         s.AddStopWord("x1");
         s.OptedIn.Add(new("p"));
-        s.LinkManually(new("p"), Code("LOWI"));
 
         var c = s.Clone();
         s.AddStopWord("later");
         s.OptedIn.Clear();
-        s.RemoveLink(new("p"), Code("LOWI"));
 
         Assert.Equal(3, c.AirportThreshold);
         Assert.True(c.IsStopWord("X1"));
         Assert.False(c.IsStopWord("later"));
         Assert.Single(c.OptedIn);
-        Assert.Single(c.ManualAirportLinks[new("p")]);
         c.AddStopWord("X1");
         Assert.Single(c.AddedStopWords);
     }
@@ -103,12 +83,8 @@ public class ContentSettingsTests
     {
         var s = new UserState();
         s.Content.OptedIn.Add(new("p"));
-        s.Content.LinkManually(new("p"), Code("LOWI"));
-        s.Content.RemoveLink(new("p"), Code("EHAM"));
-        s.Forget(new("p"));
+        s.Forget(PackageKey.Folder(new("p")));
         Assert.Empty(s.Content.OptedIn);
-        Assert.Empty(s.Content.ManualAirportLinks);
-        Assert.Empty(s.Content.RemovedAirportLinks);
     }
 
     [Fact]

@@ -13,6 +13,19 @@ public enum AirportLinkReason
 
 public sealed record AirportLink(PackageContent Package, AirportCode Code, AirportLinkReason Reason);
 
+/// <summary>
+/// Manual ICAO code links and removals per Package name, derived from the cards (spec 6.5 rule 3 and 11). A removal drops an
+/// automatic link first; a manual link is applied after it, so a manual link wins.
+/// </summary>
+public sealed record AirportLinkOverrides(
+    IReadOnlyDictionary<PackageName, IReadOnlySet<AirportCode>> Manual,
+    IReadOnlyDictionary<PackageName, IReadOnlySet<AirportCode>> Removed)
+{
+    public static AirportLinkOverrides None { get; } = new(
+        new Dictionary<PackageName, IReadOnlySet<AirportCode>>(),
+        new Dictionary<PackageName, IReadOnlySet<AirportCode>>());
+}
+
 /// <summary>Links Packages to Airport codes (spec 6.5, content rules C4, C5 and C7).</summary>
 public static class AirportLinker
 {
@@ -25,9 +38,14 @@ public static class AirportLinker
     /// <summary>One name or title token that is a known code; <c>Reason</c> says why it is not linked and is null when it is.</summary>
     public sealed record TokenCandidate(string Source, AirportCode Code, bool Linked, string? Reason);
 
-    public static IReadOnlyList<AirportLink> Link(IReadOnlyList<PackageContent> contents, ContentSettings settings)
+    /// <summary><paramref name="remembered"/> records count as known ICAO codes for the name token rule (spec 11).</summary>
+    public static IReadOnlyList<AirportLink> Link(
+        IReadOnlyList<PackageContent> contents,
+        ContentSettings settings,
+        AirportLinkOverrides overrides,
+        IReadOnlyList<AirportRecord>? remembered = null)
     {
-        var known = KnownCodes(contents, settings);
+        var known = KnownCodes(contents, settings, remembered);
         var links = new List<AirportLink>();
         foreach (var content in contents)
         {
@@ -64,7 +82,7 @@ public static class AirportLinker
                 }
             }
 
-            if (settings.RemovedAirportLinks.TryGetValue(content.Name, out var removed))
+            if (overrides.Removed.TryGetValue(content.Name, out var removed))
             {
                 foreach (var code in found.Keys.Where(removed.Contains).ToList())
                 {
@@ -72,7 +90,7 @@ public static class AirportLinker
                 }
             }
 
-            if (settings.ManualAirportLinks.TryGetValue(content.Name, out var manual))
+            if (overrides.Manual.TryGetValue(content.Name, out var manual))
             {
                 foreach (var code in manual)
                 {
@@ -98,10 +116,15 @@ public static class AirportLinker
     public static bool IsExcludedByPattern(PackageContent content, ContentSettings settings)
         => !settings.OptedIn.Contains(content.Name) && settings.MatchesExclusion(content.Name);
 
-    /// <summary>Every code in any record except those of Packages excluded by pattern (C4).</summary>
-    public static IReadOnlySet<AirportCode> KnownCodes(IReadOnlyList<PackageContent> contents, ContentSettings settings)
+    /// <summary>Every ICAO code in any record except those of Packages excluded by pattern (C4), and every remembered record's.</summary>
+    public static IReadOnlySet<AirportCode> KnownCodes(IReadOnlyList<PackageContent> contents, ContentSettings settings, IReadOnlyList<AirportRecord>? remembered = null)
     {
         var known = new HashSet<AirportCode>();
+        if (remembered is not null)
+        {
+            known.UnionWith(remembered.Select(r => r.Code));
+        }
+
         foreach (var content in contents)
         {
             if (content.UsableAirports().Count > 0 && !IsExcludedByPattern(content, settings))

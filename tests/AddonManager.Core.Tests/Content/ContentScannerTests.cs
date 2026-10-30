@@ -19,8 +19,111 @@ public class ContentScannerTests
 
     private static List<ScanTarget> Many(int count) => [.. Enumerable.Range(0, count).Select(i => T($"p{i}"))];
 
-    private ContentScanResult Scan(IReadOnlyList<ScanTarget> targets, IReadOnlyList<string> keepUnder, bool full, IProgress<ScanProgress>? progress = null, CancellationToken token = default)
-        => new ContentScanner(reader, cache).Scan(targets, cache.LoadAll(), keepUnder, full, progress, token);
+    private ContentScanResult Scan(IReadOnlyList<ScanTarget> targets, IReadOnlyList<string> keepUnder, bool full, IProgress<ScanProgress>? progress = null, CancellationToken token = default, IReadOnlySet<string>? forceRead = null, TimeProvider? clock = null)
+        => new ContentScanner(reader, cache, clock).Scan(targets, cache.LoadAll(), keepUnder, full, forceRead ?? Empty, progress, token);
+
+    private static readonly IReadOnlySet<string> Empty = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private static readonly DateTimeOffset T0 = new(2026, 10, 30, 12, 0, 0, TimeSpan.Zero);
+    private static readonly string Path0 = PathNormalizer.Normalize(@"C:\Sim\Addons\a");
+
+    [Fact]
+    public void A_package_written_within_the_quiet_period_is_read_but_not_cached()
+    {
+        reader.NewestWrites["a"] = T0 - TimeSpan.FromSeconds(3);
+
+        var result = Scan(Named("a"), [], false, clock: new ManualClock(T0));
+
+        Assert.Single(result.Contents);
+        Assert.Contains(Path0, result.Unsettled);
+        Assert.Empty(cache.LoadAll());
+        Assert.Equal(T0 + TimeSpan.FromSeconds(7), result.SettleAt);
+    }
+
+    [Fact]
+    public void The_settle_time_is_the_latest_among_the_unsettled_packages()
+    {
+        reader.NewestWrites["a"] = T0 - TimeSpan.FromSeconds(3);
+        reader.NewestWrites["b"] = T0 - TimeSpan.FromSeconds(1);
+
+        var result = Scan(Named("a", "b"), [], false, clock: new ManualClock(T0));
+
+        Assert.Equal(2, result.Unsettled.Count);
+        Assert.Equal(T0 + TimeSpan.FromSeconds(9), result.SettleAt);
+    }
+
+    [Fact]
+    public void A_quiet_package_is_cached_and_settled()
+    {
+        reader.NewestWrites["a"] = T0 - TimeSpan.FromSeconds(30);
+
+        var result = Scan(Named("a"), [], false, clock: new ManualClock(T0));
+
+        Assert.Empty(result.Unsettled);
+        Assert.Null(result.SettleAt);
+        Assert.Single(cache.LoadAll());
+    }
+
+    [Fact]
+    public void A_forced_path_is_read_even_when_its_marker_is_unchanged()
+    {
+        Scan(Named("a"), [], false);
+
+        var result = Scan(Named("a"), [], false, forceRead: new HashSet<string>([Path0], StringComparer.OrdinalIgnoreCase));
+
+        Assert.Equal(1, result.Read);
+        Assert.Equal(0, result.Reused);
+    }
+
+    [Fact]
+    public void A_package_whose_write_times_cannot_be_read_is_unreadable()
+    {
+        reader.NewestWriteFailure = new IOException("denied");
+
+        var result = Scan(Named("a"), [], false);
+
+        Assert.Equal(1, result.FailedCount);
+        Assert.Empty(result.Contents);
+        Assert.Contains(Path0, result.FailedPaths);
+    }
+
+    [Fact]
+    public void A_package_that_is_gone_when_its_write_times_are_read_vanishes()
+    {
+        reader.NewestWrites["a"] = null;
+
+        var result = Scan(Named("a"), [], false);
+
+        Assert.Empty(result.Contents);
+        Assert.Equal(1, result.FailedCount);
+    }
+
+    [Fact]
+    public void A_read_error_puts_the_path_in_failed_paths_and_still_returns_the_cached_row()
+    {
+        Scan(Named("a"), [], false);
+        reader.Touch("a");
+        reader.ThrowOn("a", new IOException("denied"));
+
+        var result = Scan(Named("a"), [], false);
+
+        Assert.Contains(Path0, result.FailedPaths);
+        Assert.Single(result.Contents);
+    }
+
+    [Fact]
+    public void A_package_unpacked_after_its_manifest_is_read_again_until_quiet()
+    {
+        reader.NewestWrites["a"] = T0 - TimeSpan.FromSeconds(1);
+        var first = Scan(Named("a"), [], false, clock: new ManualClock(T0));
+        Assert.Contains(Path0, first.Unsettled);
+        Assert.Empty(cache.LoadAll());
+
+        var second = Scan(Named("a"), [], false, forceRead: first.Unsettled, clock: new ManualClock(T0 + TimeSpan.FromSeconds(20)));
+
+        Assert.Equal(1, second.Read);
+        Assert.Empty(second.Unsettled);
+        Assert.Single(cache.LoadAll());
+    }
 
     private sealed class SyncProgress : IProgress<ScanProgress>
     {
@@ -90,7 +193,7 @@ public class ContentScannerTests
 
         Assert.Equal(["a"], r.Contents.Select(c => c.Name.Value));
         Assert.DoesNotContain(cache.LoadAll(), c => c.Name.Value == "b");
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
     }
 
     [Fact]
@@ -105,7 +208,7 @@ public class ContentScannerTests
 
         Assert.Equal(["a"], r.Contents.Select(c => c.Name.Value));
         Assert.DoesNotContain(cache.LoadAll(), c => c.Name.Value == "b");
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
         Assert.Equal(0, r.Read);
     }
 
@@ -120,7 +223,7 @@ public class ContentScannerTests
 
         Assert.Contains(r.Contents, c => c.Name.Value == "b");
         Assert.Contains(cache.LoadAll(), c => c.Name.Value == "b");
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
     }
 
     [Fact]
@@ -136,7 +239,7 @@ public class ContentScannerTests
 
         Assert.Contains(old, r.Contents);
         Assert.Contains(old, cache.LoadAll());
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
         Assert.Equal(0, r.Read);
     }
 
@@ -150,7 +253,7 @@ public class ContentScannerTests
         var r = Scan(targets, [], full: false);
 
         Assert.Contains(r.Contents, c => c.Name.Value == "b");
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
     }
 
     [Fact]
@@ -161,7 +264,7 @@ public class ContentScannerTests
         var r = Scan(Named("a", "b"), [], full: false);
 
         Assert.Equal(["a"], r.Contents.Select(c => c.Name.Value));
-        Assert.Equal(1, r.Failed);
+        Assert.Equal(1, r.FailedCount);
         Assert.Equal(1, r.Read);
     }
 

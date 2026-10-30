@@ -6,13 +6,13 @@ namespace AddonManager.Core.Tests.Community;
 
 public class CommunityClassifierTests
 {
-    private static readonly LibraryRoot Unplugged = new(@"E:\Addons");
+    private static readonly LibraryRoot Unplugged = new(@"E:\Addons", LibraryRoot.AllSections);
 
     private static CommunityEntryInfo Link(string name, string target, bool exists = true, bool manifest = true)
         => new(name, EntryKind.Junction, target, exists, exists && manifest);
 
     private static IReadOnlyList<ClassifiedEntry> Classify(IReadOnlyList<CommunityEntryInfo> entries, IReadOnlyList<PackageCopy> copies)
-        => CommunityClassifier.Classify(entries, new PackageIndex(copies, [Addons, Neofly, Unplugged], [Unplugged]));
+        => CommunityClassifier.Classify(entries, new PackageIndex(copies, [SimAddons, Neofly, Unplugged], [Unplugged]));
 
     [Theory]
     [InlineData(EntryKind.File, false, EntryClass.Stray)]
@@ -78,6 +78,17 @@ public class CommunityClassifierTests
     public void Link_outside_libraries_to_a_package_is_External()
         => Assert.Equal(EntryClass.External,
             Classify([Link("sayintentions", @"C:\Users\user\AppData\Roaming\SayIntentionsAI\sayintentions")], []).Single().Class);
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void A_link_into_a_folder_discovery_could_not_read_is_offline(bool targetExists)
+    {
+        var index = new PackageIndex([], [SimAddons], null, [@"C:\Sim\Addons\Locked"]);
+        var e = Link("x", @"C:\Sim\Addons\Locked\x", targetExists);
+
+        Assert.Equal(EntryClass.Offline, CommunityClassifier.Classify([e], index).Single().Class);
+    }
 
     [Fact]
     public void Link_to_a_folder_without_manifest_is_Ignored()

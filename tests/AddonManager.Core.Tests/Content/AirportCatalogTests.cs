@@ -19,11 +19,17 @@ public class AirportCatalogTests
             source: SimManaged);
 
     private IReadOnlyDictionary<AirportCode, Airport> Build(params PackageContent[] contents)
-        => AirportCatalog.Build(contents, AirportLinker.Link(contents, settings), settings);
+        => Build(AirportLinkOverrides.None, contents);
+
+    private IReadOnlyDictionary<AirportCode, Airport> Build(AirportLinkOverrides overrides, params PackageContent[] contents)
+        => AirportCatalog.Build(contents, AirportLinker.Link(contents, settings, overrides), settings);
 
     private IReadOnlyList<BuiltInReplacement> Replaces(params PackageContent[] contents)
+        => Replaces(AirportLinkOverrides.None, contents);
+
+    private IReadOnlyList<BuiltInReplacement> Replaces(AirportLinkOverrides overrides, params PackageContent[] contents)
     {
-        var links = AirportLinker.Link(contents, settings);
+        var links = AirportLinker.Link(contents, settings, overrides);
         return AirportCatalog.ReplacesBuiltIn(contents, links, AirportCatalog.Build(contents, links, settings), settings);
     }
 
@@ -115,8 +121,7 @@ public class AirportCatalogTests
     {
         // The only EDDF record belongs to a pattern-excluded Package; a Manual link makes the Airport exist anyway.
         var wrong = Scenery("microsoft-airport-voloport", fullRecords: [Rec("EDDF", "Wrong", 1, 1)], source: SimManaged);
-        settings.LinkManually(wrong.Name, Code("EDDF"));
-        var airport = Build(wrong)[Code("EDDF")];
+        var airport = Build(Overrides(manual: [("microsoft-airport-voloport", "EDDF")]), wrong)[Code("EDDF")];
         Assert.Null(airport.Name);
         Assert.Null(airport.Position);
     }
@@ -125,8 +130,7 @@ public class AirportCatalogTests
     public void Manual_link_from_an_excluded_package_is_real_scenery()
     {
         var big = Scenery("eddf-library", records: Many(11));
-        settings.LinkManually(big.Name, Code("EDDF"));
-        Assert.True(Build(Generic(), big)[Code("EDDF")].HasRealScenery);
+        Assert.True(Build(Overrides(manual: [("eddf-library", "EDDF")]), Generic(), big)[Code("EDDF")].HasRealScenery);
     }
 
     [Fact]
@@ -134,8 +138,7 @@ public class AirportCatalogTests
     {
         var eddf = Scenery("asobo-airport-eddf-frankfurt", hasBgl: false, source: SimManaged);
         var big = Scenery("eddf-library", records: Many(11));
-        settings.LinkManually(big.Name, Code("EDDF"));
-        Assert.Equal([("eddf-library", "EDDF")], Pairs(Replaces(Generic(), eddf, big)));
+        Assert.Equal([("eddf-library", "EDDF")], Pairs(Replaces(Overrides(manual: [("eddf-library", "EDDF")]), Generic(), eddf, big)));
     }
 
     [Fact]

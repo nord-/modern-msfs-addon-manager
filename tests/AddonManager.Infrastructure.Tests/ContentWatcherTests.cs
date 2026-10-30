@@ -33,6 +33,15 @@ public sealed class ContentWatcherTests : IDisposable
         return watcher;
     }
 
+    private ContentWatcher StartWatcherWithGsx(string gsxFolder)
+    {
+        var watcher = new ContentWatcher(_community, [_lib], Quiet, gsxFolder);
+        watcher.RescanNeeded += () => Interlocked.Increment(ref _rescans);
+        watcher.CommunityChanged += () => Interlocked.Increment(ref _communityChanges);
+        watcher.Start();
+        return watcher;
+    }
+
     private static async Task WaitUntil(Func<bool> condition, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;
@@ -60,6 +69,29 @@ public sealed class ContentWatcherTests : IDisposable
 
         // A stall between two writes may split the burst; it must still be far fewer rescans than the 50 writes.
         Assert.InRange(Rescans, 1, 5);
+    }
+
+    [Fact]
+    public async Task A_change_in_the_gsx_folder_asks_for_a_rescan()
+    {
+        var gsx = Directory.CreateDirectory(Path.Combine(_temp.Root, "Gsx")).FullName;
+        using var watcher = StartWatcherWithGsx(gsx);
+
+        File.WriteAllText(Path.Combine(gsx, "lpma.ini"), "");
+        await WaitUntil(() => Rescans >= 1, Bound);
+        await PastQuietPeriod();
+
+        Assert.Equal(1, Rescans);
+        Assert.Equal(0, CommunityChanges);
+    }
+
+    [Fact]
+    public async Task A_missing_gsx_folder_is_not_watched()
+    {
+        using var watcher = StartWatcherWithGsx(Path.Combine(_temp.Root, "nope"));
+
+        Directory.CreateDirectory(Path.Combine(_lib, "p1"));
+        await WaitUntil(() => Rescans >= 1, Bound);
     }
 
     [Fact]

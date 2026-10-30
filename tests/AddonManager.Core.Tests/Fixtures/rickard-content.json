@@ -1150,6 +1150,33 @@
       "hasThumbnail": false
     },
     {
+      "name": "AS_CRJ_900_SAS_New_EIGEH",
+      "path": "C:\\Sim\\Addons\\Aircraft\\AS_CRJ_900_SAS_New_EIGEH",
+      "source": "Library",
+      "title": "CRJ 900 Scandinavian Airlines EI-GEH",
+      "creator": "AAgun",
+      "contentType": "AIRCRAFT",
+      "packageVersion": "0.1.1",
+      "dependencies": [],
+      "hasBgl": false,
+      "bglSectionTypes": [],
+      "unreadableBgl": 0,
+      "airports": [],
+      "isAirTraffic": false,
+      "aircraft": [
+        {
+          "container": "Aerosoft_CRJ_900_SASNC_EIGEH",
+          "baseContainer": "Aerosoft_CRJ_900",
+          "typeDesignator": null
+        }
+      ],
+      "airplaneFolders": [
+        "Aerosoft_CRJ_900_SASNC_EIGEH"
+      ],
+      "encryptedAirplaneFolders": [],
+      "hasThumbnail": false
+    },
+    {
       "name": "ase05-airport-ldsp",
       "path": "C:\\Sim\\Addons\\Scenery\\Europe\\ase05-airport-ldsp",
       "source": "Library",
@@ -9828,33 +9855,6 @@
       "hasThumbnail": false
     },
     {
-      "name": "AS_CRJ_900_SAS_New_EIGEH",
-      "path": "C:\\Sim\\Addons\\Aircraft\\AS_CRJ_900_SAS_New_EIGEH",
-      "source": "Library",
-      "title": "CRJ 900 Scandinavian Airlines EI-GEH",
-      "creator": "AAgun",
-      "contentType": "AIRCRAFT",
-      "packageVersion": "0.1.1",
-      "dependencies": [],
-      "hasBgl": false,
-      "bglSectionTypes": [],
-      "unreadableBgl": 0,
-      "airports": [],
-      "isAirTraffic": false,
-      "aircraft": [
-        {
-          "container": "Aerosoft_CRJ_900_SASNC_EIGEH",
-          "baseContainer": "Aerosoft_CRJ_900",
-          "typeDesignator": null
-        }
-      ],
-      "airplaneFolders": [
-        "Aerosoft_CRJ_900_SASNC_EIGEH"
-      ],
-      "encryptedAirplaneFolders": [],
-      "hasThumbnail": false
-    },
-    {
       "name": "avioteksoftwarevce-airport-eddf-frankfurt-main",
       "path": "C:\\Sim\\Orbx Library\\msfs\\EDDF Frankfurt Main International Airport\\Community\\avioteksoftwarevce-airport-eddf-frankfurt-main",
       "source": "Library",
@@ -9886,7 +9886,10 @@
       "aircraft": [],
       "airplaneFolders": [],
       "encryptedAirplaneFolders": [],
-      "hasThumbnail": true
+      "hasThumbnail": true,
+      "gsxFiles": [
+        "GSX-PROFILE\\EDDF-7g8nwm.ini"
+      ]
     },
     {
       "name": "ba-airport-esgf-falkenberg",
@@ -80639,7 +80642,10 @@
         "inibuilds-aircraft-a350-900"
       ],
       "encryptedAirplaneFolders": [],
-      "hasThumbnail": true
+      "hasThumbnail": true,
+      "gsxFiles": [
+        "Data\\PanelStates\\cold_and_dark.ini"
+      ]
     },
     {
       "name": "jdot029-airport-lgsa-chania",
@@ -81140,7 +81146,11 @@
       "encryptedAirplaneFolders": [
         "microsoft_a310_300"
       ],
-      "hasThumbnail": true
+      "hasThumbnail": true,
+      "gsxFiles": [
+        "Data\\panelstates\\apu_running.ini",
+        "Data\\panelstates\\cold_and_dark.ini"
+      ]
     },
     {
       "name": "microsoft-aircraft-bell407",
@@ -105213,7 +105223,10 @@
       "aircraft": [],
       "airplaneFolders": [],
       "encryptedAirplaneFolders": [],
-      "hasThumbnail": true
+      "hasThumbnail": true,
+      "gsxFiles": [
+        "GSX\\esgg-4k1lpd.ini"
+      ]
     },
     {
       "name": "orbx-airport-essa-stockholm-arlanda",
@@ -105250,7 +105263,11 @@
       "aircraft": [],
       "airplaneFolders": [],
       "encryptedAirplaneFolders": [],
-      "hasThumbnail": false
+      "hasThumbnail": false,
+      "gsxFiles": [
+        "GSX\\essa-bwib1r.ini",
+        "GSX\\essa-orbx.py"
+      ]
     },
     {
       "name": "orbx-airport-lowi-innsbruck",
@@ -105416,7 +105433,11 @@
       "aircraft": [],
       "airplaneFolders": [],
       "encryptedAirplaneFolders": [],
-      "hasThumbnail": true
+      "hasThumbnail": true,
+      "gsxFiles": [
+        "GSX-Profile-EPKK\\epkk-papadelta.ini",
+        "GSX-Profile-EPKK\\epkk-papadelta.py"
+      ]
     },
     {
       "name": "pgcompany-airport-epwa-warsaw",
@@ -110771,5 +110792,57 @@
       "encryptedAirplaneFolders": [],
       "hasThumbnail": true
     }
-  ]
+  ],
+  "gsxFolder": {
+    "found": true,
+    "files": [
+      "bggh-qtyqte.ini",
+      "eddf-virtualFRA.py",
+      "eddf-virtualFRA_GSX_VDGS.ini",
+      "eddf-virtualFRA_Nool_VDGS.off",
+      "eddh-chak991-goldmund.ini",
+      "eddh-chak991-goldmund.py",
+      "eddm-bouba74.ini",
+      "eddm-bouba74.py",
+      "EFHK-Epixeri.ini",
+      "egcc-Pommesbude2000.py",
+      "egcc-zdb3mu.ini",
+      "egkk-mkvy-noolaero.ini",
+      "egkk-mkvy.py",
+      "EKCH-Simnord.ini",
+      "EKCH-Simnord.py",
+      "EKCH-Simnord_handler.py",
+      "ekrn-simnord.ini",
+      "ekrn-simnord.py",
+      "ekrn-simnord_handler.py",
+      "enbr-lqcead.ini",
+      "engm-ORBX.ini",
+      "epgd_LukSid.ini",
+      "epwa-sqvw7n.ini",
+      "esgg-ORBX.ini",
+      "esgj-kncp56.ini",
+      "esnu-mo2ezd.ini",
+      "essa-bwib1r-noolvdgs.ini",
+      "essa-orbx.py",
+      "klax-4iin6e.ini",
+      "ksfo-cxtoj_.ini",
+      "ldsp-Ase05Bouba74.ini",
+      "LDSP-y42zj0sg.ini",
+      "lepa-euroscene-vee2.ini",
+      "lepa-euroscene-vee2.py",
+      "LFMN-540_sqe9.ini",
+      "LFMN-hd6cbl.ini",
+      "LFPG-ieclnkgk.ini",
+      "LFPG-tanxil.ini",
+      "lgrp-vxxsoi.ini",
+      "lgsa-jdot029-goldmund.ini",
+      "lgsa-jdot029-goldmund.py",
+      "lgsk-fqdisl.ini",
+      "LOWI-2qv0ej.ini",
+      "LPMA.ini",
+      "lszh-wocetz.ini",
+      "lszh-wocetz.py",
+      "lszr-qqnjvs.ini"
+    ]
+  }
 }

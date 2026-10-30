@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Plans 1 (link engine), 2 (content scan), 3 (the card wall) and 3b (card model) are done; their sim-machine runs were the handover issues #15 and #17, and plan 4 (GSX) is next — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
+Plans 1 (link engine), 2 (content scan), 3 (the card wall) and 3b (card model) are done; their sim-machine runs were the handover issues #15 and #17. Plan 4 (GSX, plan on PR #19) is implemented and its scenario tests run on the re-exported fixture; plan 5 (WPF app) is next — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
 
 ## Commands
 
@@ -13,7 +13,7 @@ Plans 1 (link engine), 2 (content scan), 3 (the card wall) and 3b (card model) a
 - Test subset: `dotnet test ModernMsfsAddonManager.slnx --filter FullyQualifiedName~<Name>`
 - Status against the real machine (it never creates `userdata.db` and never writes user rows: a missing file means no Libraries; opening an existing file may touch its cache tables and WAL side files, and resets the cache tables when their version differs): `dotnet run --project src/AddonManager.Cli -- status [--library <path>[=sections]]`
 - Content scan against the real machine (writes only the cache tables of `%LOCALAPPDATA%\ModernMsfsAddonManager\userdata.db` and `--token-links`; on a machine without the file it creates it with an empty user schema, but never writes user rows): `dotnet run --project src/AddonManager.Cli -- scan [--full] [--token-links <file>] [--library <path>[=sections]]`
-- Card wall against the real machine (`scan` and `cards` write only the cache tables of `%LOCALAPPDATA%\ModernMsfsAddonManager\userdata.db`, and on a machine without the file create it with an empty user schema, but never write user rows; user data is never saved, so the CLI never stores sections and Packages without a stored section are re-read on every run): `dotnet run --project src/AddonManager.Cli -- cards [--full] [--packages] [--library <path>[=sections]]`
+- Card wall, with the GSX status per Airport and the shipped profiles (the GSX folder is only read), against the real machine (`scan` and `cards` write only the cache tables of `%LOCALAPPDATA%\ModernMsfsAddonManager\userdata.db`, and on a machine without the file create it with an empty user schema, but never write user rows; user data is never saved, so the CLI never stores sections and Packages without a stored section are re-read on every run): `dotnet run --project src/AddonManager.Cli -- cards [--full] [--packages] [--library <path>[=sections]]`
 - Export the content fixture (writes only the cache tables, creating the file with an empty user schema when missing, and `--out`): `dotnet run --project src/AddonManager.Cli -- export-content --out <file> [--library <path>[=sections]]`
 
 ## What we're building

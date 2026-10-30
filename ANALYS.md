@@ -321,7 +321,20 @@ Plan 3b bygger kortmodellen. Besluten nedan ska Rickard kontrollera.
 - **Behörighet för en menysektion** är unionen av alla kopiors Libraries.
 - **En GSX-profil som redan ligger på ett kort** förblir ett paket även när dess ICAO-kod på tre tecken inte längre är känd.
 - **Memo-enum lagras som namn.** Ett okänt namn eller ett tal räknas som skada.
-- **Plan 4 måste sätta `GsxFolderFound` till true** när GSX inte är installerat, annars visas bannern "GSX folder missing" för evigt.
+- **Plan 4 måste sätta `GsxFolderFound` till true** när GSX inte är installerat, annars visas bannern "GSX folder missing" för evigt. (Ersatt 2026-10-30 av D3 nedan.)
+
+## Beslut för plan 4, GSX (2026-10-30)
+
+Plan 4 matar GSX-profiler in i kortmodellen. Besluten D1–D10 står i `docs/superpowers/plans/2026-10-30-04-gsx.md`; de som ändrar spec eller en tidigare anteckning:
+
+- **D2:** GSX-mappen cachas inte. Den läses vid varje skanningskörning och vid start (cirka 40 småfiler). Medföljande profiler cachas som ett faktum om sitt paket (`PackageContent.GsxFiles`, cacheversion 4). Varje board, även startboardet i `ScanCallbacks.OnCached`, måste få `WithGsx(...)`, annars visas alla lagrade profiler som Not found tills första körningen är klar (plan 5 kopplar det).
+- **D3:** Bannern "GSX folder missing" visas bara när mappen saknas och en profil är lagrad på ett kort. Ersätter anteckningen att plan 4 ska sätta `GsxFolderFound` till true.
+- **D4:** Medföljande profiler listas bara under kortets egna ICAO-koder, så ett flygplanspakets `A320.ini` eller en lös `test.ini` visas aldrig.
+- **D5:** Kopiering skriver aldrig över; den vägras om `<namn>.ini` eller `<namn>.off` finns och frågar innan Two profiles uppstår.
+- **D6:** Söklänken är `https://flightsim.to/others/gsx-pro/search/{kod}` med små bokstäver. **Obekräftad:** en hämtning av `/search/essa` gav en ofiltrerad lista över alla 2 720 profiler (filtret kan ligga i sidans JavaScript). Rickard kontrollerar länken i en webbläsare.
+- **D10:** En Two profiles-varning per Airport på kortet, även när profilerna ligger på ett annat kort med samma ICAO-kod.
+- **Tillägg efter granskning (2026-10-30):** när GSX-mappen inte kan läsas visar korten ingen GSX-markering, inga söklänkar och ingen Two profiles-varning (spec 8: "ändrar ingenting"); bannern säger varför.
+- **Fynd på den riktiga maskinen:** flygplanspaket levererar `.ini`-filer som `cold_and_dark.ini` och `apu_running.ini`, vars namn ger ICAO-liknande koder (COLD, APU). De lagras som medföljande filer men visas aldrig, eftersom flygplanskort saknar ICAO-koder. ESSA, ESGG, EDDF och EPKK levererar alla en profil. Orbx listar EDDF:s (`GSX-PROFILE\EDDF-7g8nwm.ini`) och EPKK:s (`GSX-Profile-EPKK\epkk-papadelta.ini` och `.py`) inte i `layout.json`, så medföljande GSX-filer hämtas både från `layout.json` och från en genomgång av disken (kontrollerat på maskinen 2026-10-30).
 
 ## Komponenter och bedömd svårighet
 

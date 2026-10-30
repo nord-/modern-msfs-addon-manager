@@ -67,6 +67,6 @@ internal static class RickardWorld
         var index = new PackageIndex(copies, state.Libraries, []);
         var community = CommunityClassifier.Classify(entries, index);
         var input = new BoardInput(index, community, inLibraries, ContentAnalyzer.Analyze(inLibraries, state.Content), true);
-        return (state, input.Reanalyze(state));
+        return (state, input.WithGsx(ContentFixtureLoader.LoadGsx("rickard-content")).Reanalyze(state));
     }
 }

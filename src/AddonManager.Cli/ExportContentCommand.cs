@@ -2,6 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 
 namespace AddonManager.Cli;
 
@@ -36,13 +37,13 @@ internal static class ExportContentCommand
         if (run is null)
             return exitCode;
 
-        var fixture = Build(run.Outcome.Content.Contents, run.Outcome.Analysis, DateTime.Today, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        var fixture = Build(run.Outcome.Content.Contents, run.Outcome.Analysis, run.Outcome.Gsx, DateTime.Today, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         ScanCommand.WriteText(outFile, JsonSerializer.Serialize(fixture, JsonOptions));
         output.WriteLine($"Wrote {fixture.Packages.Count} Packages to {outFile}");
         return 0;
     }
 
-    internal static Fixture Build(IReadOnlyList<PackageContent> contents, ContentAnalysis analysis, DateTime exported, string userProfile)
+    internal static Fixture Build(IReadOnlyList<PackageContent> contents, ContentAnalysis analysis, GsxFolderContent gsx, DateTime exported, string userProfile)
     {
         var excluded = analysis.Excluded.Select(c => c.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var linkedCodes = analysis.AirportLinks.Select(l => l.Code).ToHashSet();
@@ -76,11 +77,14 @@ internal static class ExportContentCommand
                     c.AircraftConfigs,
                     c.AirplaneFolders,
                     c.EncryptedAirplaneFolders,
-                    c.ThumbnailPath is not null);
+                    c.ThumbnailPath is not null,
+                    c.GsxFiles.Count > 0 ? c.GsxFiles : null);
             })
             .ToList();
 
-        return new Fixture(exported.ToString("yyyy-MM-dd"), packages);
+        // File names only, never the GSX folder's path.
+        var gsxFolder = new FixtureGsxFolder(gsx.Found, [.. gsx.FileNames.Order(StringComparer.OrdinalIgnoreCase)]);
+        return new Fixture(exported.ToString("yyyy-MM-dd"), packages, gsxFolder);
     }
 
     internal static string ReplaceProfile(string path, string userProfile)
@@ -88,7 +92,9 @@ internal static class ExportContentCommand
             ? "%USERPROFILE%" + path[userProfile.Length..]
             : path;
 
-    internal sealed record Fixture(string Exported, IReadOnlyList<FixturePackage> Packages);
+    internal sealed record Fixture(string Exported, IReadOnlyList<FixturePackage> Packages, FixtureGsxFolder GsxFolder);
+
+    internal sealed record FixtureGsxFolder(bool Found, IReadOnlyList<string> Files);
 
     internal sealed record FixtureAirport(string Code, string? Name, double? Lat, double? Lon);
 
@@ -110,5 +116,6 @@ internal static class ExportContentCommand
         IReadOnlyList<AircraftConfig> Aircraft,
         IReadOnlyList<string> AirplaneFolders,
         IReadOnlyList<string> EncryptedAirplaneFolders,
-        bool HasThumbnail);
+        bool HasThumbnail,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? GsxFiles);
 }

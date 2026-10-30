@@ -1,7 +1,10 @@
 using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
 using AddonManager.Core.FirstRun;
+using AddonManager.Core.Gsx;
+using AddonManager.Core.Packages;
 using AddonManager.Core.Sync;
+using AddonManager.Infrastructure;
 
 namespace AddonManager.Cli;
 
@@ -61,7 +64,7 @@ internal static class CardsCommand
             Unsettled = outcome.Content.Unsettled,
             Failed = outcome.Content.FailedPaths,
             PresentOutsideLibraries = discovery.PresentOutsideLibraries,
-        }.Reanalyze(state);
+        }.WithGsx(outcome.Gsx).Reanalyze(state);
         Settlement.Apply(state, input, DateTimeOffset.UtcNow);
 
         // Placement changed the cards, so the board is built from an analysis of the current ones.
@@ -81,10 +84,15 @@ internal static class CardsCommand
         foreach (var p in board.NotShown)
             output.WriteLine($"  {p.Name}  {(p.Library is null ? "(no Library)" : $"{p.Library.Path} [{string.Join(", ", p.Library.Sections)}]")} -> {p.Section}");
 
+        if (board.GsxNotRecognised.Count > 0)
+            output.WriteLine($"GSX files not recognised ({board.GsxNotRecognised.Count}): {string.Join(", ", board.GsxNotRecognised)}");
+
         var banner = board.Banner;
         output.WriteLine($"Community: {banner.Broken.Count} Broken, {banner.Stray.Count} Stray; pending {banner.Pending}");
         foreach (var library in banner.LibrariesNotFound)
             output.WriteLine($"Library not found: {library.Path}");
+        if (banner.GsxFolderMissing)
+            output.WriteLine($"GSX folder missing: {ExportContentCommand.ReplaceProfile(AppPaths.GsxProfileFolder, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))}");
         if (banner.Unreadable.Count > 0)
             output.WriteLine($"Unreadable ({banner.Unreadable.Count}): {string.Join(", ", banner.Unreadable)}");
         if (banner.Provisional > 0)
@@ -109,10 +117,12 @@ internal static class CardsCommand
             var line = $"  {state} {head}".TrimEnd();
             if (card.Tags.Count > 0)
                 line += $"  tags: {string.Join(", ", card.Tags)}";
+            if (card.Gsx != GsxMark.None)
+                line += $"  GSX {MarkText(card.Gsx)}";
             if (card.Pending)
                 line += "  Next sim start";
             foreach (var warning in card.Warnings)
-                line += $"  ! {WarningText(warning.Kind)}: {warning.Package}";
+                line += $"  ! {WarningText(warning.Kind)}: {(warning.Kind == WarningKind.TwoGsxProfiles ? warning.Code : warning.Package)}";
             o.WriteLine(line);
 
             if (!packages)
@@ -123,11 +133,45 @@ internal static class CardsCommand
                 var locked = p.Lock == LockReason.None ? "" : $", locked: {p.Lock}";
                 o.WriteLine($"      {p.DisplayName} ({p.Name}) {library}, {p.Presence}, {p.Role}{locked}");
             }
+
+            foreach (var airport in card.GsxAirports)
+                o.WriteLine(GsxLine(airport, card));
         }
+    }
+
+    private static string MarkText(GsxMark mark) => mark switch
+    {
+        GsxMark.Installed => "ok",
+        GsxMark.Missing => "missing",
+        GsxMark.TwoProfiles => "two",
+        _ => mark.ToString(),
+    };
+
+    // ASCII only, and no GSX folder path: disabled files and scripts are file names, shipped profiles are Package-relative paths.
+    private static string GsxLine(GsxAirport airport, Card card)
+    {
+        var parts = new List<string>();
+        if (airport.Active.Count > 0)
+            parts.Add($"active: {string.Join(", ", airport.Active)}");
+        if (airport.Disabled.Count > 0)
+            parts.Add($"disabled: {string.Join(", ", airport.Disabled.Select(Path.GetFileName))}");
+        if (airport.Scripts.Count > 0)
+            parts.Add($"scripts: {string.Join(", ", airport.Scripts.Select(Path.GetFileName))}");
+        foreach (var shipped in airport.Shipped)
+        {
+            var package = card.Packages.First(p => p.Kind == PackageKind.Folder && p.Name == shipped.Package);
+            parts.Add($"shipped: {shipped.Package} {Path.GetRelativePath(package.Path, shipped.IniPath)}{(shipped.InGsxFolder ? " (in GSX folder)" : "")}");
+        }
+
+        if (airport.Status == GsxMark.Missing)
+            parts.Add($"search: {airport.SearchLink}");
+        var detail = parts.Count == 0 ? "" : " - " + string.Join("; ", parts);
+        return $"      GSX {airport.Code}: {airport.Status}{detail}";
     }
 
     private static string WarningText(WarningKind kind) => kind switch
     {
+        WarningKind.TwoGsxProfiles => "Two GSX profiles",
         WarningKind.DuplicatePackage => "Duplicate Package",
         WarningKind.DuplicateCopy => "Duplicate copy",
         WarningKind.LiveryWithoutAircraft => "Livery without aircraft",

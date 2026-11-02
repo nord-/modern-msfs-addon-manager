@@ -22,6 +22,23 @@ public class LinkCoverageTests
     }
 
     [Fact]
+    public void Counted_links_under_no_library_are_listed_as_not_covered_by_name()
+    {
+        CommunityEntryInfo[] community =
+        [
+            new("z", EntryKind.Junction, @"D:\Other\z", true, true),
+            new("a", EntryKind.Junction, @"C:\Sim\Addons\a", true, true),
+            new("M", EntryKind.Junction, @"D:\Other\m", true, true),
+            new("s", EntryKind.Symlink, @"D:\Other\s", true, true),
+        ];
+
+        var report = LinkCoverage.Measure(community, [new LibraryRoot(@"C:\Sim\Addons", LibraryRoot.AllSections)]);
+
+        Assert.Equal(["M", "z"], report.NotCovered.Select(e => e.Name));
+        Assert.Equal(["s"], report.NotCounted.Select(e => e.Name));
+    }
+
+    [Fact]
     public void Symlinks_broken_links_fsdt_junctions_and_non_package_targets_are_not_counted()
     {
         CommunityEntryInfo[] community =

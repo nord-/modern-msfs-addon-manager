@@ -30,7 +30,7 @@ public sealed class UserState
     /// <summary>True once a completed content scan has been settled; plan 5 shows "Grouping cards…" until then.</summary>
     public bool ContentPassCompleted { get; set; }
 
-    /// <summary>The folder the app keeps its own Packages in; <c>null</c> until the user chooses one.</summary>
+    /// <summary>The Packages root (the folder holding Community and Official) when the user picked it; null when it is found from <c>UserCfg.opt</c>.</summary>
     public string? PackagesRoot { get; set; }
 
     /// <summary>The id the next card gets; ids are never reused (rule R1).</summary>

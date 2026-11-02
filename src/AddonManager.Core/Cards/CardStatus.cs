@@ -33,4 +33,10 @@ public sealed record Banner(
 {
     /// <summary>The GSX folder does not exist, so its profiles are Library not found (spec 8).</summary>
     public bool GsxFolderMissing { get; init; }
+
+    /// <summary>The Community entries classed Stale (a link into a Library whose target is gone), by name.</summary>
+    public IReadOnlyList<ClassifiedEntry> StaleLinks { get; init; } = [];
+
+    /// <summary>What "Grouping cards…" counts (spec 6.5): every provisional card before the first settled scan, after it only those whose Package is still being written.</summary>
+    public int Grouping { get; init; }
 }

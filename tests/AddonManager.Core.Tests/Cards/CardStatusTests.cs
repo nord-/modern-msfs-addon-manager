@@ -386,6 +386,89 @@ public sealed class CardStatusTests
         Assert.Equal([Name("pkg-b")], done.Unreadable);
     }
 
+    [Fact]
+    public void Stale_links_are_listed_in_the_banner()
+    {
+        var w = NewWorld();
+        w.Add(Scenery("moved", ["EHAM"]));
+        w.Dangling("moved", @"C:\Sim\Old\moved");
+        w.Add(Scenery("fine", ["EHRD"]));
+        w.Linked("fine");
+
+        var banner = Wall(w).Banner;
+
+        var stale = Assert.Single(banner.StaleLinks);
+        Assert.Equal("moved", stale.Entry.Name);
+        Assert.Equal(EntryClass.Stale, stale.Class);
+        Assert.Empty(banner.Broken);
+    }
+
+    [Fact]
+    public void Grouping_counts_provisional_cards_before_the_first_pass()
+    {
+        var w = NewWorld();
+        w.Add(Scenery("pkg-a", ["EHAM"]));
+
+        var banner = Wall(w, place: false).Banner;
+
+        Assert.False(w.State.ContentPassCompleted);
+        Assert.Equal(1, banner.Grouping);
+        Assert.Equal(1, banner.Provisional);
+    }
+
+    [Fact]
+    public void An_unreadable_package_is_not_grouping_after_the_first_pass()
+    {
+        var w = NewWorld();
+        w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.WithoutContent("pkg-a");
+        w.State.ContentPassCompleted = true;
+
+        var banner = Wall(w, place: false).Banner;
+
+        Assert.Equal(0, banner.Grouping);
+        Assert.Equal([Name("pkg-a")], banner.Unreadable);
+    }
+
+    [Fact]
+    public void A_package_still_being_written_is_grouping()
+    {
+        var w = NewWorld();
+        var content = w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.State.ContentPassCompleted = true;
+        var input = w.Input() with { Unsettled = new HashSet<string>([PathNormalizer.Normalize(content.Path)], StringComparer.OrdinalIgnoreCase) };
+
+        var banner = BoardBuilder.Build(w.State, input).Banner;
+
+        Assert.Equal(1, banner.Grouping);
+    }
+
+    [Fact]
+    public void A_discovery_board_after_the_first_pass_is_not_grouping()
+    {
+        var w = NewWorld();
+        w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.State.ContentPassCompleted = true;
+
+        var banner = Wall(w, place: false, scanComplete: false).Banner;
+
+        Assert.Equal(1, banner.Provisional);
+        Assert.Equal(0, banner.Grouping);
+    }
+
+    [Fact]
+    public void A_failed_package_with_an_old_cached_row_is_unreadable()
+    {
+        var w = NewWorld();
+        var content = w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.State.ContentPassCompleted = true;
+        var input = w.Input() with { Failed = new HashSet<string>([PathNormalizer.Normalize(content.Path)], StringComparer.OrdinalIgnoreCase) };
+
+        var banner = BoardBuilder.Build(w.State, input).Banner;
+
+        Assert.Equal([Name("pkg-a")], banner.Unreadable);
+    }
+
     // ---- Not found, Library not found, Unreadable (spec 6.1, 6.3, 6.7, 10) ----
 
     [Fact]

@@ -2,7 +2,15 @@
 
 A modern addon manager for Microsoft Flight Simulator 2020, built with .NET.
 
-> **Status:** in development. The link engine and the content scan are done, as a headless engine with a command-line tool; the app itself isn't built yet. The design is in the [MVP spec](docs/superpowers/specs/2026-10-25-mvp-design.md), and [ANALYS.md](ANALYS.md) (Swedish) holds the analysis and decisions.
+> **Status:** in development. The link engine, the content scan and the card wall are done, as a headless engine with a command-line tool. The app shell (main window, first run, banner) is built; settings and the rest of the app come in the next version. The design is in the [MVP spec](docs/superpowers/specs/2026-10-25-mvp-design.md), and [ANALYS.md](ANALYS.md) (Swedish) holds the analysis and decisions.
+
+## Running the app
+
+Run it with `dotnet run --project src/AddonManager.App`. On first start the app asks for the Libraries to add per menu section. Add `-- --data-dir <folder>` to keep the database in another folder (`<folder>\userdata.db`) instead of `%LOCALAPPDATA%\ModernMsfsAddonManager`, so a development run never touches your real file.
+
+## Command-line tool
+
+`src/AddonManager.Cli` is a developer tool for checking the engine against a real installation: `status`, `scan`, `cards` and `export-content`. Each command uses the Packages root you picked in the app when one is stored. `cards` follows Community in memory, so its lights match the app's, and it saves no user data.
 
 ## Goals
 

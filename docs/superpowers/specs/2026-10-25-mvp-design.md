@@ -57,7 +57,7 @@ This app replaces Addons Linker for that workflow. Scenery is the focus, aircraf
 - **C7.** MSFS 2020 loads Packages only from `Official\<store>` and Community, and only at sim startup. The real folders in the Packages root next to them (for example `orbx-airport-esgg-gothenburg`, `fsdreamteam-gsx-pro`) have no `manifest.json`; they are the sim's WASM cache and module storage, not Packages, and the app ignores them.
 - **C8.** English UI, dark theme only.
 - **C9.** Package names, container names and ICAO codes are compared case-insensitively everywhere.
-- **C10.** Only one instance of the app runs at a time (a named mutex). A second start brings the running window to the front and exits.
+- **C10.** Only one instance of the app runs at a time (a named mutex). A second start brings the running window to the front and exits (in another Windows session it shows a message and exits; ANALYS.md plan 5a D4).
 
 ## 6. Domain rules
 
@@ -222,12 +222,12 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 
 ### 7.2 Normal start
 
-1. Show the main window with the last saved state and cached scan results immediately.
+1. Show the main window at once. The card wall is built from the cached scan results only when a completed content scan has been settled before and the cache is not empty; otherwise it shows "Scanning…" until the run completes, so the first run waits for its scan (ANALYS.md, plan 5a decision D3).
 2. In the background, reconcile against Community (7.4).
 3. Then run an incremental scan (7.3).
 4. Update the UI as results come in. On/off works at all times; it only needs Community, Package paths and the stored choices.
 
-Targets (to be measured): main window usable with cached data within about 1 second; Community reconcile under 1 second for about 150 entries.
+Target (to be measured): Community reconcile under 1 second for about 150 entries. The target of about 1 second for the main window to show cached data moves to plan 5b, since the wall now waits for discovery (step 1).
 
 ### 7.3 Scanning
 
@@ -299,7 +299,7 @@ Thumbnails come from the Package's own files (`ContentInfo\<any>\Thumbnail.jpg`;
   - the Libraries of each menu section;
   - cards: id, menu section, tab, the user's name and image path when set, created time (the oldest card wins, 6.5), and their ICAO codes;
   - Packages: kind (folder or GSX profile), name, a reference to the card (empty while provisional or Not shown), menu section (empty until a completed scan has read it, 6.4), on/off choice, active copy, and the display facts the card needs while the Package is Not found or its Library is not found: last known path, version, tags, display name, thumbnail path, type designators, Containers, and the ICAO codes of its Airports with their names and positions, which count as known records while the Package is Not found or its Library is not found. The facts are updated by every completed scan;
-  - the ICAO codes the user removed from each card (Airport links are not stored per Package: manual links and removals follow the card, 6.5); the Packages root when the user picked or overrode it (7.1); whether the first content pass has completed (6.5); opted-in Packages; the pending set; the last accepted Community snapshot; search URL templates; threshold, exclusion list and stop-list (only the user's changes to the defaults).
+  - the ICAO codes the user removed from each card (Airport links are not stored per Package: manual links and removals follow the card, 6.5); the Packages root (the folder holding Community and Official) when the user picked or overrode it (7.1), which wins over detection on later starts; whether the first content pass has completed (6.5); opted-in Packages; the pending set; the last accepted Community snapshot; search URL templates; threshold, exclusion list and stop-list (only the user's changes to the defaults).
 - **What is stored versus computed:** a card and its Packages change only by user action and by new Packages joining it (6.5). A card's state, its built-in parts, its tags, Not found and "(several)" are computed on every analysis. Its name and image are computed unless the user set them.
 - **Saving:** every change is saved at once, in one transaction.
 - **Scan cache tables:** per Package the change marker and the facts read from its files (manifest data, airport records, BGL section types, `aircraft.cfg` facts including type designators, airplane folders, thumbnail path), and the GSX files shipped inside Packages. The GSX folder itself is not cached (2026-10-30): it holds about 40 small files, so it is read on every scan run and at startup. Links, Airports and aircraft groups are recomputed from these on every analysis.
@@ -353,7 +353,7 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Marketplace and World Update partner airports count as real scenery.
 - Changes to Community from other tools while the app runs offer the sync dialog, with "don't ask again this session".
 - The pending set survives an app restart.
-- Startup targets of about 1 second.
+- Startup target: Community reconcile under 1 second; the 1 s window target moves to 5b (2026-11-02).
 - Sync dialog rows are per Package, grouped by card.
 - A card's menu section is its Packages' menu section when it is made; its menu section and tab change only by user action (6.4).
 - Within one scan, Packages are grouped by identical sets of ICAO codes before they join existing cards, so a YQ05 Package and a YQ05+YMUZ Package found in the same scan get two cards, while found in separate scans they share one only when the YQ05+YMUZ Package came first; the user merges them (2026-10-29).

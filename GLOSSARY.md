@@ -67,6 +67,9 @@ _Avoid_: Built-in package, official package (official is only one kind)
 
 ## Community entries
 
+**Following Community**:
+The app's reading of Community at each scan run (startup, a watcher change, F5). It takes Community's current state into memory, so the switches and cards match what the sim will load, without changing any link. The caller saves the result.
+
 **Managed entry**:
 A junction or symlink in Community that points to a Package in a registered Library. The app can create and remove it.
 

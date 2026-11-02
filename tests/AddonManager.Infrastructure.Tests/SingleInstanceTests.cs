@@ -34,7 +34,7 @@ public sealed class SingleInstanceTests
         var activated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var first = SingleInstance.TryAcquire(name, () => activated.TrySetResult());
 
-        Assert.True(SingleInstance.SignalRunningInstance(name));
+        Assert.Equal(SignalResult.Signalled, SingleInstance.TrySignalRunningInstance(name));
         await activated.Task.WaitAsync(Bound);
     }
 
@@ -42,6 +42,27 @@ public sealed class SingleInstanceTests
     public void Signalling_without_a_running_instance_returns_false()
     {
         Assert.False(SingleInstance.SignalRunningInstance(NewName()));
+        Assert.Equal(SignalResult.NotRunning, SingleInstance.TrySignalRunningInstance(NewName()));
+    }
+
+    [Fact]
+    public void The_mutex_lives_in_the_global_namespace()
+    {
+        var name = NewName();
+        using var first = SingleInstance.TryAcquire(name, () => { });
+
+        Assert.True(Mutex.TryOpenExisting(@"Global\" + name, out var mutex));
+        mutex.Dispose();
+    }
+
+    [Fact]
+    public void A_global_mutex_without_an_event_here_means_another_session()
+    {
+        var name = NewName();
+        using var foreign = new Mutex(false, @"Global\" + name);
+
+        Assert.Null(SingleInstance.TryAcquire(name, () => { }));
+        Assert.False(SingleInstance.SignalRunningInstance(name));
     }
 
     private static string NewName() => $"{SingleInstance.AppName}.Test.{Guid.NewGuid():N}";

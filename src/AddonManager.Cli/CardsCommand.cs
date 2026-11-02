@@ -57,14 +57,9 @@ internal static class CardsCommand
         output.WriteLine($"Links covered: {coverage.Covered} of {coverage.Counted}");
 
         // The scan has completed (rule A5). Everything below changes the in-memory state only; it is never saved.
-        if (state.Snapshot is null)
-            Reconciler.Adopt(state, discovery.Community, discovery.Index);
-        var input = new BoardInput(discovery.Index, discovery.Community, outcome.Content.Contents, outcome.Analysis, ScanComplete: true)
-        {
-            Unsettled = outcome.Content.Unsettled,
-            Failed = outcome.Content.FailedPaths,
-            PresentOutsideLibraries = discovery.PresentOutsideLibraries,
-        }.WithGsx(outcome.Gsx).Reanalyze(state);
+        // Following Community in memory draws the same lights as the app does on the same userdata.db.
+        CommunityFollower.Follow(state, discovery.Community, discovery.Index);
+        var input = outcome.ToBoardInput().Reanalyze(state);
         Settlement.Apply(state, input, DateTimeOffset.UtcNow);
 
         // Placement changed the cards, so the board is built from an analysis of the current ones.
@@ -119,6 +114,8 @@ internal static class CardsCommand
                 line += $"  tags: {string.Join(", ", card.Tags)}";
             if (card.Gsx != GsxMark.None)
                 line += $"  GSX {MarkText(card.Gsx)}";
+            if (card.BuiltIns.Count > 0)
+                line += "  Built-in";
             if (card.Pending)
                 line += "  Next sim start";
             foreach (var warning in card.Warnings)

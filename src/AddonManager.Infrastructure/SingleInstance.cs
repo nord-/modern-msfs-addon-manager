@@ -1,10 +1,15 @@
 namespace AddonManager.Infrastructure;
 
+/// <summary>What <see cref="SingleInstance.TrySignalRunningInstance"/> found: an instance woken, none in this session, or one this token may not open (it runs elevated).</summary>
+public enum SignalResult { Signalled, NotRunning, AccessDenied }
+
 /// <summary>
-/// Lets only one instance of the app run per Windows session. The first process holds a named mutex and waits on a
-/// named auto-reset event; a second process finds the mutex taken, sets the event and exits. Both kernel objects live
-/// in the <c>Local\</c> namespace, so they are scoped to the current session and need no admin rights.
-/// <see cref="Dispose"/> stops listening and releases both objects so the name can be acquired again.
+/// Lets only one instance of the app run across all Windows sessions. The first process holds a named mutex in the
+/// <c>Global\</c> namespace and waits on a named auto-reset event in the <c>Local\</c> namespace; a second process in the
+/// same session finds the mutex taken, sets the event and exits. A taken mutex with no event in this session means
+/// another Windows session runs the app: <see cref="TryAcquire"/> gives null and <see cref="SignalRunningInstance"/> false.
+/// Neither object needs admin rights. <see cref="Dispose"/> stops listening and releases both objects so the name can be
+/// acquired again.
 /// </summary>
 public sealed class SingleInstance : IDisposable
 {
@@ -64,10 +69,13 @@ public sealed class SingleInstance : IDisposable
     }
 
     /// <summary>
-    /// Wakes the instance that holds <paramref name="name"/>. Returns false if no instance is running, or if it runs elevated and this
-    /// token may not signal it.
+    /// Wakes the instance that holds <paramref name="name"/>. False if no instance is running, or if it runs elevated and this
+    /// token may not signal it; <see cref="TrySignalRunningInstance"/> tells those two apart.
     /// </summary>
-    public static bool SignalRunningInstance(string name)
+    public static bool SignalRunningInstance(string name) => TrySignalRunningInstance(name) == SignalResult.Signalled;
+
+    /// <summary>Like <see cref="SignalRunningInstance"/>, but says why nobody was woken.</summary>
+    public static SignalResult TrySignalRunningInstance(string name)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
 
@@ -76,19 +84,19 @@ public sealed class SingleInstance : IDisposable
         {
             if (!EventWaitHandle.TryOpenExisting(EventName(name), out activate))
             {
-                return false;
+                return SignalResult.NotRunning;
             }
         }
         catch (UnauthorizedAccessException)
         {
-            return false;
+            return SignalResult.AccessDenied;
         }
 
         using (activate)
         {
             activate.Set();
         }
-        return true;
+        return SignalResult.Signalled;
     }
 
     public void Dispose()
@@ -104,7 +112,7 @@ public sealed class SingleInstance : IDisposable
         _mutex.Dispose();
     }
 
-    private static string MutexName(string name) => @"Local\" + name;
+    private static string MutexName(string name) => @"Global\" + name;
 
     private static string EventName(string name) => @"Local\" + name + ".Activate";
 }

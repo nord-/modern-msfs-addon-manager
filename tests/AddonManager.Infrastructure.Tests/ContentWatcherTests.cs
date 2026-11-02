@@ -111,6 +111,31 @@ public sealed class ContentWatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task An_event_is_pending_until_it_is_raised_and_stays_so_after_dispose()
+    {
+        var watcher = StartWatcher(TimeSpan.FromSeconds(30));
+        Assert.False(watcher.HasPending);
+
+        Directory.CreateDirectory(Path.Combine(_lib, "p0"));
+        await WaitUntil(() => watcher.HasPending, TimeSpan.FromSeconds(2));
+
+        watcher.Dispose();
+        Assert.True(watcher.HasPending);
+        Assert.Equal(0, Rescans);
+    }
+
+    [Fact]
+    public async Task Nothing_is_pending_after_the_raise()
+    {
+        using var watcher = StartWatcher();
+
+        watcher.ScheduleRescan(DateTimeOffset.UtcNow.AddMinutes(-1));
+        await WaitUntil(() => Rescans == 1, TimeSpan.FromSeconds(1));
+
+        Assert.False(watcher.HasPending);
+    }
+
+    [Fact]
     public async Task A_scheduled_rescan_in_the_past_is_raised_right_away()
     {
         using var watcher = StartWatcher();

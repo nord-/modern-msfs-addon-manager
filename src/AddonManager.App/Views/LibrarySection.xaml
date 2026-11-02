@@ -1,0 +1,23 @@
+<UserControl x:Class="AddonManager.App.Views.LibrarySection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:AddonManager.App.Views">
+    <StackPanel Margin="0,0,0,16">
+        <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=local:LibrarySection}}" FontSize="16" FontWeight="SemiBold" />
+        <ItemsControl ItemsSource="{Binding Folders, RelativeSource={RelativeSource AncestorType=local:LibrarySection}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel Margin="0,4,0,0">
+                        <ui:Button DockPanel.Dock="Right" Content="Remove" Margin="8,0,0,0"
+                                   Command="{Binding RemoveCommand, RelativeSource={RelativeSource AncestorType=local:LibrarySection}}"
+                                   CommandParameter="{Binding}" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ui:Button Content="Add Library…" Margin="0,8,0,0"
+                   Command="{Binding AddCommand, RelativeSource={RelativeSource AncestorType=local:LibrarySection}}" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AddonManager.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../AddonManager.Core/AddonManager.Core.csproj" />
+    <ProjectReference Include="../AddonManager.Infrastructure/AddonManager.Infrastructure.csproj" />
+    <ProjectReference Include="../AddonManager.Sim2020/AddonManager.Sim2020.csproj" />
+  </ItemGroup>
+
+</Project>

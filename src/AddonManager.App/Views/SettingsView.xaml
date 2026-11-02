@@ -1,0 +1,29 @@
+<UserControl x:Class="AddonManager.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,16" />
+
+            <TextBlock Text="Libraries" FontSize="16" FontWeight="SemiBold" />
+            <ItemsControl ItemsSource="{Binding SettingsLibraries}" Margin="0,4,0,16">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="{Binding Title}" Opacity="0.8" />
+                            <ItemsControl ItemsSource="{Binding Folders}" Margin="12,0,0,0" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Packages folder" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding PackagesRoot}" Margin="0,4,0,16" TextWrapping="Wrap" />
+
+            <TextBlock Text="Database" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding DatabaseFile}" Margin="0,4,0,16" TextWrapping="Wrap" />
+
+            <TextBlock Text="More settings come in a later version." Opacity="0.8" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

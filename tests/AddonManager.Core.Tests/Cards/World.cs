@@ -76,6 +76,9 @@ internal sealed class World
     /// <summary>A junction named <paramref name="name"/> to any target; it is classified like a real one.</summary>
     public void LinkTo(string name, string target) => entries.Add(new CommunityEntryInfo(name, EntryKind.Junction, target, true, true));
 
+    /// <summary>A junction named <paramref name="name"/> whose target is gone; with a copy of that name in a Library it is Stale.</summary>
+    public void Dangling(string name, string target) => entries.Add(new CommunityEntryInfo(name, EntryKind.Junction, target, false, false));
+
     public void External(PackageContent content, string target)
     {
         contents.Add(content with { Path = target, Source = PackageSource.Community });

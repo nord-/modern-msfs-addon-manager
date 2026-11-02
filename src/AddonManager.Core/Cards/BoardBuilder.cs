@@ -52,7 +52,8 @@ public static class BoardBuilder
             cards.Add(MakeCard(null, [profile], CardLayout.Compute(null, [profile], input.Analysis, Category.Scenery), tagIndex, facts));
         }
 
-        var banner = MakeBanner(state, input, summaries, cards.Count(c => c.Id is null));
+        var provisional = cards.Where(c => c.Id is null).ToList();
+        var banner = MakeBanner(state, input, summaries, provisional.Count, GroupingCount(state, input, provisional));
         return new Board(WithBuiltIns(Ordered(cards), banner, facts), [.. notShown.OrderBy(n => n.Name.Value, Names)], banner)
         {
             GsxNotRecognised = ProfileCatalog.NotRecognised(state, input),
@@ -157,7 +158,16 @@ public static class BoardBuilder
         };
     }
 
-    private static Banner MakeBanner(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries, int provisionalCards)
+    /// <summary>
+    /// What "Grouping cards…" counts (spec 6.5): every provisional card until the first settled scan; after it only those whose Package is
+    /// still being written (<see cref="BoardInput.Unsettled"/>), so a later run's discovery board shows none.
+    /// </summary>
+    private static int GroupingCount(UserState state, BoardInput input, List<Card> provisional)
+        => state.ContentPassCompleted
+            ? provisional.Count(c => c.Packages.Any(p => p.Path.Length > 0 && input.Unsettled.Contains(PathNormalizer.Normalize(p.Path))))
+            : provisional.Count;
+
+    private static Banner MakeBanner(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries, int provisionalCards, int grouping)
     {
         List<ClassifiedEntry> Of(EntryClass entryClass)
             => [.. input.Community.Where(e => e.Class == entryClass).OrderBy(e => e.Entry.Name, Names)];
@@ -169,13 +179,16 @@ public static class BoardBuilder
             provisionalCards,
             [.. summaries.Values
                 .Where(s => s.Presence == Presence.Unreadable
-                            || (input.ScanComplete && s.Presence == Presence.Found && s.Lock != LockReason.NotInRegisteredLibrary && !s.HasContent))
+                            || (input.ScanComplete && s.Presence == Presence.Found && s.Lock != LockReason.NotInRegisteredLibrary
+                                && (!s.HasContent || input.Failed.Contains(PathNormalizer.Normalize(s.Path)))))
                 .Select(s => s.Name)
                 .OrderBy(n => n.Value, Names)],
             [.. input.Index.Unreachable.OrderBy(l => l.Path, Names)])
         {
             // Plan 4, D3: only a machine that has stored profiles on cards can have lost the folder.
             GsxFolderMissing = !input.GsxFolderFound && state.Profiles.Any(p => p.Value.CardId is not null),
+            StaleLinks = Of(EntryClass.Stale),
+            Grouping = grouping,
         };
     }
 

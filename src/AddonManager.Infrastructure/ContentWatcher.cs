@@ -9,7 +9,7 @@ namespace AddonManager.Infrastructure;
 /// <see cref="CommunityChanged"/>. <see cref="Dispose"/> waits for an in-flight raise to finish; after it returns no event is raised, so a handler
 /// must not block on a thread that may be calling <see cref="Dispose"/> (marshal with <c>InvokeAsync</c>, not <c>Invoke</c>).
 /// </summary>
-public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> libraryPaths, TimeSpan quietPeriod, string? gsxFolder = null) : IDisposable
+public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> libraryPaths, TimeSpan quietPeriod, string? gsxFolder = null) : IContentWatcher
 {
     private const int BufferSize = 65536;
 
@@ -74,6 +74,15 @@ public sealed class ContentWatcher(string communityPath, IReadOnlyList<string> l
         catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException)
         {
             watcher?.Dispose();
+        }
+    }
+
+    public bool HasPending
+    {
+        get
+        {
+            lock (_gate)
+                return _pending;
         }
     }
 

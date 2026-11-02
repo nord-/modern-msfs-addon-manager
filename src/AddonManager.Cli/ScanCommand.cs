@@ -63,15 +63,6 @@ internal static class ScanCommand
     public static ScanRun? Execute(bool full, IReadOnlyList<LibraryRoot> libraryArgs, TextWriter output, out int exitCode, bool listLibraries = true)
     {
         exitCode = 1;
-        var paths = InstallLocator.Locate(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify));
-        if (paths is null)
-        {
-            output.WriteLine("No MSFS 2020 install found (no UserCfg.opt with InstalledPackagesPath).");
-            return null;
-        }
-
         // One instance for the cache and the user data: a second connection would look like another program holding the lock.
         UserDataDatabase db;
         UserState state;
@@ -95,6 +86,11 @@ internal static class ScanCommand
         }
 
         using var owned = db;
+
+        // The stored Packages root is part of the user state, so the install is located after loading it.
+        var paths = InstallPaths.Resolve(state, output);
+        if (paths is null)
+            return null;
 
         // --library replaces the stored Libraries for this run; nothing is saved.
         if (libraryArgs.Count > 0)

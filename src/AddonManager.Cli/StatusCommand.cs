@@ -26,22 +26,6 @@ internal static class StatusCommand
             return 2;
         }
 
-        var paths = InstallLocator.Locate(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify));
-        if (paths is null)
-        {
-            output.WriteLine("No MSFS 2020 install found (no UserCfg.opt with InstalledPackagesPath).");
-            return 1;
-        }
-
-        output.WriteLine($"UserCfg.opt:  {paths.UserCfgPath}");
-        output.WriteLine($"Packages:     {paths.PackagesPath}");
-        output.WriteLine($"Community:    {paths.CommunityPath}");
-        output.WriteLine($"Official:     {paths.OfficialPath ?? "(not found)"}");
-        output.WriteLine($"User data:    {AppPaths.DatabaseFile}");
-        output.WriteLine();
-
         // A missing file means first run: status never creates it.
         Core.State.UserState state;
         try
@@ -63,6 +47,18 @@ internal static class StatusCommand
             return 1;
         }
 
+        // The stored Packages root is part of the user state, so the install is located after loading it.
+        var paths = InstallPaths.Resolve(state, output);
+        if (paths is null)
+            return 1;
+
+        output.WriteLine($"UserCfg.opt:  {paths.UserCfgPath ?? "(Packages root picked by the user)"}");
+        output.WriteLine($"Packages:     {paths.PackagesPath}");
+        output.WriteLine($"Community:    {paths.CommunityPath}");
+        output.WriteLine($"Official:     {paths.OfficialPath ?? "(not found)"}");
+        output.WriteLine($"User data:    {AppPaths.DatabaseFile}");
+        output.WriteLine();
+
         var entries = new CommunityReader(paths.CommunityPath).Read();
 
         // --library replaces the stored Libraries for this run; nothing is saved.
@@ -81,6 +77,9 @@ internal static class StatusCommand
 
         var coverage = LinkCoverage.Measure(entries, libraries);
         output.WriteLine($"Links covered: {coverage.Covered} of {coverage.Counted}");
+        output.WriteLine($"Not covered: {coverage.NotCovered.Count}");
+        foreach (var entry in coverage.NotCovered)
+            output.WriteLine($"  {entry.Name} ({entry.Target})");
         output.WriteLine($"Not counted (made by other tools): {coverage.NotCounted.Count}");
         foreach (var entry in coverage.NotCounted)
             output.WriteLine($"  {entry.Name}");

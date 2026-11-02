@@ -63,5 +63,38 @@ public sealed class InstallLocatorTests : IDisposable
     }
 
     [Fact]
+    public void A_picked_root_gives_community_and_official()
+    {
+        var pkgs = Path.Combine(root, "Picked");
+        Directory.CreateDirectory(Path.Combine(pkgs, "Community"));
+        Directory.CreateDirectory(Path.Combine(pkgs, "Official", "OneStore"));
+
+        var paths = InstallLocator.FromPackagesRoot(pkgs);
+
+        Assert.NotNull(paths);
+        Assert.Null(paths.UserCfgPath);
+        Assert.Equal(pkgs, paths.PackagesPath);
+        Assert.Equal(Path.Combine(pkgs, "Community"), paths.CommunityPath);
+        Assert.Equal(Path.Combine(pkgs, "Official", "OneStore"), paths.OfficialPath);
+    }
+
+    [Fact]
+    public void A_root_without_community_is_refused()
+    {
+        var pkgs = Directory.CreateDirectory(Path.Combine(root, "NoCommunity")).FullName;
+
+        Assert.Null(InstallLocator.FromPackagesRoot(pkgs));
+    }
+
+    [Fact]
+    public void A_root_without_official_has_no_official_path()
+    {
+        var pkgs = Path.Combine(root, "NoOfficial");
+        Directory.CreateDirectory(Path.Combine(pkgs, "Community"));
+
+        Assert.Null(InstallLocator.FromPackagesRoot(pkgs)!.OfficialPath);
+    }
+
+    [Fact]
     public void Returns_null_when_no_usercfg_exists() => Assert.Null(InstallLocator.Locate(Roaming, Local));
 }

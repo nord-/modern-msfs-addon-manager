@@ -1,6 +1,7 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
+using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Infrastructure.Tests.Fakes;
@@ -76,6 +77,38 @@ public sealed class ScanServiceTests : IDisposable
 
         Assert.True(outcome.Gsx.Found);
         Assert.Equal("eham", Assert.Single(outcome.Gsx.Profiles).Name.Value);
+    }
+
+    [Fact]
+    public async Task The_completed_input_carries_the_run()
+    {
+        var gsx = Directory.CreateDirectory(Path.Combine(temp.Root, "gsx")).FullName;
+        File.WriteAllText(Path.Combine(gsx, "eham.ini"), "");
+        using var withGsx = new ScanService(reader, cache, community, new FakeSimManaged(simFolders), gsx);
+
+        var outcome = await Bounded(withGsx.RunAsync(state, false));
+        var input = outcome.ToBoardInput();
+
+        Assert.True(input.ScanComplete);
+        Assert.Equal("eham", Assert.Single(input.Profiles).Name.Value);
+        Assert.Equal(outcome.Discovery.PresentOutsideLibraries, input.PresentOutsideLibraries);
+    }
+
+    [Fact]
+    public async Task The_discovered_input_is_built_from_the_cache()
+    {
+        IReadOnlyList<PackageContent>? cachedRows = null;
+        ContentAnalysis? cachedAnalysis = null;
+        BoardInput? input = null;
+
+        await Bounded(service.RunAsync(state, false, new ScanCallbacks(
+            OnCached: (rows, analysis) => (cachedRows, cachedAnalysis) = (rows, analysis),
+            OnDiscovered: d => input = d.ToBoardInput(cachedRows!, cachedAnalysis!, GsxFolderContent.Missing))));
+
+        Assert.NotNull(input);
+        Assert.False(input.ScanComplete);
+        Assert.Same(cachedRows, input.Contents);
+        Assert.False(input.GsxFolderFound);
     }
 
     [Fact]

@@ -289,6 +289,33 @@ public sealed class UserDataDatabaseTests : IDisposable
     }
 
     [Fact]
+    public void A_failed_user_write_names_the_file()
+    {
+        using var db = OpenAt(DbFile);
+
+        // A statement against a missing table is SQLITE_ERROR: neither busy nor damage.
+        var outside = Assert.Throws<UserDataUnavailableException>(() =>
+            db.Write(WriteScope.User, (c, t) => { Exec(c, t, "INSERT INTO no_such_table(x) VALUES (1)"); return 0; }));
+        Assert.Equal(DbFile, outside.FilePath);
+
+        using (var scope = db.BeginUserChange())
+        {
+            db.Write(WriteScope.User, (c, t) => { Exec(c, t, "INSERT INTO card(id, section, tab, created) VALUES (1, 'Scenery', 'A', 'now')"); return 0; });
+            var inside = Assert.Throws<UserDataUnavailableException>(() =>
+                db.Write(WriteScope.User, (c, t) => { Exec(c, t, "INSERT INTO no_such_table(x) VALUES (1)"); return 0; }));
+            Assert.Equal(DbFile, inside.FilePath);
+        }
+
+        // The failed scope rolled back the earlier insert.
+        Assert.Equal(0L, db.Read(c =>
+        {
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM card";
+            return cmd.ExecuteScalar();
+        }));
+    }
+
+    [Fact]
     public void A_change_scope_disposed_on_another_thread_fails_and_can_still_be_disposed_on_its_own()
     {
         using var db = OpenAt(DbFile);

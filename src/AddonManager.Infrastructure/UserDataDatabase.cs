@@ -204,6 +204,10 @@ public sealed class UserDataDatabase : IDisposable
                 {
                     throw new UserDataLockedException(FilePath);
                 }
+                catch (SqliteException ex)
+                {
+                    throw new UserDataUnavailableException(FilePath, ex.Message, ex);
+                }
             }
 
             _change.Depth++;
@@ -301,6 +305,11 @@ public sealed class UserDataDatabase : IDisposable
                     change.Failed = true;
                     throw new UserDataLockedException(FilePath);
                 }
+                catch (SqliteException ex)
+                {
+                    change.Failed = true;
+                    throw new UserDataUnavailableException(FilePath, ex.Message, ex);
+                }
                 catch
                 {
                     change.Failed = true;
@@ -318,6 +327,11 @@ public sealed class UserDataDatabase : IDisposable
             catch (SqliteException ex) when (ex.SqliteErrorCode is SqliteBusy or SqliteLocked)
             {
                 throw new UserDataLockedException(FilePath);
+            }
+            catch (SqliteException ex)
+            {
+                // Disk full, I/O error and the like: name the file instead of a bare provider message.
+                throw new UserDataUnavailableException(FilePath, ex.Message, ex);
             }
         }
     }

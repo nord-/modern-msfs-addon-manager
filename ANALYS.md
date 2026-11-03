@@ -355,6 +355,17 @@ Plan 5a bygger appens skal: huvudfönstret med kortväggen, första start, banne
 - **D13 Första start** avgörs som i spec 11: inga Libraries är registrerade och ingen ögonblicksbild finns. Ett tillstånd med ögonblicksbild men utan Libraries (bara möjligt genom att redigera filen för hand) startar som vanligt och visar bara korten för Community-poster och GSX-profiler. Både den här regeln och D3:s är Core-predikat (`StartupRules`, Task 2).
 - **D14 CLI:t använder en vald Packages-rot.** Varje CLI-kommando som hittar installationen använder den lagrade `PackagesRoot` via `InstallLocator.FromPackagesRoot` när den är satt. Då fungerar kontrollsteg 2 också på en dator där roten valts.
 
+## Beslut för plan 5b (2026-11-03)
+
+Rickard delade issue #22 i tre delar: 5b (slå kort av och på, Remove, sim-detektering, sync-dialogen med ompekning av Stale), 5c (redigera kort, drag och släpp, GSX-delen) och 5d (Settings och målet om ett fönster på ungefär 1 sekund). Designen för 5b står i `docs/superpowers/specs/2026-11-03-plan-5b-switches-design.md`. Ledstjärnan är Rickards, 2026-11-03: bygg bara det som används nu. Appen är oftast öppen en kort stund, och Rickard slutar med Addons Linker när 5b fungerar.
+
+- **En switch per kort.** Dialogen har en enda switch, för kortet. Paketraderna har ingen egen. Rickard, 2026-11-03: "Kortets switch är det enda du ska bygga nu i 5b. Inga globala switchar för alla kort på brädan, inga paket-switchar och ingen 'Switch all' för alla paket på ett kort." Ett Mixed-kort visar switchen som av, och ett klick slår på hela kortet. Avviker från spec 6.3 och 10.
+- **Inget val av aktiv kopia.** Standardregeln i spec 6.1 väljer alltid. Dialogen visar bara vilken kopia som är aktiv.
+- **Ingen Pending.** Medan simmen kör är switchen och Remove avstängda ("Close MSFS to change add-ons"), och `ChangeApplier` vägrar varje länkändring i stället för att skjuta upp den. Appen bevakar inte när simmen avslutas. Avviker från spec 6.8.
+- **En sync-dialog, en kodväg.** Varje upptäckt (start, bevakare, F5) kör `SyncCoordinator.Start` i stället för 5a:s `CommunityFollower.Follow`. Det finns inget särskilt meddelande för ändringar under körning och inget "don't ask again". Appens egna ändringar ger inga rader, eftersom `ChangeApplier` uppdaterar snapshoten i samma skrivning. Dialogen stängs bara med Apply. Medan simmen kör visas ingen dialog, bara en bannerrad. Avviker från spec 7.4.
+- **Processnamn.** `SimProcessMonitor` får en lista med namn. Steam-utgåvan heter `FlightSimulator.exe`. **Öppen fråga:** vad MS Store-utgåvans process heter. En forumtråd nämner bara startprogrammet `gamelaunchhelper.exe`.
+- **Ingen kontroll på simmaskinen** utöver `Get-Process FlightSimulator` medan MSFS kör. Rickard, 2026-11-03: "Du behöver ingen msfs för att testa att skapa en junction ifrån test-data." Resten kontrolleras med en kort körning på utvecklingsdatorn mot en genererad testmapp och `--data-dir`.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

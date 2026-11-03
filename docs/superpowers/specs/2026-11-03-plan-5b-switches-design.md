@@ -16,12 +16,12 @@ In 5a the app only shows the collection and follows Community silently while Add
 
 ## Goals
 
-1. **The card dialog** opens on a click on a card (an overlay; Esc, ✕ or a click outside closes it). It shows the card's name and ICAO codes as text, **one switch for the card**, and one row per Package: display name, folder name, path, Library, which copy is active when it is a Duplicate copy, and the reason when the Package is locked. Package rows have no switch of their own.
-2. **The card's switch** turns every switchable Package of the card on or off (`CardSwitch.All`) through the apply path (`ChangeApplier.SetChoices`). Locked Packages are skipped, and the dialog says how many ("2 skipped (locked)"). A Mixed card shows the switch as off; one click turns the whole card on. There is no Apply button: the change is made at once and the wall shows the result straight away by re-reading Community, without a content rescan.
-3. **Remove** on a Package row that is Not found, or held by no registered Library (`PackageRemover`), after a confirmation ("Remove `<name>` and forget it?").
-4. **The sync dialog** (spec 7.4) replaces 5a's silent following (`CommunityFollower.Follow`). Every discovery (start, watcher, F5) calls `SyncCoordinator.Start` instead: with no rows, nothing changes; with rows, the sync dialog opens over the wall. On first run `Start` returns only the Stale rows (spec 7.1 step 5).
+1. **The card dialog** opens on a click on a card (an overlay; Esc, ✕ or a click outside closes it). It shows the card's name and ICAO codes as text, **one switch for the card**, and one row per Package: display name, folder name, path, Library, which copy is active when it is a Duplicate copy, and, always shown, the reason when the Package can't be switched (the board's `DisabledReason`: locked, name taken with its holder, Not found, Library not found, unreadable). Package rows have no switch of their own.
+2. **The card's switch** turns every switchable Package of the card on or off (`CardSwitch.All`) through the apply path (`ChangeApplier.SetChoices`). Packages that can't be switched are skipped; their rows already say why, so there is no skipped count. **The switch's position comes from the switchable Packages only:** on when all of them are on, otherwise off, and a click then turns them all on. So a card that is Mixed only because of a Package that can't be switched (Not found, on an unplugged drive) still shows on and can be turned off. A card with no switchable Package shows the switch disabled, with the reason. There is no Apply button: the change is made at once and the wall shows the result straight away by re-reading Community, without a content rescan.
+3. **Remove** on a Package row that is Not found, or held by no registered Library (`PackageRemover`), after a confirmation ("Remove `<folder name>` and forget it?"). When Remove leaves the card empty, the card is removed and the dialog closes. A failure shows its message in the dialog and changes nothing.
+4. **The sync dialog** (spec 7.4) replaces 5a's silent following (`CommunityFollower.Follow`). Every discovery (start, watcher, F5) calls `SyncCoordinator.Start` instead: with no rows, nothing changes; with rows, the sync dialog opens over the wall, and an open card dialog is closed. On first run `Start` returns only the Stale rows (spec 7.1 step 5). **A discovery while the sync dialog is open** replaces its rows and keeps the user's choice for every row that is still listed; Apply resolves against the latest discovery's rows and board. A row whose link change failed keeps its old snapshot entry and comes back at the next discovery.
 5. **Sim detection:** while MSFS runs, the card's switch and Remove are disabled with "Close MSFS to change add-ons".
-6. **Banner:** a new line "N packages are on but not shown" for Packages that are on in Community and Not shown (the gap carried over from 5a, comment on #22).
+6. **Banner:** a new line "N packages are on but not shown" for Not shown Packages whose stored choice is on (the gap carried over from 5a, comment on #22).
 
 ## Deviations from the spec (Rickard, 2026-11-03)
 
@@ -29,10 +29,11 @@ Each is recorded in `ANALYS.md` with its reason.
 
 - **No switch per Package** (spec 6.3, 10). The dialog has one switch, for the card. Turning single Packages of a card on and off, and a switch for all cards of a tab or the whole wall, are Later.
 - **No choice of active copy** (spec 6.1, 10). The default rule of spec 6.1 always picks the active copy; the dialog only shows which one it is.
-- **No Pending** (spec 6.8). Instead of recording changes while the sim runs and applying them when it exits, the app refuses them: `ChangeApplier` refuses every link change while the sim runs (a new rejection reason), so nothing new is ever added to the pending set. The app does not watch for the sim to exit. "Next sim start" can only show from data an older version left behind, and `SyncCoordinator.Start` still flushes such a set on the next start.
+- **No Pending** (spec 6.8). Instead of recording changes while the sim runs and applying them when it exits, the app refuses them: while the sim runs `ChangeApplier` refuses the whole change and stores nothing, not even a choice that needs no link change, so nothing new is ever added to the pending set. The app does not watch for the sim to exit. "Next sim start" can only show from data an older version left behind, and `SyncCoordinator.Start` still flushes such a set on the next start.
 - **One sync dialog, one code path** (spec 7.4). There is no separate notice for changes made while the app runs and no "don't ask again this session": the watcher already starts a scan when Community changes, and that scan's discovery runs the same `Start` as at launch.
 - **The sync dialog closes only with Apply** (spec 7.4 doesn't say). Its defaults are safe: Keep Community keeps what is already true, and a Moved row re-points to the Package's new location.
-- **No sync dialog while the sim runs.** Moved rows and Restore app change links, which isn't allowed then. The banner says "Community changed outside the app. Close MSFS, then press F5 to review." The rows are recomputed on every discovery, so nothing is lost.
+- **No sync dialog while the sim runs.** Moved rows and Restore app change links, which isn't allowed then. The banner says "Community needs review. Close MSFS, then press F5." (also on first run, for its Stale rows). The rows are recomputed on every discovery, so nothing is lost. When MSFS starts while the sync dialog is already open, Apply is refused as a whole: the dialog stays open with "Close MSFS to change add-ons" and nothing is saved. The app doesn't watch for the sim to exit, so after MSFS closes the rows wait for the next discovery (F5, the watcher, the next start); switching a card is allowed meanwhile.
+- **The CLI is unchanged.** `cards` keeps following Community in memory (5a D2), so its lights match the app's when no sync rows are open; CLAUDE.md is updated to say so when 5b is implemented.
 - **Sim process names** (spec 6.8). `SimProcessMonitor` takes a list of process names instead of one. The only known name is `FlightSimulator` (the Steam edition, `FlightSimulator.exe`). The Microsoft Store edition's process name is unknown: a forum thread (https://forums.flightsimulator.com/t/where-in-which-folder-is-the-flight-simulator-exe-file/572117) names only its launcher `gamelaunchhelper.exe`. It is an open question in `ANALYS.md`, added to the list when someone with that edition has checked.
 - **No sim-machine check** (issue #22 step 4). The write path doesn't depend on what is in a folder: junction creation and removal are tested against temporary folders, the classification of Rickard's real Community was checked in 5a, and MSFS loading a junction is what Addons Linker relies on every day. The only thing that needs the sim machine is the process name, a one-line check.
 
@@ -45,10 +46,7 @@ Each is recorded in `ANALYS.md` with its reason.
 
 ## Errors and edge cases
 
-- **A refused change** shows its reason on the Package's row. When no Package of the card changed, the switch flips back; when some did, the card shows Mixed. The reasons:
-  - Name taken: "Name taken by `<entry>`" (spec 6.2).
-  - Offline: "Library not found".
-  - The sim runs: "Close MSFS to change add-ons".
+- **A refused change** (name taken, offline, the copy gone since the dialog opened) shows on the Package's row the board's own `DisabledReason` once the wall is refreshed, so a Package never shows two wordings for one reason. When no Package of the card changed, the switch flips back; when some did, the card shows Mixed. The one new text is for the sim: "Close MSFS to change add-ons".
 - **A failed link change** (an IO error) shows its message in the dialog. Nothing is saved for that Package (spec 6.8, write order); Packages of the same card that did change are saved.
 - **A locked `userdata.db`** refuses the change before any link is touched (already so in `ChangeApplier`), and the message is shown in the dialog.
 - **Remove** while the sim runs is disabled; a Broken link that can't be removed leaves the Package as it was (already so in `PackageRemover`).
@@ -68,13 +66,13 @@ Each is recorded in `ANALYS.md` with its reason.
 
 ## Testing
 
-- **Core:** `ChangeApplier` refuses every link change while the sim runs, and adds nothing to the pending set; the banner line "on but not shown"; a Mixed card's switch turns the card on.
-- **App:** the card's switch calls the apply path and the wall shows the change; an own change gives no sync rows, also when the watcher fires after it; a change made by someone else opens the sync dialog; while the sim runs there is no dialog and the banner line shows instead; the turned-around composition test.
+- **Core:** `ChangeApplier` refuses the whole change while the sim runs, stores nothing and adds nothing to the pending set; the banner line "on but not shown"; the switch position from the switchable Packages only, including a card Mixed only by a Package that can't be switched.
+- **App:** the card's switch calls the apply path and the wall shows the change; an own change gives no sync rows, also when the watcher fires after it; a change made by someone else opens the sync dialog; a discovery while it is open keeps the choices of rows still listed; Apply while the sim runs is refused and saves nothing; while the sim runs there is no dialog and the banner line shows instead; Remove closes the dialog when the card goes; the turned-around composition test.
 - All against fakes and temporary folders, never Rickard's real Community.
 
 ## How Rickard checks 5b
 
-1. **On the dev machine** (about 5 minutes; Kjell asks right before starting any GUI): a generated test folder holds a Packages root (`Community`, `Official`) and a couple of Library Packages. The app runs with `--data-dir`, so the real `userdata.db` and Community are never touched. Turn a card on and off, change a link by hand in Explorer and see the sync dialog. Then start a renamed copy of a harmless exe (for example `notepad.exe` copied to `FlightSimulator.exe`): the switch is disabled with its reason, and works again once the copy is closed.
+1. **On the dev machine** (about 5 minutes; Kjell asks right before starting any GUI): a generated test folder holds a Packages root (`Community`, `Official`) and a couple of Library Packages. The app runs with `--data-dir` on a fresh folder, which redirects only `userdata.db`. This is safe because the dev machine has no `UserCfg.opt` (checked 2026-11-03), so first run asks for the Packages root and the generated folder is picked; on a machine with MSFS installed, first run would detect the real Community instead. Turn a card on and off, change a link by hand in Explorer and see the sync dialog. Then start a renamed copy of a harmless exe (for example `notepad.exe` copied to `FlightSimulator.exe`): the switch is disabled with its reason, and works again once the copy is closed.
 2. **On the sim machine** (about 30 seconds), with MSFS running: `Get-Process FlightSimulator` returns a row.
 
 ## Left to the builder

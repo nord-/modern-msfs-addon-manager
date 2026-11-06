@@ -1009,6 +1009,30 @@ public sealed class AppSessionTests : IDisposable
         Assert.Equal(SyncReason.LinkDisappeared, Assert.Single(session.Current.Sync!.Rows).Reason);
     }
 
+    [Fact]
+    public async Task A_failed_row_error_survives_the_discovery_its_own_change_triggers()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        machine.Link("a");
+        var session = await StartedAsync(NewSession(linkFs: new FailingLinks(lib)), lib);
+        machine.Unlink("a");
+        await Bounded(session.RescanAsync(false));
+        await Bounded(session.ResolveSyncAsync(new Dictionary<SyncKey, SyncChoice> { [Key("a", SyncReason.LinkDisappeared)] = SyncChoice.RestoreApp }));
+        var error = $"1 change could not be applied: {FailingLinks.Message}";
+        Assert.Equal(error, session.Current.Error);
+
+        var handled = session.HandledOutcomes;
+        watchers.All[^1].Raise();
+        await Until(() => session.HandledOutcomes == handled + 1);
+
+        Assert.Equal(error, session.Current.Error);
+
+        await Bounded(session.RescanAsync(false));
+
+        Assert.Null(session.Current.Error);
+    }
+
     private static PackageKey Pkg(string name) => PackageKey.Folder(new PackageName(name));
 
     private void DeletePackage(string name, string library = "Lib") => Directory.Delete(Path.Combine(machine.Root, library, name), true);

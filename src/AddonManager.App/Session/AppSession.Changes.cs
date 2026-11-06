@@ -36,8 +36,6 @@ public sealed partial class AppSession
             if (disposed || services?.Links is not { } links || latestDiscovery is null || latestInput is null)
                 return null;
 
-            // A user action ends the error of the write path.
-            writeError = null;
             ApplyResult? result;
             try
             {
@@ -60,7 +58,10 @@ public sealed partial class AppSession
             if (result is { Failed.Count: > 0 })
                 message = DescribeFailed(result.Failed);
 
-            var next = view with { Error = writeError };
+            // A user action ends the errors of the write path. Only a change that ran clears them: a refusal returns above, unpublished.
+            writeError = null;
+            resolveError = null;
+            var next = view with { Error = ErrorLine };
             raise = Publish(view.Board is null ? next : next with { Board = BuildBoard(latestInput) });
         }
 

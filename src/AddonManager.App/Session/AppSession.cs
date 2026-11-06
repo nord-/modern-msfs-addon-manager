@@ -29,6 +29,7 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
     private DiscoveryOutcome? latestDiscovery;
     private BoardInput? latestInput;
     private string? writeError;
+    private string? resolveError;
     private ScanOutcome? lastHandled;
     private Task<ScanOutcome>? latestTask;
     private IReadOnlyList<PackageContent> cachedContents = [];
@@ -137,7 +138,13 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
             await RunAsync(false).ConfigureAwait(false);
     });
 
-    public Task RescanAsync(bool full) => Task.Run(() => RunAsync(full));
+    public Task RescanAsync(bool full) => Task.Run(() =>
+    {
+        // F5 is a user action: it ends the error of a failed Resolve (a watcher's run does not, it goes through RunAsync directly).
+        lock (gate)
+            resolveError = null;
+        return RunAsync(full);
+    });
 
     public bool IsSimRunning => services?.Links?.Sim.IsRunning ?? false;
 
@@ -336,7 +343,7 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
                     heldBack = true;
             }
 
-            var next = view with { Sync = sync, SyncHeldBack = heldBack, Error = writeError };
+            var next = view with { Sync = sync, SyncHeldBack = heldBack, Error = ErrorLine };
             if (StartupRules.ShowsWallAtDiscovery(state, cachedContents.Count))
                 next = next with { Phase = SessionPhase.Ready, Board = board, CanRetry = false };
             if (!Equals(next, view))
@@ -363,7 +370,7 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
             var input = latestInput = outcome.ToBoardInput();
             SaveStep(() => Settlement.Apply(state, Reanalyzed(input), DateTimeOffset.UtcNow));
             // The sync prompt, the held-back line and the error of the write path outlive the run's completion.
-            raise = Publish(new SessionView(SessionPhase.Ready, BuildBoard(input), null, writeError, Sync: view.Sync, SyncHeldBack: view.SyncHeldBack));
+            raise = Publish(new SessionView(SessionPhase.Ready, BuildBoard(input), null, ErrorLine, Sync: view.Sync, SyncHeldBack: view.SyncHeldBack));
 
             replaced = watcher;
             current = watcher = NewWatcher(outcome.Discovery);
@@ -467,6 +474,8 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
             }
             catch (SimRunningException e)
             {
+                // Resolve may have changed the state in memory before the links refused; the next step saves it.
+                unsaved = true;
                 return e.Message;
             }
             catch (UserDataException e)
@@ -475,8 +484,10 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
                 return e.Message;
             }
 
-            writeError = result.Failed.Count > 0 ? Describe(result.Failed, "change", "changes", "applied") : null;
-            var next = view with { Sync = null, Error = writeError };
+            // A refusal above returns before this: the old error stays and nothing is cleared without being published.
+            writeError = null;
+            resolveError = result.Failed.Count > 0 ? Describe(result.Failed, "change", "changes", "applied") : null;
+            var next = view with { Sync = null, Error = ErrorLine };
             raise = Publish(view.Board is null ? next : next with { Board = BuildBoard(latestInput) });
         }
 
@@ -484,9 +495,15 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
         return null;
     }
 
-    /// <summary>"1 link could not be repaired: message", "3 links could not be repaired: message" (distinct messages joined).</summary>
+    /// <summary>
+    /// The error line: the repair error, which every discovery recomputes, else the error of a failed Resolve, which only the next user action
+    /// (switch, Remove, Apply, F5) clears. Caller holds the lock.
+    /// </summary>
+    private string? ErrorLine => writeError ?? resolveError;
+
+    /// <summary>"1 link could not be repaired: message", "3 links could not be repaired: message" (the first failure's message).</summary>
     private static string Describe(IReadOnlyList<(PackageName Package, string Error)> failed, string singular, string plural, string verb)
-        => $"{failed.Count} {(failed.Count == 1 ? singular : plural)} could not be {verb}: {string.Join("; ", failed.Select(f => f.Error).Distinct())}";
+        => $"{failed.Count} {(failed.Count == 1 ? singular : plural)} could not be {verb}: {failed[0].Error}";
 
     /// <summary>The input with Community read now, under the lock: the run's copy can predate a change of our own (D3).</summary>
     private BoardInput WithCurrentCommunity(BoardInput input)

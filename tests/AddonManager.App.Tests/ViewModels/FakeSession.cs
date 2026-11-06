@@ -4,6 +4,7 @@ using AddonManager.Core.Community;
 using AddonManager.Core.Content;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
+using AddonManager.Core.Sync;
 using AddonManager.Sim2020;
 
 namespace AddonManager.App.Tests.ViewModels;
@@ -55,6 +56,20 @@ internal sealed class FakeSession : IAppSession
     {
         Rescans.Add(full);
         return Task.CompletedTask;
+    }
+
+    public bool IsSimRunning { get; set; }
+
+    /// <summary>The choices of each <c>ResolveSyncAsync</c> call.</summary>
+    public List<IReadOnlyDictionary<SyncKey, SyncChoice>> Resolved { get; } = [];
+
+    /// <summary>What <c>ResolveSyncAsync</c> returns.</summary>
+    public string? ResolveMessage { get; set; }
+
+    public Task<string?> ResolveSyncAsync(IReadOnlyDictionary<SyncKey, SyncChoice> choices)
+    {
+        Resolved.Add(choices);
+        return Task.FromResult(ResolveMessage);
     }
 
     public void Raise(SessionView view) => Changed?.Invoke(view);

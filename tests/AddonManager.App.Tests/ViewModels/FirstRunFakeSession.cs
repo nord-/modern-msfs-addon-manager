@@ -2,6 +2,7 @@ using AddonManager.App.Session;
 using AddonManager.Core.Community;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
+using AddonManager.Core.Sync;
 using AddonManager.Sim2020;
 
 namespace AddonManager.App.Tests.ViewModels;
@@ -48,6 +49,10 @@ internal sealed class FirstRunFakeSession : IAppSession
     }
 
     public Task RescanAsync(bool full) => Task.CompletedTask;
+
+    public bool IsSimRunning => false;
+
+    public Task<string?> ResolveSyncAsync(IReadOnlyDictionary<SyncKey, SyncChoice> choices) => Task.FromResult<string?>(null);
 
     public void Publish(SessionView view)
     {

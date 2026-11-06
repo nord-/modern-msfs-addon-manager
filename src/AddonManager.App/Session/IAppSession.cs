@@ -1,6 +1,7 @@
 using AddonManager.Core.Community;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
+using AddonManager.Core.Sync;
 using AddonManager.Sim2020;
 
 namespace AddonManager.App.Session;
@@ -26,4 +27,13 @@ public interface IAppSession
     Task CompleteFirstRunAsync(IReadOnlyList<LibraryRoot> libraries);
 
     Task RescanAsync(bool full);
+
+    /// <summary>Whether MSFS runs right now; false before the install is known.</summary>
+    bool IsSimRunning { get; }
+
+    /// <summary>
+    /// Applies the choices of the open sync dialog to the rows the session holds (a choice counts only for a row with the same Package
+    /// and reason; every other row gets its default). Returns the message to show, or <c>null</c> on success; a refusal keeps the dialog.
+    /// </summary>
+    Task<string?> ResolveSyncAsync(IReadOnlyDictionary<SyncKey, SyncChoice> choices);
 }

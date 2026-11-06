@@ -72,6 +72,15 @@ public sealed class LockedToVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
+/// <summary>True when the value equals the parameter; converting back from <c>true</c> gives the parameter. Drives a RadioButton per enum value.</summary>
+public sealed class EqualsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => Equals(value, parameter);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? parameter : Binding.DoNothing;
+}
+
 /// <summary>Joins a list of strings with a separator (the parameter, default " · ").</summary>
 public sealed class JoinConverter : IValueConverter
 {

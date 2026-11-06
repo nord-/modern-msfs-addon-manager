@@ -4,6 +4,7 @@ using AddonManager.App.ViewModels;
 using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
 using AddonManager.Core.Packages;
+using AddonManager.Core.Sync;
 using AddonManager.Sim2020;
 using static AddonManager.App.Tests.ViewModels.Boards;
 
@@ -22,7 +23,7 @@ public sealed class MainViewModelTests
         {
             loads.Add(path);
             return loader(path);
-        });
+        }, _ => true);
 
     private static string[] Names(MainViewModel vm) => [.. vm.Cards.Select(c => c.Name)];
 
@@ -400,5 +401,97 @@ public sealed class MainViewModelTests
         Assert.Empty(vm.SettingsLibraries[2].Folders);
         Assert.Equal(@"D:\Packages", vm.PackagesRoot);
         Assert.Equal(@"C:\Data\userdata.db", vm.DatabaseFile);
+    }
+
+    private static SyncPrompt Prompt(Board board, string package = "A")
+        => new([new SyncRow(new PackageName(package), SyncReason.LinkAppeared, null)], board);
+
+    [Fact]
+    public void Clicking_a_card_opens_its_dialog()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+
+        vm.OpenCardCommand.Execute(vm.Cards[1]);
+
+        Assert.Equal("B", vm.CardDialog?.Title);
+
+        vm.CloseCardCommand.Execute(null);
+
+        Assert.Null(vm.CardDialog);
+    }
+
+    [Fact]
+    public void A_new_board_updates_the_open_dialog_and_closes_it_when_the_card_is_gone()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        vm.OpenCardCommand.Execute(vm.Cards[0]);
+        var dialog = vm.CardDialog;
+
+        Show(Ready(Board(Card(1, "A2", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+
+        Assert.Same(dialog, vm.CardDialog);
+        Assert.Equal("A2", vm.CardDialog!.Title);
+
+        Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
+
+        Assert.Null(vm.CardDialog);
+    }
+
+    [Fact]
+    public void A_sync_prompt_opens_the_sync_dialog_and_closes_the_card_dialog()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+        Show(Ready(board));
+        vm.OpenCardCommand.Execute(vm.Cards[0]);
+
+        Show(Ready(board) with { Sync = Prompt(board) });
+
+        Assert.NotNull(vm.SyncDialog);
+        Assert.Null(vm.CardDialog);
+        Assert.Single(vm.SyncDialog!.Groups);
+
+        vm.OpenCardCommand.Execute(vm.Cards[0]);
+
+        Assert.Null(vm.CardDialog);
+    }
+
+    [Fact]
+    public void A_prompt_cleared_closes_the_sync_dialog()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+        Show(Ready(board) with { Sync = Prompt(board) });
+
+        Show(Ready(board));
+
+        Assert.Null(vm.SyncDialog);
+    }
+
+    [Fact]
+    public void The_banner_shows_held_back_rows_only_without_a_dialog()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+
+        Show(Ready(board) with { SyncHeldBack = true });
+        Assert.Contains("Community needs review. Close MSFS, then press F5.", vm.BannerLines);
+
+        Show(Ready(board) with { SyncHeldBack = true, Sync = Prompt(board) });
+        Assert.DoesNotContain("Community needs review. Close MSFS, then press F5.", vm.BannerLines);
+    }
+
+    [Fact]
+    public void A_sync_prompt_during_scanning_opens_the_dialog_and_keeps_the_phase()
+    {
+        var vm = Create();
+
+        Show(new SessionView(SessionPhase.Scanning, null, new ScanProgress(1, 4, null), null, Sync: Prompt(Board())));
+
+        Assert.NotNull(vm.SyncDialog);
+        Assert.True(vm.ShowScanning);
+        Assert.Equal(SessionPhase.Scanning, vm.Phase);
     }
 }

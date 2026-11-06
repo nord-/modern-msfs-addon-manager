@@ -30,6 +30,8 @@ public sealed partial class SyncRowViewModel : ObservableObject
 
     public string DisplayName { get; }
 
+    public string FolderName => Row.Package.Value;
+
     public string Change { get; }
 
     /// <summary>False when only Keep Community is meaningful (the name is held by a link the app doesn't manage).</summary>

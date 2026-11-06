@@ -38,7 +38,8 @@ public sealed partial class CardDialogViewModel : ObservableObject
         simRefused = session.IsSimRunning;
         ToggleCommand = new AsyncRelayCommand(ToggleAsync, () => CanToggle);
         RemoveCommand = new AsyncRelayCommand<PackageRowViewModel>(RemoveAsync, row => row is { CanRemove: true } && !simRefused);
-        Update(board);
+        if (!Update(board))
+            throw new ArgumentException("The card is not on the board.", nameof(card));
     }
 
     public ObservableCollection<PackageRowViewModel> Rows { get; } = [];
@@ -54,17 +55,11 @@ public sealed partial class CardDialogViewModel : ObservableObject
 
     public IAsyncRelayCommand<PackageRowViewModel> RemoveCommand { get; }
 
-    /// <summary>Raised when the card is gone from the board.</summary>
-    public event Action? Closed;
-
-    /// <summary>Shows the card as it is on <paramref name="board"/>; <c>false</c> (and <see cref="Closed"/>) when the card is gone. <see cref="Message"/> is kept.</summary>
+    /// <summary>Shows the card as it is on <paramref name="board"/>; <c>false</c> when the card is gone. <see cref="Message"/> is kept.</summary>
     public bool Update(Board board)
     {
         if (cardRef.In(board) is not { } found)
-        {
-            Closed?.Invoke();
             return false;
-        }
 
         card = found;
         cardRef = CardRef.Of(found);
@@ -94,9 +89,11 @@ public sealed partial class CardDialogViewModel : ObservableObject
     private async Task Apply(Task<string?> change)
     {
         var result = await change;
-        Message = result;
+        // The sim text is shown as SwitchReason; showing it as Message too would repeat it.
         if (result == SimRunningException.Text)
             simRefused = true;
+        else
+            Message = result;
         Refresh();
     }
 

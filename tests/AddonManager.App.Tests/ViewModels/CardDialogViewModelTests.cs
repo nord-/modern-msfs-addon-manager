@@ -91,7 +91,7 @@ public sealed class CardDialogViewModelTests
         await vm.ToggleCommand.ExecuteAsync(null);
         vm.Update(BoardOf(CardOf(1, "A", With("a", on: false))));
 
-        Assert.Equal(SimText, vm.Message);
+        Assert.Null(vm.Message);
         Assert.Equal(SimText, vm.SwitchReason);
         Assert.False(vm.CanToggle);
         Assert.False(vm.ToggleCommand.CanExecute(null));
@@ -177,11 +177,16 @@ public sealed class CardDialogViewModelTests
     public void Update_returns_false_when_the_card_is_gone()
     {
         var vm = Dialog(new FakeSession(), CardOf(1, "A", With("a")));
-        var closed = 0;
-        vm.Closed += () => closed++;
 
         Assert.False(vm.Update(Board()));
-        Assert.Equal(1, closed);
+    }
+
+    [Fact]
+    public void A_card_that_is_not_on_the_board_is_refused()
+    {
+        var card = CardOf(1, "A", With("a"));
+
+        Assert.Throws<ArgumentException>(() => new CardDialogViewModel(new FakeSession(), Board(), CardRef.Of(card), _ => true));
     }
 
     [Fact]

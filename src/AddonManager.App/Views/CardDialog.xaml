@@ -5,6 +5,7 @@
              xmlns:local="clr-namespace:AddonManager.App.Views">
     <UserControl.Resources>
         <local:PresentToVisibilityConverter x:Key="Present" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
     <Border Background="#2B2B2B" CornerRadius="8" Padding="20" Width="640" MaxHeight="620"
             HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -35,7 +36,8 @@
                             <DockPanel Margin="0,0,0,12">
                                 <ui:Button DockPanel.Dock="Right" Content="Remove" VerticalAlignment="Top" Margin="12,0,0,0"
                                            Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                           CommandParameter="{Binding}" ToolTip="{Binding Reason}" ToolTipService.ShowOnDisabled="True" />
+                                           CommandParameter="{Binding}" ToolTip="{Binding Reason}" ToolTipService.ShowOnDisabled="True"
+                                           Visibility="{Binding CanRemove, Converter={StaticResource BoolToVisibility}}" />
                                 <StackPanel>
                                     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                     <TextBlock Text="{Binding FolderName}" Opacity="0.8" />

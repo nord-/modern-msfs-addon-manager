@@ -84,6 +84,7 @@ public sealed partial class SyncDialogViewModel : ObservableObject
 
     private async Task ApplyAsync()
     {
+        Message = null;
         var choices = Groups.SelectMany(g => g.Rows).ToDictionary(r => KeyOf(r.Row), r => r.Choice);
         Message = await session.ResolveSyncAsync(choices);
     }

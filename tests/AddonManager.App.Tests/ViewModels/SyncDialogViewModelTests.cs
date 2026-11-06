@@ -130,4 +130,29 @@ public sealed class SyncDialogViewModelTests
         Assert.Equal(2, Assert.Single(session.Resolved).Count);
         Assert.Equal("Close MSFS to change add-ons", vm.Message);
     }
+
+    [Fact]
+    public void A_row_shows_the_folder_name_beside_the_display_name()
+    {
+        var (vm, _) = Create();
+        vm.Replace(new SyncPrompt([Row("pkg-a")], Board(Card(1, "Nice name", packages: ["pkg-a"]))));
+
+        var row = vm.Groups[0].Rows[0];
+        Assert.Equal("pkg-a", row.FolderName);
+    }
+
+    [Fact]
+    public async Task Apply_clears_the_previous_message_when_it_starts()
+    {
+        var (vm, session) = Create();
+        session.ResolveMessage = "refused";
+        vm.Replace(new SyncPrompt([Row("a")], Board()));
+        await vm.ApplyCommand.ExecuteAsync(null);
+        Assert.Equal("refused", vm.Message);
+
+        session.ResolveMessage = null;
+        await vm.ApplyCommand.ExecuteAsync(null);
+
+        Assert.Null(vm.Message);
+    }
 }

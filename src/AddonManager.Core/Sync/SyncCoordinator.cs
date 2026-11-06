@@ -8,16 +8,16 @@ using AddonManager.Core.State;
 namespace AddonManager.Core.Sync;
 
 /// <param name="Flushed">The result of applying the pending set, <c>Deferred</c> while the sim runs, or <c>null</c> when there was nothing pending. Only data from older versions can be pending: no change is made while the sim runs any more.</param>
-/// <param name="Repaired">The result of re-pointing the links to moved add-ons of Packages that are on (decision D10), or <c>null</c> when none was attempted. Failed repairs are tried again at the next start.</param>
-/// <param name="RepairsWaiting">Links to moved add-ons were left alone because the sim runs; the next start repairs them.</param>
+/// <param name="Repaired">The result of re-pointing the links to moved add-ons of Packages that are on (decision D10), or <c>null</c> when none was attempted. Failed or rejected repairs are tried again at the next discovery.</param>
+/// <param name="RepairsWaiting">Links to moved add-ons were left alone because the sim runs; the next discovery repairs them.</param>
 public sealed record StartupOutcome(bool FirstRun, IReadOnlyList<SyncRow> Rows, ApplyResult? Flushed, ApplyResult? Repaired = null, bool RepairsWaiting = false);
 
 /// <summary>The outcome of <see cref="SyncCoordinator.RegisterLibrary"/>: the decisions left to the user, and the repair of the stale links it adopted.</summary>
 public sealed record RegisterOutcome(IReadOnlyList<SyncRow> Rows, ApplyResult? Repaired, bool RepairsWaiting);
 
 /// <summary>
-/// The startup, sync-dialog and sim-exit sequence (spec 7.2 and 12). The UI calls <see cref="Start"/> at launch,
-/// <see cref="Resolve"/> with the user's sync-dialog choices, and <see cref="OnSimExited"/> when the sim process ends.
+/// The startup and sync-dialog sequence (spec 7.2 and 12). The app calls <see cref="Start"/> at every discovery and
+/// <see cref="Resolve"/> with the user's sync-dialog choices. It does not watch the sim any more, so <see cref="OnSimExited"/> is only kept for flushing a pending set stored by older versions.
 /// </summary>
 public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource community, IUserStateStore store)
 {

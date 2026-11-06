@@ -16,7 +16,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$full = [System.IO.Path]::GetFullPath($Root)
+$full = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Root)
 if (Test-Path -LiteralPath $full) {
     if (-not (Test-Path -LiteralPath $full -PathType Container)) { throw "$full exists and is not a folder." }
     if (Get-ChildItem -LiteralPath $full -Force | Select-Object -First 1) { throw "$full is not empty. Choose a new folder." }

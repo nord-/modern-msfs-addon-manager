@@ -38,7 +38,7 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
     public ApplyResult Relink(UserState state, PackageIndex index, IEnumerable<PackageName> packages)
         => ApplyLinks(state, index, packages.Distinct().ToDictionary(p => p, p => new DesiredLink(state.IsOn(p))));
 
-    /// <summary>Applies the link changes of resolved sync rows (RestoreApp, Moved). Nothing is stored until its link has changed.</summary>
+    /// <summary>Applies the link changes of resolved sync rows (RestoreApp, Moved) and the repairs of links to moved add-ons (D10). Nothing is stored until its link has changed.</summary>
     public ApplyResult ApplyLinks(UserState state, PackageIndex index, IReadOnlyDictionary<PackageName, DesiredLink> desired)
         => Apply(state, index, desired.ToDictionary(d => d.Key, d => d.Value), Mode.Relink);
 

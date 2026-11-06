@@ -110,7 +110,7 @@ public static class Reconciler
     /// <summary>
     /// Applies KeepCommunity rows to the stored choices and returns the link changes still to apply:
     /// RestoreApp rows, and every Moved row (re-pointed, or its stale link removed). Those are not stored here;
-    /// the apply path stores them once the link has changed (or the change is deferred).
+    /// the apply path stores them once the link has changed.
     /// </summary>
     public static IReadOnlyDictionary<PackageName, DesiredLink> Resolve(UserState state, IReadOnlyList<SyncRow> rows, IReadOnlyDictionary<PackageName, SyncChoice> choices)
     {

@@ -10,7 +10,7 @@ namespace AddonManager.Core.Tests.Cards;
 public sealed class PackageRemoverTests
 {
     private const string LibPath = @"C:\Sim\Addons";
-    private const string SimMessage = "Remove is unavailable while the sim runs.";
+    private const string SimMessage = "Close MSFS to change add-ons";
     private const string NotRemovableMessage = "Only a Package that is Not found or held by no registered Library can be removed.";
 
     private static readonly PackageKey Eham = PackageKey.Folder(new PackageName("eham-x"));
@@ -97,7 +97,7 @@ public sealed class PackageRemoverTests
         NotFoundPackage();
         sim.IsRunning = true;
 
-        var error = Assert.Throws<InvalidOperationException>(Remove);
+        var error = Assert.Throws<SimRunningException>(Remove);
 
         Assert.Equal(SimMessage, error.Message);
         Assert.Empty(fs.Calls);
@@ -105,6 +105,16 @@ public sealed class PackageRemoverTests
         Assert.Contains(Eham.Name, w.State.Packages.Keys);
         Assert.Single(w.State.Cards);
         Assert.Equal(0, store.SaveCount);
+    }
+
+    [Fact]
+    public void Remove_while_the_sim_runs_is_refused_before_the_lock()
+    {
+        NotFoundPackage();
+        sim.IsRunning = true;
+        store.RefuseWith = new IOException("locked");
+
+        Assert.Throws<SimRunningException>(Remove);
     }
 
     [Fact]
@@ -149,6 +159,8 @@ public sealed class PackageRemoverTests
     private sealed class LockedFileSystem : ILinkFileSystem
     {
         public void CreateJunction(string linkPath, string targetPath) => throw new IOException("Locked.");
+
+        public bool DirectoryExists(string path) => true;
 
         public void RemoveLink(string linkPath) => throw new IOException("Locked.");
     }

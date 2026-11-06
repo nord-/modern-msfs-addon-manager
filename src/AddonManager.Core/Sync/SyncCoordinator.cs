@@ -7,7 +7,7 @@ using AddonManager.Core.State;
 
 namespace AddonManager.Core.Sync;
 
-/// <param name="Flushed">The result of applying the pending set, <c>Deferred</c> while the sim runs, or <c>null</c> when there was nothing pending.</param>
+/// <param name="Flushed">The result of applying the pending set, <c>Deferred</c> while the sim runs, or <c>null</c> when there was nothing pending. Only data from older versions can be pending: no change is made while the sim runs any more.</param>
 public sealed record StartupOutcome(bool FirstRun, IReadOnlyList<SyncRow> Rows, ApplyResult? Flushed);
 
 /// <summary>
@@ -104,9 +104,11 @@ public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource comm
     /// <summary>
     /// Applies the sync-dialog choices, then accepts the resolved Packages so their rows don't come back. A Package whose
     /// link change failed, and any change made while the dialog was open, keeps its old snapshot entry and is offered again.
+    /// Throws <see cref="SimRunningException"/> while the sim runs, before anything changes.
     /// </summary>
     public ApplyResult Resolve(UserState state, PackageIndex index, IReadOnlyList<SyncRow> rows, IReadOnlyDictionary<PackageName, SyncChoice> choices, Board board)
     {
+        applier.EnsureSimClosed();
         using var change = store.BeginChange();
         var desired = Reconciler.Resolve(state, rows, choices);
         var result = applier.ApplyLinks(state, index, desired);

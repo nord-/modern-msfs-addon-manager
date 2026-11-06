@@ -11,7 +11,7 @@ public enum LinkOpKind { Create, Remove, Repoint }
 
 public sealed record LinkOp(LinkOpKind Kind, PackageName Package, string LinkPath, string? TargetPath);
 
-public enum RejectReason { NameTaken, NotInLibrary, Offline }
+public enum RejectReason { NameTaken, NotInLibrary, Offline, TargetGone }
 
 /// <param name="HeldBy">For <see cref="RejectReason.NameTaken"/>: the class of the entry holding the name.</param>
 public sealed record Rejection(PackageName Package, RejectReason Reason, EntryClass? HeldBy = null);

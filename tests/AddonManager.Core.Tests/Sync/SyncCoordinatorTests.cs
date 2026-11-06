@@ -36,6 +36,8 @@ public class SyncCoordinatorTests
         coordinator = new SyncCoordinator(applier, community, store);
     }
 
+    private static readonly Board NoBoard = new([], [], new Banner([], [], 0, 0, [], []));
+
     private static Dictionary<PackageName, SyncChoice> KeepAll(IEnumerable<SyncRow> rows) => rows.ToDictionary(r => r.Package, _ => SyncChoice.KeepCommunity);
 
     [Fact]
@@ -93,30 +95,32 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
-    public void Keep_community_is_not_asked_again_even_when_the_relink_was_deferred()
+    public void Resolve_while_the_sim_runs_changes_nothing()
     {
-        community.AddJunction("m", @"C:\Sim\Addons\m", targetExists: false);
         coordinator.Start(state, index);
+        community.AddJunction("pkg", pkg.Path);
+        community.AddJunction("other", other.Path);
         var o = coordinator.Start(state, index);
-        Assert.Equal(SyncReason.Moved, o.Rows.Single().Reason);
-
+        Assert.Equal(2, o.Rows.Count);
+        var choices = new Dictionary<PackageName, SyncChoice> { [Pkg] = SyncChoice.KeepCommunity, [Other] = SyncChoice.RestoreApp };
+        var storedBefore = state.Packages.ToDictionary(p => p.Key, p => state.IsOn(p.Key));
+        var snapshotBefore = state.Snapshot!.ToList();
+        var saves = store.SaveCount;
         sim.IsRunning = true;
-        coordinator.Resolve(state, index, o.Rows, KeepAll(o.Rows));
-        sim.IsRunning = false;
 
-        Assert.Empty(coordinator.Start(state, index).Rows);
-        Assert.False(community.Has("m"));
-        Assert.False(state.IsOn(M));
-        Assert.Empty(coordinator.Start(state, index).Rows);
+        Assert.Throws<SimRunningException>(() => coordinator.Resolve(state, index, o.Rows, choices, NoBoard));
+
+        Assert.Equal(storedBefore, state.Packages.ToDictionary(p => p.Key, p => state.IsOn(p.Key)));
+        Assert.Equal(snapshotBefore, state.Snapshot);
+        Assert.Equal(saves, store.SaveCount);
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
     public void Pending_from_a_previous_session_is_applied_once_at_start()
     {
         coordinator.Start(state, index);
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
-        sim.IsRunning = false;
+        SeedPending();
 
         var reloaded = store.Load();
         var o = coordinator.Start(reloaded, index);
@@ -131,8 +135,8 @@ public class SyncCoordinatorTests
     public void Start_while_the_sim_runs_reports_pending_as_deferred()
     {
         coordinator.Start(state, index);
+        SeedPending();
         sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
 
         var o = coordinator.Start(state, index);
 
@@ -145,14 +149,20 @@ public class SyncCoordinatorTests
     public void Sim_exit_flushes_pending()
     {
         coordinator.Start(state, index);
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
-        sim.IsRunning = false;
+        SeedPending();
 
         coordinator.OnSimExited(state, index);
 
         Assert.Single(fs.Calls);
         Assert.Empty(state.Pending);
+    }
+
+    /// <summary>Older data can hold a pending change; nothing creates one any more.</summary>
+    private void SeedPending()
+    {
+        state.SetOn(Pkg, true);
+        state.Pending.Add(Pkg);
+        store.Save(state);
     }
 
     [Fact]

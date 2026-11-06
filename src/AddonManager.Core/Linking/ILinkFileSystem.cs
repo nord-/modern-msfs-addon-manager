@@ -8,4 +8,7 @@ public interface ILinkFileSystem
 
     /// <summary>Removes a junction or symlink only. Throws <see cref="InvalidOperationException"/> for anything else.</summary>
     void RemoveLink(string linkPath);
+
+    /// <summary>Whether <paramref name="path"/> is an existing directory.</summary>
+    bool DirectoryExists(string path);
 }

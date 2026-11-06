@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using AddonManager.App.Session;
 using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -61,6 +62,9 @@ public sealed partial class CardViewModel : ObservableObject
     /// <summary>What identifies the card across boards: its id, or its Package for a provisional card.</summary>
     public string Key { get; }
 
+    /// <summary>Names the card for the session, refreshed by <see cref="Update"/>.</summary>
+    public CardRef Ref { get; private set; } = null!;
+
     /// <summary>UI Automation falls back to this for the card's name: the code and the name, as the card shows them.</summary>
     public override string ToString() => Code is null ? Name : $"{Code} {Name}";
 
@@ -69,6 +73,7 @@ public sealed partial class CardViewModel : ObservableObject
 
     public void Update(Card card, string? subtitle, bool showGsx)
     {
+        Ref = CardRef.Of(card);
         Code = card.Several ? "(several)" : card.Codes.Count == 1 ? card.Codes[0].Value : null;
         CodesLine = card.Several ? string.Join(", ", card.Codes.Select(c => c.Value)) : null;
         Name = card.Name;

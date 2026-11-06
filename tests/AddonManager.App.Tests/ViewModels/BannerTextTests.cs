@@ -41,10 +41,26 @@ public sealed class BannerTextTests
         => Assert.Equal(["Community: 0 Broken, 1 Stray"], Lines(EmptyBanner with { Stray = [Entry("c", EntryClass.Stray)] }));
 
     [Fact]
-    public void Stale_links_are_counted_in_singular_and_plural()
+    public void The_moved_links_line_is_gone()
+        => Assert.Empty(Lines(EmptyBanner with { StaleLinks = [Entry("a", EntryClass.Stale), Entry("b", EntryClass.Stale)] }));
+
+    [Fact]
+    public void Not_shown_packages_that_are_on_follow_unreadable()
     {
-        Assert.Equal(["1 link points to a moved Package"], Lines(EmptyBanner with { StaleLinks = [Entry("a", EntryClass.Stale)] }));
-        Assert.Equal(["2 links point to a moved Package"], Lines(EmptyBanner with { StaleLinks = [Entry("a", EntryClass.Stale), Entry("b", EntryClass.Stale)] }));
+        Assert.Equal(["1 package is on but not shown: a"], Lines(EmptyBanner with { OnButNotShown = [new PackageName("a")] }));
+        Assert.Equal(["2 packages are on but not shown: a, b"], Lines(EmptyBanner with { OnButNotShown = [new PackageName("a"), new PackageName("b")] }));
+        Assert.Equal(
+            ["Unreadable: u", "1 package is on but not shown: a"],
+            Lines(EmptyBanner with { Unreadable = [new PackageName("u")], OnButNotShown = [new PackageName("a")] }));
+    }
+
+    [Fact]
+    public void Held_back_rows_follow_the_community_line()
+    {
+        var banner = EmptyBanner with { Broken = [Entry("a", EntryClass.Broken)] };
+        Assert.Equal(
+            ["Community: 1 Broken, 0 Stray", "Community needs review. Close MSFS, then press F5."],
+            BannerText.Lines(banner, null, null, Gsx, syncHeldBack: true));
     }
 
     [Fact]
@@ -72,6 +88,7 @@ public sealed class BannerTextTests
             Grouping = 2,
             Broken = [Entry("a", EntryClass.Broken)],
             StaleLinks = [Entry("s", EntryClass.Stale)],
+            OnButNotShown = [new PackageName("n")],
             LibrariesNotFound = [new LibraryRoot(@"D:\A", [Category.Scenery])],
             Unreadable = [new PackageName("u")],
             GsxFolderMissing = true,
@@ -84,12 +101,13 @@ public sealed class BannerTextTests
                 "Scanning… 1 of 2",
                 "Grouping cards… (2)",
                 "Community: 1 Broken, 0 Stray",
-                "1 link points to a moved Package",
+                "Community needs review. Close MSFS, then press F5.",
                 @"Library not found: D:\A",
                 "Unreadable: u",
+                "1 package is on but not shown: n",
                 @"GSX folder missing: C:\GSX",
                 "1 changes wait for the next sim start",
             ],
-            Lines(banner, new ScanProgress(1, 2, null), "Disk full"));
+            BannerText.Lines(banner, new ScanProgress(1, 2, null), "Disk full", Gsx, syncHeldBack: true));
     }
 }

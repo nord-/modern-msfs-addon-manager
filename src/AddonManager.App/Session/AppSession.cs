@@ -2,6 +2,7 @@ using AddonManager.Core.Cards;
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
 using AddonManager.Core.FirstRun;
+using AddonManager.Core.Linking;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Core.Sync;
@@ -11,12 +12,12 @@ using AddonManager.Sim2020;
 namespace AddonManager.App.Session;
 
 /// <summary>
-/// The WPF-free heart of the app: startup, first run, scans, following Community and watching (plan 5a). One lock guards the state, the
+/// The WPF-free heart of the app: startup, first run, scans, the sync check at every discovery and watching (plans 5a and 5b). One lock guards the state, the
 /// phase, the current view and the watcher reference. It is held while a run is requested and while its discovery and completion are
 /// handled, never while a watcher is disposed or <see cref="Changed"/> is raised. The UI thread never takes it while a run can hold it:
 /// <see cref="RescanAsync"/> and <see cref="CompleteFirstRunAsync"/> move to the thread pool first.
 /// </summary>
-public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
+public sealed partial class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
 {
     private readonly object gate = new();
     private readonly UserState emptyState = new();
@@ -26,6 +27,9 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
     private IReadOnlyList<CommunityEntryInfo>? community;
     private string? pickedRoot;
     private DiscoveryOutcome? latestDiscovery;
+    private BoardInput? latestInput;
+    private string? writeError;
+    private string? resolveError;
     private ScanOutcome? lastHandled;
     private Task<ScanOutcome>? latestTask;
     private IReadOnlyList<PackageContent> cachedContents = [];
@@ -134,7 +138,17 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             await RunAsync(false).ConfigureAwait(false);
     });
 
-    public Task RescanAsync(bool full) => Task.Run(() => RunAsync(full));
+    public Task RescanAsync(bool full) => Task.Run(() =>
+    {
+        // F5 is a user action: it ends the error of a failed Resolve (a watcher's run does not, it goes through RunAsync directly).
+        lock (gate)
+            resolveError = null;
+        return RunAsync(full);
+    });
+
+    public bool IsSimRunning => services?.Links?.Sim.IsRunning ?? false;
+
+    public Task<string?> ResolveSyncAsync(IReadOnlyDictionary<SyncKey, SyncChoice> choices) => Task.Run(() => ResolveSync(choices));
 
     public void Dispose()
     {
@@ -298,13 +312,42 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             watcher ??= NewWatcher(discovery);
 
             var state = State;
-            SaveStep(() => CommunityFollower.Follow(state, discovery.Community, discovery.Index));
+            var links = services!.Links!;
+            var input = latestInput = discovery.ToBoardInput(cachedContents, cachedAnalysis!, GsxFolderReader.Read(gsxFolder));
 
-            if (StartupRules.ShowsWallAtDiscovery(state, cachedContents.Count))
+            // The sync check belongs to every discovery, the first run's too, and needs a board even when the wall is not shown yet (D4).
+            StartupOutcome started;
+            try
             {
-                var input = discovery.ToBoardInput(cachedContents, cachedAnalysis!, GsxFolderReader.Read(gsxFolder)).Reanalyze(state);
-                raise = Publish(view with { Phase = SessionPhase.Ready, Board = BoardBuilder.Build(state, input), CanRetry = false });
+                started = links.Sync.Start(state, discovery.Index, BuildBoard(input));
             }
+            catch
+            {
+                // Start may have changed the state before its save failed; the next step saves it again.
+                unsaved = true;
+                throw;
+            }
+
+            // Start changed the state (adoption) and Community (repairs), so the board is built again from Community as it is now.
+            var board = BuildBoard(input);
+            writeError = started.Repaired is { Failed.Count: > 0 } repaired ? Describe(repaired.Failed, "link", "links", "repaired") : null;
+
+            var heldBack = started.RepairsWaiting;
+            SyncPrompt? sync = null;
+            if (started.Rows.Count > 0)
+            {
+                // An open dialog stays open, also while the sim runs; otherwise the rows wait for the sim to exit.
+                if (view.Sync is not null || !links.Sim.IsRunning)
+                    sync = new SyncPrompt(started.Rows, board);
+                else
+                    heldBack = true;
+            }
+
+            var next = view with { Sync = sync, SyncHeldBack = heldBack, Error = ErrorLine };
+            if (StartupRules.ShowsWallAtDiscovery(state, cachedContents.Count))
+                next = next with { Phase = SessionPhase.Ready, Board = board, CanRetry = false };
+            if (!Equals(next, view))
+                raise = Publish(next);
         }
 
         Raise(raise);
@@ -324,9 +367,10 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             lastHandled = outcome;
             Interlocked.Increment(ref handledOutcomes);
             var state = State;
-            var input = outcome.ToBoardInput();
-            SaveStep(() => Settlement.Apply(state, input.Reanalyze(state), DateTimeOffset.UtcNow));
-            raise = Publish(new SessionView(SessionPhase.Ready, BoardBuilder.Build(state, input.Reanalyze(state)), null, null));
+            var input = latestInput = outcome.ToBoardInput();
+            SaveStep(() => Settlement.Apply(state, Reanalyzed(input), DateTimeOffset.UtcNow));
+            // The sync prompt, the held-back line and the error of the write path outlive the run's completion.
+            raise = Publish(new SessionView(SessionPhase.Ready, BuildBoard(input), null, ErrorLine, Sync: view.Sync, SyncHeldBack: view.SyncHeldBack));
 
             replaced = watcher;
             current = watcher = NewWatcher(outcome.Discovery);
@@ -367,8 +411,8 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             if (watcher is null && services?.Scans is not null)
                 watcher = NewWatcher(null);
             raise = Publish(view.Board is null
-                ? new SessionView(SessionPhase.Failed, null, null, error, CanRetry: true)
-                : new SessionView(SessionPhase.Ready, view.Board, null, error));
+                ? new SessionView(SessionPhase.Failed, null, null, error, CanRetry: true, Sync: view.Sync, SyncHeldBack: view.SyncHeldBack)
+                : new SessionView(SessionPhase.Ready, view.Board, null, error, Sync: view.Sync, SyncHeldBack: view.SyncHeldBack));
         }
 
         Raise(raise);
@@ -403,6 +447,82 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             throw;
         }
     }
+
+    /// <summary>
+    /// Applies the sync dialog's choices to the rows it shows. A refusal (the sim runs, the database is locked) leaves the dialog and every
+    /// link as they were; otherwise the dialog closes, rows that failed show on the error line, and the board is rebuilt when a wall is shown.
+    /// </summary>
+    private string? ResolveSync(IReadOnlyDictionary<SyncKey, SyncChoice> choices)
+    {
+        SessionView? raise;
+        lock (gate)
+        {
+            if (disposed || services?.Links is not { } links || view.Sync is not { } prompt || latestDiscovery is null || latestInput is null)
+                return null;
+
+            var byPackage = new Dictionary<PackageName, SyncChoice>();
+            foreach (var row in prompt.Rows)
+            {
+                if (choices.TryGetValue(new SyncKey(row.Package, row.Reason), out var choice))
+                    byPackage[row.Package] = choice;
+            }
+
+            ApplyResult result;
+            try
+            {
+                result = links.Sync.Resolve(State, latestDiscovery.Index, prompt.Rows, byPackage, BuildBoard(latestInput));
+            }
+            catch (SimRunningException e)
+            {
+                // Resolve may have changed the state in memory before the links refused; the next step saves it.
+                unsaved = true;
+                return e.Message;
+            }
+            catch (UserDataException e)
+            {
+                unsaved = true;
+                return e.Message;
+            }
+
+            // A refusal above returns before this: the old error stays and nothing is cleared without being published.
+            writeError = null;
+            resolveError = result.Failed.Count > 0 ? Describe(result.Failed, "change", "changes", "applied") : null;
+            var next = view with { Sync = null, Error = ErrorLine };
+            raise = Publish(view.Board is null ? next : next with { Board = BuildBoard(latestInput) });
+        }
+
+        Raise(raise);
+        return null;
+    }
+
+    /// <summary>
+    /// The error line: the repair error, which every discovery recomputes, else the error of a failed Resolve, which only the next user action
+    /// (switch, Remove, Apply, F5) clears. Caller holds the lock.
+    /// </summary>
+    private string? ErrorLine => writeError ?? resolveError;
+
+    /// <summary>"1 link could not be repaired: message", "3 links could not be repaired: message" (the first failure's message).</summary>
+    private static string Describe(IReadOnlyList<(PackageName Package, string Error)> failed, string singular, string plural, string verb)
+        => $"{failed.Count} {(failed.Count == 1 ? singular : plural)} could not be {verb}: {failed[0].Error}";
+
+    /// <summary>The input with Community read now, under the lock: the run's copy can predate a change of our own (D3).</summary>
+    private BoardInput WithCurrentCommunity(BoardInput input)
+    {
+        try
+        {
+            return input with { Community = CommunityClassifier.Classify(services!.ReadCommunity(), input.Index) };
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return input;
+        }
+    }
+
+    /// <summary>The input as every board and settlement takes it: Community as it is now, analysed with the current cards. Caller holds the lock.</summary>
+    private BoardInput Reanalyzed(BoardInput input) => WithCurrentCommunity(input).Reanalyze(State);
+
+    /// <summary>A board from the given input, never empty, also when the wall is not shown. Caller holds the lock.</summary>
+    private Board BuildBoard(BoardInput input) => BoardBuilder.Build(State, Reanalyzed(input));
 
     private IContentWatcher NewWatcher(DiscoveryOutcome? discovery)
     {

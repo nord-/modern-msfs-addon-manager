@@ -30,8 +30,10 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly Action<Action> post;
     private readonly string gsxFolder;
     private readonly Func<string?, Task<ImageSource?>> loadImage;
+    private readonly Func<string, bool> confirm;
     private readonly Dictionary<MenuSection, CardTab> rememberedTabs = [];
     private Board? lastBoard;
+    private SyncPrompt? lastSync;
     private int queued;
     private bool applying;
 
@@ -67,12 +69,21 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string databaseFile = "";
 
-    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, Func<string?, Task<ImageSource?>> loadImage)
+    /// <summary>The open card dialog, or <c>null</c>. Never set while <see cref="SyncDialog"/> is.</summary>
+    [ObservableProperty]
+    private CardDialogViewModel? cardDialog;
+
+    /// <summary>The open sync dialog, or <c>null</c>. It shows above every phase, the scanning screen included.</summary>
+    [ObservableProperty]
+    private SyncDialogViewModel? syncDialog;
+
+    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, Func<string?, Task<ImageSource?>> loadImage, Func<string, bool> confirm)
     {
         this.session = session;
         this.post = post;
         this.gsxFolder = gsxFolder;
         this.loadImage = loadImage;
+        this.confirm = confirm;
         session.Changed += OnSessionChanged;
         Apply(session.Current);
     }
@@ -99,6 +110,18 @@ public sealed partial class MainViewModel : ObservableObject
     public bool ShowRetryHint => Phase == SessionPhase.Failed && CanRetry;
 
     private bool CanRescan => Phase == SessionPhase.Ready || (Phase == SessionPhase.Failed && CanRetry);
+
+    [RelayCommand]
+    private void OpenCard(CardViewModel? card)
+    {
+        // A card opens only on the current board, and never over the sync dialog.
+        if (card is null || SyncDialog is not null || lastBoard is null || card.Ref.In(lastBoard) is null)
+            return;
+        CardDialog = new CardDialogViewModel(session, lastBoard, card.Ref, confirm);
+    }
+
+    [RelayCommand]
+    private void CloseCard() => CardDialog = null;
 
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task Rescan() => session.RescanAsync(full: true);
@@ -143,13 +166,34 @@ public sealed partial class MainViewModel : ObservableObject
 
         CanRetry = view.CanRetry;
         ErrorText = view.Phase == SessionPhase.Ready ? null : view.Error;
-        BannerLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder);
+        BannerLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder, view.SyncHeldBack && view.Sync is null);
         Phase = view.Phase;
+        ApplyDialogs(view, boardChanged);
 
         if (view.Phase == SessionPhase.Ready && (boardChanged || !wasReady))
             RefreshSettings();
         if (boardChanged)
             ApplySelection();
+    }
+
+    /// <summary>A sync prompt replaces the card dialog and is never a phase; a cleared prompt closes the sync dialog; a new board refreshes the card dialog.</summary>
+    private void ApplyDialogs(SessionView view, bool boardChanged)
+    {
+        if (view.Sync is { } sync)
+        {
+            SyncDialog ??= new SyncDialogViewModel(session);
+            // Only a new discovery replaces the rows, so a progress-only view keeps the user's choices and scroll position.
+            if (!ReferenceEquals(sync, lastSync))
+                SyncDialog.Replace(sync);
+            lastSync = sync;
+            CardDialog = null;
+            return;
+        }
+
+        lastSync = null;
+        SyncDialog = null;
+        if (boardChanged && CardDialog is not null && !CardDialog.Update(lastBoard!))
+            CardDialog = null;
     }
 
     private void RefreshSettings()

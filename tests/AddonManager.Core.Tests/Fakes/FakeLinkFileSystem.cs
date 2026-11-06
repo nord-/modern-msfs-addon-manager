@@ -12,7 +12,14 @@ internal sealed class FakeLinkFileSystem(FakeCommunity community) : ILinkFileSys
 {
     private readonly List<(string Name, string? Target, Exception? Error)> failures = [];
 
+    private readonly HashSet<string> gone = new(StringComparer.OrdinalIgnoreCase);
+
     public List<FsCall> Calls { get; } = [];
+
+    /// <summary>Makes <see cref="DirectoryExists"/> answer false for <paramref name="path"/>; every other path exists.</summary>
+    public void Gone(string path) => gone.Add(PathNormalizer.Normalize(path));
+
+    public bool DirectoryExists(string path) => !gone.Contains(PathNormalizer.Normalize(path));
 
     /// <summary>
     /// Makes creating a link named <paramref name="name"/> fail (only to <paramref name="target"/>, when given),

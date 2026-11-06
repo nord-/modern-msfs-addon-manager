@@ -43,6 +43,8 @@ public sealed class JunctionFileSystem(Func<string, string, bool>? setReparsePoi
         Directory.Delete(linkPath, recursive: false);
     }
 
+    public bool DirectoryExists(string path) => Directory.Exists(path);
+
     /// <summary>The normalised target of a junction or symlink, or <c>null</c> when <paramref name="path"/> isn't a link.</summary>
     public static string? ReadLinkTarget(string path)
     {

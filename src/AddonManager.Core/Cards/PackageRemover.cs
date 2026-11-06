@@ -14,10 +14,13 @@ public sealed class PackageRemover(ChangeApplier applier, ICommunitySource commu
     /// <summary>
     /// Forgets everything stored for the Package and the card it leaves empty, and saves. A Broken link of a folder Package is removed
     /// first; when that fails the Package stays. Throws <see cref="InvalidOperationException"/> when the board does not offer Remove for
-    /// it, or while the sim runs (Community is not changed then). <paramref name="board"/> must be built from the current state.
+    /// it; <see cref="SimRunningException"/> while the sim runs, before anything else (Community is not changed then). <paramref name="board"/> must be built from the current state.
     /// </summary>
     public void Remove(UserState state, Board board, PackageIndex index, PackageKey package)
     {
+        if (sim.IsRunning)
+            throw new SimRunningException();
+
         // One scope around the link removal and the forgetting: they commit together, and a locked file refuses both.
         using var change = store.BeginChange();
         var shown = board.CardOf(package)?.Packages.FirstOrDefault(p => p.Kind == package.Kind && p.Name == package.Name);
@@ -26,19 +29,11 @@ public sealed class PackageRemover(ChangeApplier applier, ICommunitySource commu
             throw new InvalidOperationException("Only a Package that is Not found or held by no registered Library can be removed.");
         }
 
-        if (sim.IsRunning)
-        {
-            throw new InvalidOperationException("Remove is unavailable while the sim runs.");
-        }
-
         // Only a folder Package has an entry in Community.
         if (package.Kind == PackageKind.Folder && CommunityClassifier.Classify(community.Read(), index)
                 .Any(e => e.Name == package.Name && e.Class == EntryClass.Broken))
         {
-            if (applier.RemoveBrokenLink(state, index, package.Name.Value).Deferred)
-            {
-                throw new InvalidOperationException("Remove is unavailable while the sim runs.");
-            }
+            applier.RemoveBrokenLink(state, index, package.Name.Value);
         }
 
         state.Forget(package);

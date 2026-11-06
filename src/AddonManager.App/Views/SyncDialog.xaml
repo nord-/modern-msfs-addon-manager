@@ -1,0 +1,61 @@
+<UserControl x:Class="AddonManager.App.Views.SyncDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:AddonManager.App.Views"
+             xmlns:sync="clr-namespace:AddonManager.Core.Sync;assembly=AddonManager.Core">
+    <UserControl.Resources>
+        <local:PresentToVisibilityConverter x:Key="Present" />
+        <local:EqualsConverter x:Key="Equals" />
+    </UserControl.Resources>
+    <Border Background="#2B2B2B" CornerRadius="8" Padding="20" Width="760" MaxHeight="620"
+            HorizontalAlignment="Center" VerticalAlignment="Center">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top">
+                <TextBlock Text="Changes outside the app" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Community changed outside the app. Choose what to do with each Package." Opacity="0.8" TextWrapping="Wrap" Margin="0,4,0,0" />
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <ui:Button Content="Keep Community for all" Click="OnKeepAll" Margin="0,0,8,0" />
+                    <ui:Button Content="Restore app state for all" Click="OnRestoreAll" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                <TextBlock Text="{Binding Message}" Foreground="#FFB000" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Visibility="{Binding Message, Converter={StaticResource Present}}" />
+                <ui:Button Content="Apply" Command="{Binding ApplyCommand}" HorizontalAlignment="Right" Appearance="Primary" />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" />
+                                <ItemsControl ItemsSource="{Binding Rows}" Margin="12,4,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,0,0,8">
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Top">
+                                                    <RadioButton Content="Keep Community" Margin="0,0,8,0"
+                                                                 IsChecked="{Binding Choice, Mode=TwoWay, Converter={StaticResource Equals}, ConverterParameter={x:Static sync:SyncChoice.KeepCommunity}}" />
+                                                    <RadioButton Content="Restore app state" IsEnabled="{Binding CanRestore}"
+                                                                 IsChecked="{Binding Choice, Mode=TwoWay, Converter={StaticResource Equals}, ConverterParameter={x:Static sync:SyncChoice.RestoreApp}}" />
+                                                </StackPanel>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding FolderName}" Opacity="0.8" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Change}" Opacity="0.8" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>

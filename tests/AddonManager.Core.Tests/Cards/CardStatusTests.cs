@@ -845,4 +845,20 @@ public sealed class CardStatusTests
         Assert.Single(board.CardsAt(Code("EHAM")));
         Assert.Empty(board.CardsAt(Code("EHRD")));
     }
+
+    [Fact]
+    public void Not_shown_packages_whose_choice_is_on_are_on_the_banner()
+    {
+        var w = NewWorld();
+        var other = w.Library(@"C:\Sim\Other", Category.Other);
+        w.Add(Scenery("a", ["EHAM"]), library: other);
+        w.Add(Scenery("b", ["EHAM"]), library: other);
+        w.State.Packages[Name("a")] = new PackageState(false);
+        w.State.Packages[Name("b")] = new PackageState(true);
+
+        var board = Wall(w, place: false);
+
+        Assert.Equal(["a", "b"], board.NotShown.Select(n => n.Name.Value));
+        Assert.Equal([Name("b")], board.Banner.OnButNotShown);
+    }
 }

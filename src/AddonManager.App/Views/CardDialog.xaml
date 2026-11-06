@@ -1,0 +1,61 @@
+<UserControl x:Class="AddonManager.App.Views.CardDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:AddonManager.App.Views">
+    <UserControl.Resources>
+        <local:PresentToVisibilityConverter x:Key="Present" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+    <Border Background="#2B2B2B" CornerRadius="8" Padding="20" Width="640" MaxHeight="620"
+            HorizontalAlignment="Center" VerticalAlignment="Center">
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Top">
+                <ui:Button DockPanel.Dock="Right" Content="&#x2715;" ToolTip="Close" VerticalAlignment="Top" Click="OnCloseClick" />
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Codes}" Opacity="0.8" Visibility="{Binding Codes, Converter={StaticResource Present}}" />
+                </StackPanel>
+            </DockPanel>
+
+            <StackPanel DockPanel.Dock="Top" Margin="0,12,0,0">
+                <ui:ToggleSwitch Content="On" IsChecked="{Binding SwitchOn, Mode=OneWay}" Command="{Binding ToggleCommand}"
+                                 IsEnabled="{Binding CanToggle}" ToolTip="{Binding SwitchReason}" ToolTipService.ShowOnDisabled="True" />
+                <TextBlock Text="{Binding SwitchReason}" Foreground="#FFB000" TextWrapping="Wrap"
+                           Visibility="{Binding SwitchReason, Converter={StaticResource Present}}" />
+                <TextBlock Text="{Binding Message}" Foreground="#FFB000" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Visibility="{Binding Message, Converter={StaticResource Present}}" />
+            </StackPanel>
+
+            <ui:Button DockPanel.Dock="Bottom" Content="Close" HorizontalAlignment="Right" Margin="0,16,0,0" Click="OnCloseClick" />
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,0,0,12">
+                                <ui:Button DockPanel.Dock="Right" Content="Remove" VerticalAlignment="Top" Margin="12,0,0,0"
+                                           Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           CommandParameter="{Binding}" ToolTip="{Binding Reason}" ToolTipService.ShowOnDisabled="True"
+                                           Visibility="{Binding CanRemove, Converter={StaticResource BoolToVisibility}}" />
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding FolderName}" Opacity="0.8" />
+                                    <TextBlock Text="{Binding Path}" Opacity="0.8" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Version, StringFormat='Version {0}'}" Opacity="0.8"
+                                               Visibility="{Binding Version, Converter={StaticResource Present}}" />
+                                    <TextBlock Text="{Binding Library, StringFormat='Library: {0}'}" Opacity="0.8" TextWrapping="Wrap"
+                                               Visibility="{Binding Library, Converter={StaticResource Present}}" />
+                                    <TextBlock Text="{Binding ActiveCopy, StringFormat='Active copy: {0}'}" Opacity="0.8" TextWrapping="Wrap"
+                                               Visibility="{Binding ActiveCopy, Converter={StaticResource Present}}" />
+                                    <TextBlock Text="{Binding Reason}" Foreground="#FFB000" TextWrapping="Wrap"
+                                               Visibility="{Binding Reason, Converter={StaticResource Present}}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>

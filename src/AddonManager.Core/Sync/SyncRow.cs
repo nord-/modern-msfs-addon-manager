@@ -22,5 +22,9 @@ public sealed record SyncRow(PackageName Package, SyncReason Reason, string? New
     /// </summary>
     public bool NotFound { get; init; }
 
-    public SyncChoice DefaultChoice => Reason == SyncReason.Moved ? SyncChoice.RestoreApp : SyncChoice.KeepCommunity;
+    /// <summary>
+    /// Always <see cref="SyncChoice.KeepCommunity"/>. For <see cref="SyncReason.Moved"/> (a Package that is off, linked to its old location)
+    /// that choice re-points the link: Community says the Package is linked, and the re-pointed link is the only working form of that.
+    /// </summary>
+    public SyncChoice DefaultChoice => SyncChoice.KeepCommunity;
 }

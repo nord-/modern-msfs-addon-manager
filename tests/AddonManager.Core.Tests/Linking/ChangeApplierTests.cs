@@ -174,54 +174,86 @@ public class ChangeApplierTests
         Assert.DoesNotContain(state.Snapshot!, s => s.Name == "other");
     }
 
-    [Fact]
-    public void While_the_sim_runs_nothing_writes_to_community_and_changes_are_pending()
+    [Theory]
+    [InlineData("SetChoices")]
+    [InlineData("SetChoicesNeedingNoLink")]
+    [InlineData("Relink")]
+    [InlineData("RelinkWithNameTaken")]
+    [InlineData("ApplyLinks")]
+    [InlineData("SetActiveCopy")]
+    [InlineData("RemoveBrokenLink")]
+    public void Every_change_is_refused_while_the_sim_runs_and_nothing_changes(string change)
     {
+        community.AddJunction("gone", @"C:\Old\gone", targetExists: false);
+        if (change == "RelinkWithNameTaken")
+        {
+            community.AddDirectory("pkg", hasManifest: true);
+            state.SetOn(Pkg, true);
+        }
+
         sim.IsRunning = true;
+        var before = Fingerprint(state);
+        var saves = store.SaveCount;
 
-        var r = applier.SetChoices(state, index, On("pkg"));
+        Assert.Throws<SimRunningException>(() => _ = change switch
+        {
+            "SetChoices" => applier.SetChoices(state, index, On("pkg")),
+            "SetChoicesNeedingNoLink" => applier.SetChoices(state, index, Off("pkg")),
+            "Relink" or "RelinkWithNameTaken" => applier.Relink(state, index, [Pkg]),
+            "ApplyLinks" => applier.ApplyLinks(state, index, new Dictionary<PackageName, DesiredLink> { [Pkg] = new(true) }),
+            "SetActiveCopy" => applier.SetActiveCopy(state, index, Pkg, pkgNeofly.Path),
+            _ => applier.RemoveBrokenLink(state, index, "gone"),
+        });
 
-        Assert.True(r.Deferred);
+        Assert.Equal(before, Fingerprint(state));
+        Assert.Equal(saves, store.SaveCount);
         Assert.Empty(fs.Calls);
-        Assert.Contains(Pkg, state.Pending);
-        Assert.True(state.IsOn(Pkg));
-        Assert.Contains(Pkg, store.Load().Pending);
     }
 
     [Fact]
-    public void While_the_sim_runs_a_rejected_change_is_not_stored()
+    public void The_sim_refusal_text_is_the_one_the_user_sees()
+        => Assert.Equal("Close MSFS to change add-ons", new SimRunningException().Message);
+
+    private static string Fingerprint(UserState s)
+        => string.Join('|',
+            s.Packages.OrderBy(p => p.Key.Value).Select(p => $"{p.Key}:{s.IsOn(p.Key)}:{p.Value.ActiveCopyPath}")
+                .Concat(s.Pending.Select(p => $"pending:{p}").Order())
+                .Concat(s.Snapshot!.Select(e => $"snap:{e.Name}:{e.Target}")));
+
+    [Fact]
+    public void A_no_op_choice_updates_its_snapshot_entry()
     {
-        sim.IsRunning = true;
-        community.AddDirectory("pkg", hasManifest: true);
+        community.AddJunction("pkg", pkgCopy.Path);
+        state.Snapshot = SnapshotEntry.From(community.Read());
+        community.Remove("pkg");
+        state.SetOn(Pkg, true, pkgCopy.Path);
+
+        var r = applier.SetChoices(state, index, Off("pkg"));
+
+        Assert.Empty(fs.Calls);
+        Assert.Equal([Pkg], r.Applied);
+        Assert.DoesNotContain(state.Snapshot, s => s.Name == "pkg");
+    }
+
+    [Fact]
+    public void A_create_to_a_gone_target_is_rejected_and_nothing_is_stored()
+    {
+        fs.Gone(pkgCopy.Path);
 
         var r = applier.SetChoices(state, index, On("pkg"));
 
-        Assert.Equal(RejectReason.NameTaken, r.Rejected.Single().Reason);
+        Assert.Equal(RejectReason.TargetGone, r.Rejected.Single().Reason);
+        Assert.Empty(fs.Calls);
         Assert.False(state.IsOn(Pkg));
-        Assert.Empty(state.Pending);
-    }
-
-    [Fact]
-    public void On_off_on_while_running_results_in_one_create_after_the_sim_exits()
-    {
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, On("pkg"));
-        applier.SetChoices(state, index, Off("pkg"));
-        applier.SetChoices(state, index, On("pkg"));
-        sim.IsRunning = false;
-
-        applier.FlushPending(state, index);
-
-        Assert.Equal([FsCallKind.Create], fs.Calls.Select(c => c.Kind));
-        Assert.Empty(state.Pending);
+        Assert.Empty(r.Applied);
     }
 
     [Fact]
     public void Pending_survives_a_restart_and_is_applied_once()
     {
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, On("pkg"));
-        sim.IsRunning = false;
+        state.SetOn(Pkg, true);
+        state.Pending.Add(Pkg);
+        store.Save(state);
 
         var first = store.Load();
         NewApplier().FlushPending(first, index);
@@ -233,7 +265,7 @@ public class ChangeApplierTests
     }
 
     [Fact]
-    public void FlushPending_while_the_sim_runs_is_deferred()
+    public void FlushPending_while_the_sim_runs_is_still_deferred()
     {
         state.Pending.Add(Pkg);
         state.SetOn(Pkg, true);
@@ -325,16 +357,6 @@ public class ChangeApplierTests
         Assert.True(state.IsOn(vanished));
         Assert.Equal(target, state.Packages[vanished].ActiveCopyPath);
         Assert.True(store.Load().IsOn(vanished));
-    }
-
-    [Fact]
-    public void RemoveBrokenLink_while_the_sim_runs_does_nothing()
-    {
-        community.AddJunction("gone", @"C:\Old\gone", targetExists: false);
-        sim.IsRunning = true;
-
-        Assert.True(applier.RemoveBrokenLink(state, index, "gone").Deferred);
-        Assert.True(community.Has("gone"));
     }
 
     [Fact]

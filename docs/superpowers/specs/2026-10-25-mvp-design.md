@@ -227,7 +227,7 @@ Several Packages at one Airport are shown neutrally ("3 packages"), never as a w
 3. Then run an incremental scan (7.3).
 4. Update the UI as results come in. On/off works at all times; it only needs Community, Package paths and the stored choices.
 
-Target (to be measured): Community reconcile under 1 second for about 150 entries. The target of about 1 second for the main window to show cached data moves to plan 5b, since the wall now waits for discovery (step 1).
+Target (to be measured): Community reconcile under 1 second for about 150 entries. The target of about 1 second for the main window to show cached data moves to plan 5d (#24; first moved to 5b on 2026-11-02, then to 5d on 2026-11-03), since the wall now waits for discovery (step 1).
 
 ### 7.3 Scanning
 
@@ -353,7 +353,7 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Marketplace and World Update partner airports count as real scenery.
 - Changes to Community from other tools while the app runs offer the sync dialog, with "don't ask again this session".
 - The pending set survives an app restart.
-- Startup target: Community reconcile under 1 second; the 1 s window target moves to 5b (2026-11-02).
+- Startup target: Community reconcile under 1 second; the 1 s window target moves to 5b (2026-11-02), then to 5d (2026-11-03).
 - Sync dialog rows are per Package, grouped by card.
 - A card's menu section is its Packages' menu section when it is made; its menu section and tab change only by user action (6.4).
 - Within one scan, Packages are grouped by identical sets of ICAO codes before they join existing cards, so a YQ05 Package and a YQ05+YMUZ Package found in the same scan get two cards, while found in separate scans they share one only when the YQ05+YMUZ Package came first; the user merges them (2026-10-29).

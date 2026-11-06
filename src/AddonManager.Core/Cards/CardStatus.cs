@@ -39,4 +39,7 @@ public sealed record Banner(
 
     /// <summary>What "Grouping cards…" counts (spec 6.5): every provisional card before the first settled scan, after it only those whose Package is still being written.</summary>
     public int Grouping { get; init; }
+
+    /// <summary>The Not shown Packages whose stored choice is on, sorted case-insensitively: they are on, but no card shows them.</summary>
+    public IReadOnlyList<PackageName> OnButNotShown { get; init; } = [];
 }

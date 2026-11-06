@@ -17,7 +17,7 @@ namespace AddonManager.App.Session;
 /// handled, never while a watcher is disposed or <see cref="Changed"/> is raised. The UI thread never takes it while a run can hold it:
 /// <see cref="RescanAsync"/> and <see cref="CompleteFirstRunAsync"/> move to the thread pool first.
 /// </summary>
-public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
+public sealed partial class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
 {
     private readonly object gate = new();
     private readonly UserState emptyState = new();

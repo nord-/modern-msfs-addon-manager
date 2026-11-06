@@ -72,6 +72,34 @@ internal sealed class FakeSession : IAppSession
         return Task.FromResult(ResolveMessage);
     }
 
+    /// <summary>The card of each <c>SwitchCardAsync</c> call.</summary>
+    public List<CardRef> Switched { get; } = [];
+
+    /// <summary>What <c>SwitchCardAsync</c> returns.</summary>
+    public string? SwitchMessage { get; set; }
+
+    /// <summary>Runs inside <c>SwitchCardAsync</c> before it returns; a test throws or changes <c>IsSimRunning</c> here.</summary>
+    public Action<CardRef>? OnSwitch { get; set; }
+
+    public Task<string?> SwitchCardAsync(CardRef card)
+    {
+        Switched.Add(card);
+        OnSwitch?.Invoke(card);
+        return Task.FromResult(SwitchMessage);
+    }
+
+    /// <summary>The card and Package of each <c>RemoveAsync</c> call.</summary>
+    public List<(CardRef Card, PackageKey Package)> Removed { get; } = [];
+
+    /// <summary>What <c>RemoveAsync</c> returns.</summary>
+    public string? RemoveMessage { get; set; }
+
+    public Task<string?> RemoveAsync(CardRef card, PackageKey package)
+    {
+        Removed.Add((card, package));
+        return Task.FromResult(RemoveMessage);
+    }
+
     public void Raise(SessionView view) => Changed?.Invoke(view);
 }
 

@@ -1009,6 +1009,212 @@ public sealed class AppSessionTests : IDisposable
         Assert.Equal(SyncReason.LinkDisappeared, Assert.Single(session.Current.Sync!.Rows).Reason);
     }
 
+    private static PackageKey Pkg(string name) => PackageKey.Folder(new PackageName(name));
+
+    private void DeletePackage(string name, string library = "Lib") => Directory.Delete(Path.Combine(machine.Root, library, name), true);
+
+    [Fact]
+    public async Task Switching_a_card_links_it_and_the_wall_shows_it_at_once()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardOf(session.Current, "a");
+        Assert.Equal(CardState.Off, card.State);
+
+        var message = await Bounded(session.SwitchCardAsync(CardRef.Of(card)));
+
+        Assert.Null(message);
+        AssertLinkedTo("a", "Lib");
+        Assert.Equal(CardState.On, CardOf(session.Current, "a").State);
+        Assert.True(session.State.IsOn(new PackageName("a")));
+    }
+
+    [Fact]
+    public async Task An_own_change_gives_no_sync_rows()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        await Bounded(session.SwitchCardAsync(CardRef.Of(CardOf(session.Current, "a"))));
+        var handled = session.HandledOutcomes;
+
+        watchers.All[^1].Raise();
+        await Until(() => session.HandledOutcomes > handled);
+
+        Assert.Null(session.Current.Sync);
+        Assert.False(session.Current.SyncHeldBack);
+    }
+
+    [Fact]
+    public async Task A_switch_during_a_run_survives_its_completion()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = NewSession(useGate: true);
+        await Bounded(session.StartAsync());
+        await Bounded(session.CompleteFirstRunAsync(Libraries(lib)));
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+        gated!.Close();
+
+        var run = session.RescanAsync(false);
+        await Until(() => gated.Waiting > 0);
+        var message = await Bounded(session.SwitchCardAsync(card));
+        gated.Open();
+        await Bounded(run);
+
+        Assert.Null(message);
+        Assert.Equal(CardState.On, CardOf(session.Current, "a").State);
+        Assert.Null(session.Current.Sync);
+        AssertLinkedTo("a", "Lib");
+    }
+
+    [Fact]
+    public async Task A_switch_while_the_sim_runs_returns_the_sim_text_and_changes_nothing()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var sim = new ToggleSim();
+        var session = await StartedAsync(NewSession(sim: sim), lib);
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+        sim.Running = true;
+
+        var message = await Bounded(session.SwitchCardAsync(card));
+
+        Assert.Equal(SimRunningException.Text, message);
+        Assert.Empty(machine.ListCommunity());
+        Assert.False(session.State.IsOn(new PackageName("a")));
+        Assert.Equal(CardState.Off, CardOf(session.Current, "a").State);
+    }
+
+    [Fact]
+    public async Task A_locked_database_refuses_the_switch_before_any_link()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = NewSession(flakyStore: true);
+        await StartedAsync(session, lib);
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+        store!.FailBeginCall = store.BeginCalls + 1;
+
+        var message = await Bounded(session.SwitchCardAsync(card));
+
+        Assert.Contains("userdata.db", message);
+        Assert.Empty(machine.ListCommunity());
+    }
+
+    [Fact]
+    public async Task A_copy_gone_before_the_click_shows_the_board_reason()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardOf(session.Current, "a");
+        Assert.NotNull(card.Id);
+        var before = machine.ListCommunity();
+        DeletePackage("a");
+
+        var message = await Bounded(session.SwitchCardAsync(CardRef.Of(card)));
+
+        Assert.Null(message);
+        Assert.Equal(before, machine.ListCommunity());
+        Assert.False(session.State.IsOn(new PackageName("a")));
+        await Bounded(session.RescanAsync(false));
+        var row = session.Current.Board!.Find(card.Id!.Value)!.Packages.Single();
+        Assert.NotNull(row.DisabledReason);
+    }
+
+    [Fact]
+    public async Task A_failed_link_change_returns_its_message()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(NewSession(linkFs: new FailingLinks(lib)), lib);
+
+        var message = await Bounded(session.SwitchCardAsync(CardRef.Of(CardOf(session.Current, "a"))));
+
+        Assert.Equal($"Could not change a: {FailingLinks.Message}", message);
+        Assert.Empty(machine.ListCommunity());
+    }
+
+    [Fact]
+    public async Task Several_failed_link_changes_return_the_count_and_the_first_message()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        machine.AddPackage("b");
+        var session = await StartedAsync(NewSession(linkFs: new FailingLinks(lib)), lib);
+        // The user grouped both Packages on one card.
+        session.State.SetCard(Pkg("b"), CardOf(session.Current, "a").Id);
+        session.State.RemoveEmptyCards();
+        await Bounded(session.RescanAsync(false));
+        var card = CardOf(session.Current, "a");
+        Assert.Equal(2, card.Packages.Count);
+
+        var message = await Bounded(session.SwitchCardAsync(CardRef.Of(card)));
+
+        Assert.Equal($"2 packages could not be changed: {FailingLinks.Message}", message);
+    }
+
+    [Fact]
+    public async Task A_card_switch_settles_its_waiting_row()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        machine.Link("a");
+        var sim = new ToggleSim();
+        var session = await StartedAsync(NewSession(sim: sim), lib);
+        sim.Running = true;
+        machine.Unlink("a");
+        await Bounded(session.RescanAsync(false));
+        Assert.True(session.Current.SyncHeldBack);
+        sim.Running = false;
+
+        var message = await Bounded(session.SwitchCardAsync(CardRef.Of(CardOf(session.Current, "a"))));
+        await Bounded(session.RescanAsync(false));
+
+        Assert.Null(message);
+        Assert.False(session.State.IsOn(new PackageName("a")));
+        Assert.Null(session.Current.Sync);
+        Assert.False(session.Current.SyncHeldBack);
+    }
+
+    [Fact]
+    public async Task Remove_forgets_a_not_found_package_and_its_card()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardOf(session.Current, "a");
+        DeletePackage("a");
+        await Bounded(session.RescanAsync(false));
+
+        var message = await Bounded(session.RemoveAsync(CardRef.Of(card), Pkg("a")));
+
+        Assert.Null(message);
+        Assert.Null(session.Current.Board!.CardOf(Pkg("a")));
+        Assert.Empty(Reload().Cards);
+        Assert.Empty(Reload().Packages);
+    }
+
+    [Fact]
+    public async Task Remove_while_the_sim_runs_returns_the_sim_text()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var sim = new ToggleSim();
+        var session = await StartedAsync(NewSession(sim: sim), lib);
+        var card = CardOf(session.Current, "a");
+        DeletePackage("a");
+        await Bounded(session.RescanAsync(false));
+        sim.Running = true;
+
+        var message = await Bounded(session.RemoveAsync(CardRef.Of(card), Pkg("a")));
+
+        Assert.Equal(SimRunningException.Text, message);
+        Assert.NotNull(session.Current.Board!.CardOf(Pkg("a")));
+    }
+
     /// <summary>A second, unpooled connection holding the write lock of the user database until it is disposed.</summary>
     private LockHolder HoldWriteLock() => new(machine.DatabaseFile);
 

@@ -1,5 +1,6 @@
 using AddonManager.App.Session;
 using AddonManager.Core.Cards;
+using AddonManager.Core.Linking;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Infrastructure;
@@ -40,6 +41,12 @@ public sealed class AppSessionTests : IDisposable
         }
     }
 
+    /// <summary>The default sim of the suite: never running, so no test depends on a real FlightSimulator process.</summary>
+    private sealed class StoppedSim : ISimProcessMonitor
+    {
+        public bool IsRunning => false;
+    }
+
     private readonly SimMachine machine = new();
     private readonly FakeWatchers watchers = new();
     private readonly List<SessionView> views = [];
@@ -54,7 +61,8 @@ public sealed class AppSessionTests : IDisposable
         machine.Dispose();
     }
 
-    private AppSession NewSession(Func<SimPaths?>? locate = null, bool useGate = false, bool flakyStore = false)
+    private AppSession NewSession(Func<SimPaths?>? locate = null, bool useGate = false, bool flakyStore = false,
+        ISimProcessMonitor? sim = null, ILinkFileSystem? linkFs = null)
     {
         if (useGate)
             gated = new GatedReader(machine.Paths.OfficialPath);
@@ -62,10 +70,13 @@ public sealed class AppSessionTests : IDisposable
         {
             var services = AppServices.Open(machine.DatabaseFile);
             services.CreateWatcher = watchers.Create;
-            if (useGate)
-                services.UseSim(machine.Paths, machine.Gsx, gated!);
+            services.Sim = sim ?? new StoppedSim();
+            if (linkFs is not null)
+                services.LinkFileSystem = () => linkFs;
             if (flakyStore)
                 services.Store = store = new FlakyStore(services.Store);
+            if (useGate)
+                services.UseSim(machine.Paths, machine.Gsx, gated!);
             return services;
         }, locate ?? (() => machine.Paths), machine.Gsx);
         session.Changed += v =>

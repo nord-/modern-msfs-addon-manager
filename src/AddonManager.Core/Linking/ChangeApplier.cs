@@ -21,6 +21,9 @@ public sealed record ApplyResult(
 /// </summary>
 public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community, IUserStateStore store, ISimProcessMonitor sim, string communityPath)
 {
+    /// <summary>Whether the sim runs right now; the answer can change before the next call.</summary>
+    public bool IsSimRunning => sim.IsRunning;
+
     /// <summary>Throws <see cref="SimRunningException"/> while the sim runs; every entry point starts with it.</summary>
     public void EnsureSimClosed()
     {

@@ -5,12 +5,16 @@ using AddonManager.Core.State;
 
 namespace AddonManager.Core.Sync;
 
-/// <summary>Compares the last accepted Community snapshot with the current Community (spec 6.8, 7.1, 7.4).</summary>
+/// <summary>
+/// Compares the last accepted Community snapshot with the current Community (spec 6.8, 7.1, 7.4). Community always wins: every difference
+/// is adopted as the stored choice (decision 2026-11-09, no sync dialog).
+/// </summary>
 public static class Reconciler
 {
     /// <summary>
-    /// First run: every indexed Package is on exactly when it has a Managed or Stale entry. With <paramref name="only"/>
-    /// (a Library registered later) just those Packages are adopted; a pending Package is skipped and a stored active copy that still stands is kept.
+    /// First run: every indexed Package is on exactly when it has a Managed or Stale entry, and a Managed entry's copy becomes the
+    /// stored active copy. With <paramref name="only"/> (a Library registered later) just those Packages are adopted and a pending
+    /// Package is skipped.
     /// </summary>
     public static void Adopt(UserState state, IReadOnlyList<ClassifiedEntry> current, PackageIndex index, IReadOnlyCollection<PackageName>? only = null)
     {
@@ -24,8 +28,7 @@ public static class Reconciler
             switch (entry?.Class)
             {
                 case EntryClass.Managed:
-                    var keepStored = subset && StoredCopyStands(state, name, index);
-                    state.SetOn(name, true, keepStored ? null : entry.Package!.Path);
+                    state.SetOn(name, true, entry.Package!.Path);
                     break;
                 case EntryClass.Stale:
                     state.SetOn(name, true);
@@ -43,42 +46,26 @@ public static class Reconciler
         }
     }
 
-    /// <summary>One <see cref="SyncReason.Moved"/> row per Package whose entry is Stale, sorted by name; limited to <paramref name="only"/> when given.</summary>
-    public static IReadOnlyList<SyncRow> StaleRows(UserState state, IReadOnlyList<ClassifiedEntry> current, PackageIndex index, IReadOnlyCollection<PackageName>? only = null)
-        => (only ?? index.Names)
-            .OrderBy(n => n.Value, StringComparer.OrdinalIgnoreCase)
-            .Select(n => MovedRow(state, n, PackageFacts.EntryFor(current, n), index))
-            .OfType<SyncRow>()
-            .ToList();
-
-    /// <summary>A Managed entry whose link points at another copy than the stored active copy; one row per such Package, sorted by name.</summary>
-    public static IReadOnlyList<SyncRow> RetargetedRows(UserState state, IReadOnlyList<ClassifiedEntry> current, PackageIndex index, IReadOnlyCollection<PackageName> names)
-    {
-        var rows = new List<SyncRow>();
-        foreach (var name in names.OrderBy(n => n.Value, StringComparer.OrdinalIgnoreCase))
-        {
-            var stored = state.Packages.GetValueOrDefault(name)?.ActiveCopyPath;
-            var entry = PackageFacts.EntryFor(current, name);
-            if (stored is not null && StoredCopyStands(state, name, index) && entry is { Class: EntryClass.Managed, Package: { } linked }
-                && !PathNormalizer.AreEqual(stored, linked.Path))
-                rows.Add(new SyncRow(name, SyncReason.LinkRetargeted, linked.Path));
-        }
-        return rows;
-    }
-
     /// <summary>
-    /// The stored active copy is still the Package's copy: it is indexed, or it lies under an unreachable Library. A stored copy that
-    /// vanished from a reachable Library doesn't stand, so <see cref="Adopt"/> takes the linked copy and no re-point row is offered.
+    /// The links to repair without asking (decision D10): every Package that is on, not pending, and whose entry is Stale (its link
+    /// points where the add-on used to be), re-pointed at its active copy. Limited to <paramref name="only"/> when given.
+    /// <see cref="Diff"/> gives these Packages no row of any reason.
     /// </summary>
-    private static bool StoredCopyStands(UserState state, PackageName name, PackageIndex index)
-        => state.Packages.GetValueOrDefault(name)?.ActiveCopyPath is { } stored && (index.FindByPath(stored) is not null || index.IsUnreachable(stored));
+    public static IReadOnlyDictionary<PackageName, DesiredLink> StaleRepairs(UserState state, IReadOnlyList<ClassifiedEntry> current, PackageIndex index, IReadOnlyCollection<PackageName>? only = null)
+        => (only ?? index.Names)
+            .Where(n => state.IsOn(n) && !state.Pending.Contains(n))
+            .OrderBy(n => n.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(n => (Name: n, Copy: MovedCopy(state, n, PackageFacts.EntryFor(current, n), index)))
+            .Where(r => r.Copy is not null)
+            .ToDictionary(r => r.Name, r => new DesiredLink(true, r.Copy!.Path));
 
     /// <summary>
     /// One row per Package that differs from the snapshot or fails the self-check; none on first run. <paramref name="notFound"/> are the
     /// folder Packages the board shows as Not found: they have no copy to link, so their snapshot entries are compared too but never
-    /// self-checked, and their rows can't be restored (spec 6.1, 7.4). <paramref name="notShown"/> are the folder Packages the board shows
-    /// as Not shown (no card, no Library registered for their section holds them): they have copies, but the app doesn't manage their
-    /// link, so their rows can't be restored either. A Reconciler has no content, so the board supplies both sets.
+    /// self-checked (spec 6.1, 7.4). <paramref name="notShown"/> are the folder Packages the board shows as Not shown (no card, no Library
+    /// registered for their section holds them): they have copies, but the app doesn't manage their link, so a stale link of one that is
+    /// off gives no <see cref="SyncReason.Moved"/> row (re-pointing it would be the app's change). A Reconciler has no content, so the board
+    /// supplies both sets.
     /// </summary>
     public static IReadOnlyList<SyncRow> Diff(
         UserState state,
@@ -90,10 +77,13 @@ public static class Reconciler
         if (state.Snapshot is null)
             return [];
 
+        // Rows are computed before the repair, so a Package about to be repaired would only give a row that undoes it.
+        var repairs = StaleRepairs(state, current, index);
         var rows = new List<SyncRow>();
         foreach (var name in index.Names.Union(notFound).OrderBy(n => n.Value, StringComparer.OrdinalIgnoreCase))
         {
             if (state.Pending.Contains(name)
+                || repairs.ContainsKey(name)
                 || PackageFacts.IsLibraryNotFound(state, name, index, current))
                 continue;
 
@@ -101,41 +91,32 @@ public static class Reconciler
             var isNotFound = notFound.Contains(name) && index.CopiesOf(name).Count == 0;
             // A name held by a Fixed or External entry is locked: a turn-on would be rejected, so no self-check row.
             var row = CompareWithSnapshot(state, name, now, index, isNotFound) ?? (IsLocked(now) || isNotFound ? null : SelfCheck(state, name, now));
-            if (row is not null)
-                rows.Add(isNotFound ? row with { Restorable = false, NotFound = true } : notShown.Contains(name) ? row with { Restorable = false } : row);
+            if (row is null || (row.Reason == SyncReason.Moved && notShown.Contains(name)))
+                continue;
+            rows.Add(isNotFound ? row with { NotFound = true } : row);
         }
         return rows;
     }
 
     /// <summary>
-    /// Applies KeepCommunity rows to the stored choices and returns the link changes still to apply:
-    /// RestoreApp rows, and every Moved row (re-pointed, or its stale link removed). Those are not stored here;
-    /// the apply path stores them once the link has changed (or the change is deferred).
+    /// Adopts Community for every row: a Package is on exactly when Community links it, and a linked copy becomes the stored active copy
+    /// (never a Not found Package's vanished target). Returns the link changes still to apply: every <see cref="SyncReason.Moved"/> row
+    /// (an off Package whose link points where the add-on used to be) is turned on by re-pointing its link at the new location. Those are
+    /// not stored here; the apply path stores them once the link has changed.
     /// </summary>
-    public static IReadOnlyDictionary<PackageName, DesiredLink> Resolve(UserState state, IReadOnlyList<SyncRow> rows, IReadOnlyDictionary<PackageName, SyncChoice> choices)
+    public static IReadOnlyDictionary<PackageName, DesiredLink> KeepCommunity(UserState state, IReadOnlyList<SyncRow> rows)
     {
         var relink = new Dictionary<PackageName, DesiredLink>();
         foreach (var row in rows)
         {
-            var choice = choices.TryGetValue(row.Package, out var c) ? c : row.DefaultChoice;
-            if (!row.Restorable)
-                choice = SyncChoice.KeepCommunity;
-
             if (row.Reason == SyncReason.Moved)
             {
-                relink[row.Package] = choice == SyncChoice.RestoreApp ? new DesiredLink(true, row.NewTarget) : new DesiredLink(false);
+                relink[row.Package] = new DesiredLink(true, row.NewTarget);
+                continue;
             }
-            else if (choice == SyncChoice.RestoreApp)
-            {
-                relink[row.Package] = new DesiredLink(state.IsOn(row.Package));
-            }
-            else
-            {
-                var linked = row.Reason is SyncReason.LinkAppeared or SyncReason.LinkRetargeted or SyncReason.OffButLinked;
-                // A Not found Package's link target is gone, so it never becomes the stored copy. Any other row keeps its target, also a
-                // Not shown Package's (spec 7.4): that is a real copy.
-                state.SetOn(row.Package, linked, linked && !row.NotFound ? row.NewTarget : null);
-            }
+
+            var linked = row.Reason is SyncReason.LinkAppeared or SyncReason.LinkRetargeted or SyncReason.OffButLinked;
+            state.SetOn(row.Package, linked, linked && !row.NotFound ? row.NewTarget : null);
         }
         return relink;
     }
@@ -162,7 +143,7 @@ public static class Reconciler
         {
             (null, null) => null,
             (null, _) => new SyncRow(name, SyncReason.LinkAppeared, nowTarget),
-            (_, null) => new SyncRow(name, SyncReason.LinkDisappeared, null) { Restorable = !IsLocked(now) && !notFound },
+            (_, null) => new SyncRow(name, SyncReason.LinkDisappeared, null),
             _ => PathNormalizer.AreEqual(beforeTarget, nowTarget) ? null : new SyncRow(name, SyncReason.LinkRetargeted, nowTarget),
         };
     }
@@ -192,15 +173,15 @@ public static class Reconciler
 
     private static bool IsLocked(ClassifiedEntry? entry) => entry?.Class is EntryClass.Fixed or EntryClass.External;
 
-    private static SyncRow? MovedRow(UserState state, PackageName name, ClassifiedEntry? now, PackageIndex index)
-    {
-        if (now?.Class != EntryClass.Stale)
-            return null;
+    /// <summary>The copy a Stale entry is re-pointed at: the user's chosen copy wins over the first copy the classifier found. <c>null</c> when the entry isn't Stale.</summary>
+    private static PackageCopy? MovedCopy(UserState state, PackageName name, ClassifiedEntry? now, PackageIndex index)
+        => now?.Class == EntryClass.Stale
+            ? ActiveCopySelector.Select(name, index, null, state.Packages.GetValueOrDefault(name)?.ActiveCopyPath) ?? now.Package!
+            : null;
 
-        // The user's chosen copy wins over the first copy the classifier found.
-        var copy = ActiveCopySelector.Select(name, index, null, state.Packages.GetValueOrDefault(name)?.ActiveCopyPath) ?? now.Package!;
-        return new SyncRow(name, SyncReason.Moved, copy.Path);
-    }
+    /// <summary>A Stale entry of a Package that is off: Community links it, so it is turned on and re-pointed. An on Package is repaired instead.</summary>
+    private static SyncRow? MovedRow(UserState state, PackageName name, ClassifiedEntry? now, PackageIndex index)
+        => !state.IsOn(name) && MovedCopy(state, name, now, index) is { } copy ? new SyncRow(name, SyncReason.Moved, copy.Path) : null;
 
     private static SyncRow? SelfCheck(UserState state, PackageName name, ClassifiedEntry? now)
     {

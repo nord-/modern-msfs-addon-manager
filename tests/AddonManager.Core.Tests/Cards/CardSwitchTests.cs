@@ -72,4 +72,58 @@ public sealed class CardSwitchTests
         Assert.Equal([new KeyValuePair<PackageName, bool>(Name("pkg-a"), true)], CardSwitch.All(card, true).Choices);
         Assert.Equal([new KeyValuePair<PackageName, bool>(Name("pkg-a"), true)], CardSwitch.One(card, PackageKey.Folder(Name("pkg-a")), true).Choices);
     }
+
+    /// <summary>One card with the Packages <c>pkg-a</c> and <c>pkg-b</c>; <c>pkg-b</c> is Not found when <paramref name="bGone"/>.</summary>
+    private static Card PairCard(bool aOn, bool bOn, bool bGone)
+    {
+        var w = new World();
+        w.Library(@"C:\Sim\Addons");
+        w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.Add(Scenery("pkg-b", ["EHAM"]));
+        w.Group(Category.Scenery, CardTab.Landscapes, "pkg-a", "pkg-b");
+        Wall(w);
+        w.State.Packages[Name("pkg-a")] = w.State.Packages[Name("pkg-a")] with { On = aOn };
+        w.State.Packages[Name("pkg-b")] = w.State.Packages[Name("pkg-b")] with { On = bOn };
+        if (bGone)
+        {
+            w.Without("pkg-b");
+        }
+
+        return Assert.Single(BoardBuilder.Build(w.State, w.Input()).Cards);
+    }
+
+    [Fact]
+    public void A_card_mixed_only_by_a_package_that_cannot_be_switched_shows_on()
+    {
+        var card = PairCard(aOn: true, bOn: false, bGone: true);
+
+        Assert.True(CardSwitch.IsOn(card));
+        var plan = CardSwitch.Toggle(card);
+        Assert.Equal([new KeyValuePair<PackageName, bool>(Name("pkg-a"), false)], plan.Choices);
+    }
+
+    [Fact]
+    public void A_mixed_card_of_switchable_packages_shows_off_and_turns_on()
+    {
+        var card = PairCard(aOn: true, bOn: false, bGone: false);
+
+        Assert.False(CardSwitch.IsOn(card));
+        var plan = CardSwitch.Toggle(card);
+        Assert.Equal([new KeyValuePair<PackageName, bool>(Name("pkg-a"), true), new KeyValuePair<PackageName, bool>(Name("pkg-b"), true)], plan.Choices);
+    }
+
+    [Fact]
+    public void A_card_without_switchable_packages_has_no_switch()
+    {
+        var w = new World();
+        w.Library(@"C:\Sim\Addons");
+        w.Add(Scenery("pkg-a", ["EHAM"]));
+        w.Group(Category.Scenery, CardTab.Landscapes, "pkg-a");
+        Wall(w);
+        w.Without("pkg-a");
+        var card = Assert.Single(BoardBuilder.Build(w.State, w.Input()).Cards);
+
+        Assert.False(CardSwitch.HasSwitchable(card));
+        Assert.False(CardSwitch.IsOn(card));
+    }
 }

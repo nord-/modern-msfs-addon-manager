@@ -36,24 +36,27 @@ public class SyncCoordinatorTests
         coordinator = new SyncCoordinator(applier, community, store);
     }
 
-    private static Dictionary<PackageName, SyncChoice> KeepAll(IEnumerable<SyncRow> rows) => rows.ToDictionary(r => r.Package, _ => SyncChoice.KeepCommunity);
+    private static readonly Board NoBoard = new([], [], new Banner([], [], 0, 0, [], []));
+
+    private bool StoredOn(PackageName name) => store.Load().IsOn(name);
+
+    private bool InSnapshot(string name) => state.Snapshot!.Any(s => s.Name == name);
 
     [Fact]
-    public void First_start_adopts_community_and_shows_no_dialog()
+    public void First_start_adopts_community()
     {
         community.AddJunction("pkg", pkg.Path);
 
         var o = coordinator.Start(state, index);
 
         Assert.True(o.FirstRun);
-        Assert.Empty(o.Rows);
         Assert.NotNull(state.Snapshot);
         Assert.True(state.IsOn(Pkg));
-        Assert.True(store.Load().IsOn(Pkg));
+        Assert.True(StoredOn(Pkg));
     }
 
     [Fact]
-    public void Second_start_with_no_changes_shows_no_dialog()
+    public void Second_start_with_no_changes_changes_nothing()
     {
         community.AddJunction("pkg", pkg.Path);
         coordinator.Start(state, index);
@@ -61,62 +64,96 @@ public class SyncCoordinatorTests
         var o = coordinator.Start(state, index);
 
         Assert.False(o.FirstRun);
-        Assert.Empty(o.Rows);
-    }
-
-    [Fact]
-    public void Keep_community_is_not_asked_again_on_next_start()
-    {
-        coordinator.Start(state, index);
-        community.AddJunction("other", other.Path);
-        var o = coordinator.Start(state, index);
-        Assert.Equal(SyncReason.LinkAppeared, o.Rows.Single().Reason);
-
-        coordinator.Resolve(state, index, o.Rows, KeepAll(o.Rows));
-
-        Assert.True(state.IsOn(Other));
-        Assert.Empty(coordinator.Start(state, index).Rows);
+        Assert.Null(o.Repaired);
+        Assert.False(o.RepairsWaiting);
+        Assert.True(state.IsOn(Pkg));
         Assert.Empty(fs.Calls);
     }
 
     [Fact]
-    public void Restore_app_relinks_and_is_not_asked_again()
+    public void A_junction_removed_outside_the_app_turns_the_package_off_and_writes_nothing_to_community()
     {
+        community.AddJunction("pkg", pkg.Path);
         coordinator.Start(state, index);
-        community.AddJunction("other", other.Path);
+        community.Remove("pkg");
+
         var o = coordinator.Start(state, index);
 
-        coordinator.Resolve(state, index, o.Rows, new Dictionary<PackageName, SyncChoice> { [Other] = SyncChoice.RestoreApp });
-
-        Assert.False(community.Has("other"));
-        Assert.Empty(coordinator.Start(state, index).Rows);
+        Assert.False(state.IsOn(Pkg));
+        Assert.False(StoredOn(Pkg));
+        Assert.False(InSnapshot("pkg"));
+        Assert.Null(o.Repaired);
+        Assert.False(o.RepairsWaiting);
+        Assert.Empty(fs.Calls);
+        Assert.False(community.Has("pkg"));
     }
 
     [Fact]
-    public void Keep_community_is_not_asked_again_even_when_the_relink_was_deferred()
+    public void A_junction_added_outside_the_app_turns_the_package_on_with_that_copy()
     {
-        community.AddJunction("m", @"C:\Sim\Addons\m", targetExists: false);
         coordinator.Start(state, index);
-        var o = coordinator.Start(state, index);
-        Assert.Equal(SyncReason.Moved, o.Rows.Single().Reason);
+        community.AddJunction("other", other.Path);
 
+        coordinator.Start(state, index);
+
+        Assert.True(state.IsOn(Other));
+        Assert.True(StoredOn(Other));
+        Assert.Equal(other.Path, state.Packages[Other].ActiveCopyPath);
+        Assert.True(InSnapshot("other"));
+        Assert.Empty(fs.Calls);
+    }
+
+    [Fact]
+    public void A_package_on_in_the_app_but_not_linked_is_turned_off()
+    {
+        coordinator.Start(state, index);
+        state.SetOn(Pkg, true);
+
+        coordinator.Start(state, index);
+
+        Assert.False(state.IsOn(Pkg));
+        Assert.Empty(fs.Calls);
+    }
+
+    [Fact]
+    public void Community_is_adopted_while_the_sim_runs_without_touching_it()
+    {
+        community.AddJunction("pkg", pkg.Path);
+        coordinator.Start(state, index);
+        community.Remove("pkg");
+        community.AddJunction("other", other.Path);
         sim.IsRunning = true;
-        coordinator.Resolve(state, index, o.Rows, KeepAll(o.Rows));
-        sim.IsRunning = false;
 
-        Assert.Empty(coordinator.Start(state, index).Rows);
-        Assert.False(community.Has("m"));
-        Assert.False(state.IsOn(M));
-        Assert.Empty(coordinator.Start(state, index).Rows);
+        var o = coordinator.Start(state, index);
+
+        Assert.False(state.IsOn(Pkg));
+        Assert.True(state.IsOn(Other));
+        Assert.True(StoredOn(Other));
+        Assert.False(o.RepairsWaiting);
+        Assert.Empty(fs.Calls);
+    }
+
+    [Fact]
+    public void A_link_replaced_by_an_external_one_turns_the_package_off()
+    {
+        var esgg = Copy("esgg");
+        var idx = IndexOf([esgg], SimAddons);
+        community.AddJunction("esgg", esgg.Path);
+        coordinator.Start(state, idx);
+        community.AddJunction("esgg", @"D:\Elsewhere\esgg");
+
+        coordinator.Start(state, idx);
+
+        Assert.False(state.IsOn(Esgg));
+        Assert.Equal(@"D:\Elsewhere\esgg", community.TargetOf("esgg"));
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
     public void Pending_from_a_previous_session_is_applied_once_at_start()
     {
         coordinator.Start(state, index);
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
-        sim.IsRunning = false;
+        SeedPending();
 
         var reloaded = store.Load();
         var o = coordinator.Start(reloaded, index);
@@ -131,8 +168,8 @@ public class SyncCoordinatorTests
     public void Start_while_the_sim_runs_reports_pending_as_deferred()
     {
         coordinator.Start(state, index);
+        SeedPending();
         sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
 
         var o = coordinator.Start(state, index);
 
@@ -145,9 +182,7 @@ public class SyncCoordinatorTests
     public void Sim_exit_flushes_pending()
     {
         coordinator.Start(state, index);
-        sim.IsRunning = true;
-        applier.SetChoices(state, index, new Dictionary<PackageName, bool> { [Pkg] = true });
-        sim.IsRunning = false;
+        SeedPending();
 
         coordinator.OnSimExited(state, index);
 
@@ -155,34 +190,199 @@ public class SyncCoordinatorTests
         Assert.Empty(state.Pending);
     }
 
-    [Fact]
-    public void A_failed_moved_relink_changes_nothing_stored_and_is_offered_again()
+    /// <summary>Older data can hold a pending change; nothing creates one any more.</summary>
+    private void SeedPending()
     {
-        community.AddJunction("m", @"C:\Sim\Addons\m", targetExists: false);
-        coordinator.Start(state, index);
+        state.SetOn(Pkg, true);
+        state.Pending.Add(Pkg);
+        store.Save(state);
+    }
+
+    private const string OldM = @"C:\Sim\Addons\m";
+
+    /// <summary>A stored choice and a snapshot for a Package whose link points at its old, vanished location.</summary>
+    private void StaleLinkOf(bool on)
+    {
+        community.AddJunction("m", OldM, targetExists: false);
+        state.SetOn(M, on);
+        state.Snapshot = SnapshotEntry.From(community.Read());
+    }
+
+    private string? SnapshotTargetOf(string name) => state.Snapshot!.Single(s => s.Name == name).Target;
+
+    [Fact]
+    public void A_stale_link_of_a_package_that_is_on_is_repaired()
+    {
+        StaleLinkOf(on: true);
+
         var o = coordinator.Start(state, index);
-        fs.FailOn("m", mNew.Path);
 
-        var r = coordinator.Resolve(state, index, o.Rows, new Dictionary<PackageName, SyncChoice> { [M] = SyncChoice.RestoreApp });
-
-        Assert.Equal(M, r.Failed.Single().Package);
-        Assert.Null(state.Packages[M].ActiveCopyPath);
-        // The fake restores the old link as an existing one; on disk it stays broken, so classify it as Stale again.
-        community.AddJunction("m", @"C:\Sim\Addons\m", targetExists: false);
-        Assert.Equal(M, coordinator.Start(state, index).Rows.Single().Package);
+        Assert.False(o.RepairsWaiting);
+        Assert.Equal([M], o.Repaired!.Applied);
+        Assert.Equal(new FsCall(FsCallKind.Create, Path.Combine(CommunityPath, "m"), mNew.Path), fs.Calls.Last());
+        Assert.Equal(mNew.Path, community.TargetOf("m"));
+        Assert.True(PathNormalizer.AreEqual(mNew.Path, SnapshotTargetOf("m")!));
+        Assert.Equal(mNew.Path, state.Packages[M].ActiveCopyPath);
+        Assert.Null(coordinator.Start(state, index).Repaired);
     }
 
     [Fact]
-    public void A_change_made_while_the_dialog_was_open_is_offered_not_accepted()
+    public void First_run_repairs_stale_links()
     {
-        coordinator.Start(state, index);
-        community.AddJunction("other", other.Path);
+        community.AddJunction("m", OldM, targetExists: false);
+
         var o = coordinator.Start(state, index);
-        community.AddJunction("pkg", pkg.Path);
 
-        coordinator.Resolve(state, index, o.Rows, KeepAll(o.Rows));
+        Assert.True(o.FirstRun);
+        Assert.True(state.IsOn(M));
+        Assert.Equal([M], o.Repaired!.Applied);
+        Assert.Equal(mNew.Path, community.TargetOf("m"));
+    }
 
-        Assert.Equal([Pkg], coordinator.Start(state, index).Rows.Select(r => r.Package));
+    [Fact]
+    public void A_repair_waits_while_the_sim_runs()
+    {
+        community.AddJunction("m", OldM, targetExists: false);
+        sim.IsRunning = true;
+
+        var first = coordinator.Start(state, index);
+
+        Assert.True(first.RepairsWaiting);
+        Assert.Null(first.Repaired);
+        Assert.Empty(fs.Calls);
+        Assert.True(state.IsOn(M));
+
+        sim.IsRunning = false;
+        var next = coordinator.Start(state, index);
+
+        Assert.False(next.RepairsWaiting);
+        Assert.Equal([M], next.Repaired!.Applied);
+        Assert.Equal(mNew.Path, community.TargetOf("m"));
+    }
+
+    [Fact]
+    public void A_sim_start_between_the_check_and_the_repair_waits()
+    {
+        StaleLinkOf(on: true);
+        sim.RunningFromRead = 2;
+
+        var o = coordinator.Start(state, index);
+
+        Assert.True(o.RepairsWaiting);
+        Assert.Null(o.Repaired);
+        Assert.Empty(fs.Calls);
+    }
+
+    [Fact]
+    public void A_stale_link_of_a_package_that_is_off_turns_it_on_and_re_points_the_link()
+    {
+        StaleLinkOf(on: false);
+
+        var o = coordinator.Start(state, index);
+
+        Assert.Equal([M], o.Repaired!.Applied);
+        Assert.False(o.RepairsWaiting);
+        Assert.Equal(mNew.Path, community.TargetOf("m"));
+        Assert.True(state.IsOn(M));
+        Assert.True(StoredOn(M));
+        Assert.Equal(mNew.Path, state.Packages[M].ActiveCopyPath);
+        Assert.True(PathNormalizer.AreEqual(mNew.Path, SnapshotTargetOf("m")!));
+
+        var calls = fs.Calls.Count;
+        Assert.Null(coordinator.Start(state, index).Repaired);
+        Assert.Equal(calls, fs.Calls.Count);
+    }
+
+    [Fact]
+    public void A_stale_link_of_a_package_that_is_off_waits_while_the_sim_runs()
+    {
+        StaleLinkOf(on: false);
+        sim.IsRunning = true;
+
+        var first = coordinator.Start(state, index);
+
+        Assert.True(first.RepairsWaiting);
+        Assert.Null(first.Repaired);
+        Assert.Empty(fs.Calls);
+        Assert.False(state.IsOn(M));
+        Assert.Equal(OldM, community.TargetOf("m"));
+
+        sim.IsRunning = false;
+        var next = coordinator.Start(state, index);
+
+        Assert.False(next.RepairsWaiting);
+        Assert.Equal([M], next.Repaired!.Applied);
+        Assert.True(state.IsOn(M));
+        Assert.Equal(mNew.Path, community.TargetOf("m"));
+    }
+
+    [Fact]
+    public void A_not_shown_package_that_is_off_with_a_stale_link_changes_nothing_at_any_discovery()
+    {
+        StaleLinkOf(on: false);
+        var board = new Board([], [new NotShownPackage(M, "m", null, Category.Scenery, false)], NoBoard.Banner);
+
+        var first = coordinator.Start(state, index, board);
+        sim.IsRunning = true;
+        var second = coordinator.Start(state, index, board);
+
+        foreach (var o in new[] { first, second })
+        {
+            Assert.Null(o.Repaired);
+            Assert.False(o.RepairsWaiting);
+        }
+        Assert.Empty(fs.Calls);
+        Assert.Equal(OldM, community.TargetOf("m"));
+        Assert.False(state.IsOn(M));
+        Assert.False(StoredOn(M));
+    }
+
+    [Fact]
+    public void A_not_shown_package_that_is_on_with_a_stale_link_is_repaired()
+    {
+        StaleLinkOf(on: true);
+        var board = new Board([], [new NotShownPackage(M, "m", null, Category.Scenery, true)], NoBoard.Banner);
+
+        var o = coordinator.Start(state, index, board);
+
+        Assert.Equal(M, Assert.Single(o.Repaired!.Applied));
+        Assert.True(PathNormalizer.AreEqual(mNew.Path, community.TargetOf("m")!));
+    }
+
+    [Fact]
+    public void A_failed_repair_is_reported_and_tried_again()
+    {
+        StaleLinkOf(on: true);
+        fs.FailOn("m", mNew.Path);
+
+        var o = coordinator.Start(state, index);
+
+        Assert.Equal(M, o.Repaired!.Failed.Single().Package);
+        Assert.Empty(o.Repaired.Applied);
+        Assert.True(PathNormalizer.AreEqual(OldM, SnapshotTargetOf("m")!));
+
+        // The fake restores the old link as an existing one; on disk it stays broken, so classify it as Stale again.
+        community.AddJunction("m", OldM, targetExists: false);
+        var again = coordinator.Start(state, index);
+
+        Assert.Equal(M, again.Repaired!.Failed.Single().Package);
+    }
+
+    [Fact]
+    public void A_failed_re_point_of_an_off_package_is_reported_and_tried_again()
+    {
+        StaleLinkOf(on: false);
+        fs.FailOn("m", mNew.Path);
+
+        var o = coordinator.Start(state, index);
+
+        Assert.Equal(M, o.Repaired!.Failed.Single().Package);
+        Assert.False(state.IsOn(M));
+
+        community.AddJunction("m", OldM, targetExists: false);
+        var again = coordinator.Start(state, index);
+
+        Assert.Equal(M, again.Repaired!.Failed.Single().Package);
     }
 
     private static readonly LibraryRoot LibB = new(@"C:\B", LibraryRoot.AllSections);
@@ -201,7 +401,7 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
-    public void First_run_offers_stale_links_for_re_point()
+    public void First_run_repairs_a_stale_link_of_a_library_package()
     {
         var esgg = Copy("esgg", @"C:\Sim\Addons\Scenery\esgg");
         community.AddJunction("esgg", @"C:\Sim\Addons\esgg", targetExists: false);
@@ -209,22 +409,23 @@ public class SyncCoordinatorTests
         var o = coordinator.Start(state, IndexOf([esgg], SimAddons));
 
         Assert.True(o.FirstRun);
-        Assert.Equal([new SyncRow(Esgg, SyncReason.Moved, esgg.Path)], o.Rows);
         Assert.True(state.IsOn(Esgg));
+        Assert.Equal(esgg.Path, community.TargetOf("esgg"));
     }
 
     [Fact]
-    public void Registering_a_library_adopts_its_packages_without_sync_rows()
+    public void Registering_a_library_adopts_its_packages()
     {
         var (_, _, indexB) = StartedWithForeignLink();
 
-        var rows = coordinator.RegisterLibrary(state, LibB, indexB);
+        coordinator.RegisterLibrary(state, LibB, indexB);
 
-        Assert.Empty(rows);
         Assert.True(state.IsOn(PB));
         Assert.False(state.IsOn(PC));
         Assert.Contains(LibB, state.Libraries);
-        Assert.Empty(coordinator.Start(state, indexB).Rows);
+        coordinator.Start(state, indexB);
+        Assert.True(state.IsOn(PB));
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
@@ -240,53 +441,35 @@ public class SyncCoordinatorTests
         Assert.Contains(PB, state.Content.OptedIn);
     }
 
-    private (PackageCopy bA, PackageCopy bB, PackageIndex indexAB, IReadOnlyList<SyncRow> rows) RegisterWithOtherActiveCopy()
+    [Fact]
+    public void A_link_to_another_copy_than_the_stored_active_copy_makes_the_linked_copy_active()
     {
         var (bB, _, _) = StartedWithForeignLink();
         var bA = Copy("b");
         var indexAB = IndexOf([pkg, other, mNew, bA, bB], SimAddons, LibB);
         state.Packages[PB] = new PackageState(false, bA.Path);
-        return (bA, bB, indexAB, coordinator.RegisterLibrary(state, LibB, indexAB));
+
+        coordinator.RegisterLibrary(state, LibB, indexAB);
+
+        Assert.Equal(new PackageState(true, bB.Path), state.Packages[PB]);
+        Assert.Equal(bB.Path, store.Load().Packages[PB].ActiveCopyPath);
+        Assert.Equal(bB.Path, community.TargetOf("b"));
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
-    public void A_link_to_another_copy_than_the_stored_active_copy_is_offered_as_a_row()
-    {
-        var (_, bB, indexAB, rows) = RegisterWithOtherActiveCopy();
-
-        Assert.Equal([new SyncRow(PB, SyncReason.LinkRetargeted, bB.Path)], rows);
-
-        coordinator.Resolve(state, indexAB, rows, KeepAll(rows));
-
-        Assert.Equal(bB.Path, state.Packages[PB].ActiveCopyPath);
-        Assert.True(state.IsOn(PB));
-    }
-
-    [Fact]
-    public void Restoring_the_stored_active_copy_re_points_the_link()
-    {
-        var (bA, _, indexAB, rows) = RegisterWithOtherActiveCopy();
-
-        coordinator.Resolve(state, indexAB, rows, new Dictionary<PackageName, SyncChoice> { [PB] = SyncChoice.RestoreApp });
-
-        Assert.Equal(bA.Path, community.TargetOf("b"));
-        Assert.Equal(bA.Path, state.Packages[PB].ActiveCopyPath);
-    }
-
-    [Fact]
-    public void A_stored_copy_that_vanished_gives_way_to_the_linked_copy_without_a_row()
+    public void A_stored_copy_that_vanished_gives_way_to_the_linked_copy()
     {
         var (bB, _, indexB) = StartedWithForeignLink();
         state.Packages[PB] = new PackageState(false, Copy("b").Path);
 
-        var rows = coordinator.RegisterLibrary(state, LibB, indexB);
+        coordinator.RegisterLibrary(state, LibB, indexB);
 
-        Assert.Empty(rows);
         Assert.Equal(new PackageState(true, bB.Path), state.Packages[PB]);
     }
 
     [Fact]
-    public void A_stored_copy_on_an_unreachable_library_is_kept_and_the_link_is_offered_as_a_row()
+    public void A_stored_copy_on_an_unreachable_library_gives_way_to_the_linked_copy()
     {
         var (bB, _, _) = StartedWithForeignLink();
         var drive = new LibraryRoot(@"E:\Addons", LibraryRoot.AllSections);
@@ -294,14 +477,14 @@ public class SyncCoordinatorTests
         var indexB = new PackageIndex([pkg, other, mNew, bB], [SimAddons, LibB, drive], [drive]);
         state.Packages[PB] = new PackageState(false, onDrive.Path);
 
-        var rows = coordinator.RegisterLibrary(state, LibB, indexB);
+        coordinator.RegisterLibrary(state, LibB, indexB);
 
-        Assert.Equal([new SyncRow(PB, SyncReason.LinkRetargeted, bB.Path)], rows);
-        Assert.Equal(new PackageState(true, onDrive.Path), state.Packages[PB]);
+        Assert.Equal(new PackageState(true, bB.Path), state.Packages[PB]);
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
-    public void Registering_a_library_offers_no_stale_row_for_a_pending_package()
+    public void Registering_a_library_does_not_repair_a_pending_package()
     {
         coordinator.Start(state, index);
         var esgg = Copy("esgg", @"C:\B\Scenery\esgg", LibB);
@@ -309,10 +492,12 @@ public class SyncCoordinatorTests
         state.SetOn(Esgg, true);
         state.Pending.Add(Esgg);
 
-        var rows = coordinator.RegisterLibrary(state, LibB, IndexOf([pkg, other, mNew, esgg], SimAddons, LibB));
+        var r = coordinator.RegisterLibrary(state, LibB.Path, Category.Scenery, IndexOf([pkg, other, mNew, esgg], SimAddons, LibB));
 
-        Assert.Empty(rows);
+        Assert.Null(r.Repaired);
+        Assert.False(r.RepairsWaiting);
         Assert.Contains(Esgg, state.Pending);
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
@@ -330,20 +515,38 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
-    public void Registering_a_library_offers_its_stale_links()
+    public void RegisterLibrary_repairs_the_stale_links_it_adopts()
     {
         coordinator.Start(state, index);
         var esgg = Copy("esgg", @"C:\B\Scenery\esgg", LibB);
         community.AddJunction("esgg", @"C:\B\esgg", targetExists: false);
 
-        var rows = coordinator.RegisterLibrary(state, LibB, IndexOf([pkg, other, mNew, esgg], SimAddons, LibB));
+        var r = coordinator.RegisterLibrary(state, LibB.Path, Category.Scenery, IndexOf([pkg, other, mNew, esgg], SimAddons, LibB));
 
-        Assert.Equal([new SyncRow(Esgg, SyncReason.Moved, esgg.Path)], rows);
+        Assert.False(r.RepairsWaiting);
+        Assert.Equal([Esgg], r.Repaired!.Applied);
+        Assert.True(state.IsOn(Esgg));
+        Assert.Equal(esgg.Path, community.TargetOf("esgg"));
+    }
+
+    [Fact]
+    public void RegisterLibrary_leaves_the_stale_links_it_adopts_while_the_sim_runs()
+    {
+        coordinator.Start(state, index);
+        var esgg = Copy("esgg", @"C:\B\Scenery\esgg", LibB);
+        community.AddJunction("esgg", @"C:\B\esgg", targetExists: false);
+        sim.IsRunning = true;
+
+        var r = coordinator.RegisterLibrary(state, LibB.Path, Category.Scenery, IndexOf([pkg, other, mNew, esgg], SimAddons, LibB));
+
+        Assert.True(r.RepairsWaiting);
+        Assert.Null(r.Repaired);
+        Assert.Empty(fs.Calls);
         Assert.True(state.IsOn(Esgg));
     }
 
     [Fact]
-    public void Unregistering_a_library_keeps_user_data_and_gives_no_sync_rows()
+    public void Unregistering_a_library_keeps_user_data()
     {
         var (_, _, indexB) = StartedWithForeignLink();
         coordinator.RegisterLibrary(state, LibB, indexB);
@@ -352,33 +555,11 @@ public class SyncCoordinatorTests
         coordinator.UnregisterLibrary(state, LibB);
 
         Assert.DoesNotContain(LibB, state.Libraries);
-        Assert.Empty(coordinator.Start(state, index).Rows);
         Assert.Equal(before, state.Packages[PB]);
     }
 
     [Fact]
-    public void A_link_replaced_by_an_external_one_gives_a_row_that_cannot_be_restored()
-    {
-        var esgg = Copy("esgg");
-        var idx = IndexOf([esgg], SimAddons);
-        community.AddJunction("esgg", esgg.Path);
-        coordinator.Start(state, idx);
-        community.AddJunction("esgg", @"D:\Elsewhere\esgg");
-
-        var rows = coordinator.Start(state, idx).Rows;
-
-        var row = Assert.Single(rows);
-        Assert.Equal(SyncReason.LinkDisappeared, row.Reason);
-        Assert.False(row.Restorable);
-
-        coordinator.Resolve(state, idx, rows, new Dictionary<PackageName, SyncChoice> { [Esgg] = SyncChoice.RestoreApp });
-
-        Assert.False(state.IsOn(Esgg));
-        Assert.Empty(fs.Calls);
-    }
-
-    [Fact]
-    public void Unregistering_a_library_gives_no_row_when_the_package_has_a_copy_elsewhere()
+    public void Unregistering_a_library_keeps_a_package_with_a_copy_elsewhere_on()
     {
         var bA = Copy("b");
         var bB = Copy("b", lib: LibB);
@@ -389,9 +570,10 @@ public class SyncCoordinatorTests
         Assert.True(state.IsOn(PB));
 
         coordinator.UnregisterLibrary(state, LibB);
-        var rows = coordinator.Start(state, IndexOf([bA], SimAddons)).Rows;
+        coordinator.Start(state, IndexOf([bA], SimAddons));
 
-        Assert.Empty(rows);
+        Assert.True(state.IsOn(PB));
+        Assert.Empty(fs.Calls);
     }
 
     [Fact]
@@ -404,9 +586,9 @@ public class SyncCoordinatorTests
         coordinator.Start(state, both);
         state.SetOn(PB, true, bB.Path);
 
-        var rows = coordinator.RegisterLibrary(state, LibB.Path, Category.Other, both);
+        var r = coordinator.RegisterLibrary(state, LibB.Path, Category.Other, both);
 
-        Assert.Empty(rows);
+        Assert.Null(r.Repaired);
         Assert.Equal([LibB.Path, SimAddons.Path], state.Libraries.Select(l => l.Path));
         Assert.Equal([Category.Scenery, Category.Other], state.Libraries[0].Sections);
         Assert.Equal(new PackageState(true, bB.Path), state.Packages[PB]);
@@ -423,10 +605,9 @@ public class SyncCoordinatorTests
         w.Place();
         Assert.Empty(w.State.Cards);
 
-        var rows = coordinator.RegisterLibrary(w.State, @"C:\Sim\Addons", Category.Scenery, w.Input().Index);
+        coordinator.RegisterLibrary(w.State, @"C:\Sim\Addons", Category.Scenery, w.Input().Index);
         w.Place();
 
-        Assert.Empty(rows);
         var card = Assert.Single(w.State.Cards);
         Assert.Equal(Category.Scenery, card.Section);
         Assert.Equal(CardTab.Airports, card.Tab);
@@ -488,7 +669,7 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
-    public void At_startup_a_not_found_packages_vanished_link_gives_one_keep_only_row()
+    public void At_startup_a_not_found_packages_vanished_link_turns_it_off()
     {
         state.Libraries.Add(SimAddons);
         community.AddJunction("pkg", pkg.Path);
@@ -506,14 +687,7 @@ public class SyncCoordinatorTests
         var board = BoardBuilder.Build(state, BoardInput.WithoutContent(goneIndex, CommunityClassifier.Classify(community.Read(), goneIndex)));
         Assert.Equal(Presence.NotFound, board.CardOf(PackageKey.Folder(Pkg))!.Packages.Single(p => p.Name == Pkg).Presence);
 
-        var o = coordinator.Start(state, goneIndex, board);
-
-        var row = Assert.Single(o.Rows);
-        Assert.Equal(Pkg, row.Package);
-        Assert.Equal(SyncReason.LinkDisappeared, row.Reason);
-        Assert.False(row.Restorable);
-
-        coordinator.Resolve(state, goneIndex, o.Rows, new Dictionary<PackageName, SyncChoice> { [Pkg] = SyncChoice.RestoreApp }, board);
+        coordinator.Start(state, goneIndex, board);
 
         Assert.False(state.IsOn(Pkg));
         Assert.Empty(fs.Calls);
@@ -529,12 +703,12 @@ internal static class SyncCoordinatorTestExtensions
         => coordinator.Start(state, index, NoBoard);
 
     /// <summary>Registers a Library for each of its sections; a new folder is adopted by the first, the rest only add their section.</summary>
-    public static IReadOnlyList<SyncRow> RegisterLibrary(this SyncCoordinator coordinator, UserState state, LibraryRoot library, PackageIndex index)
+    public static RegisterOutcome RegisterLibrary(this SyncCoordinator coordinator, UserState state, LibraryRoot library, PackageIndex index)
     {
-        var rows = coordinator.RegisterLibrary(state, library.Path, library.Sections[0], index);
+        var outcome = coordinator.RegisterLibrary(state, library.Path, library.Sections[0], index);
         foreach (var section in library.Sections.Skip(1))
             coordinator.RegisterLibrary(state, library.Path, section, index);
-        return rows;
+        return outcome;
     }
 
     public static void UnregisterLibrary(this SyncCoordinator coordinator, UserState state, LibraryRoot library)
@@ -542,12 +716,4 @@ internal static class SyncCoordinatorTestExtensions
         foreach (var section in library.Sections)
             coordinator.UnregisterLibrary(state, library.Path, section);
     }
-
-    public static ApplyResult Resolve(
-        this SyncCoordinator coordinator,
-        UserState state,
-        PackageIndex index,
-        IReadOnlyList<SyncRow> rows,
-        IReadOnlyDictionary<PackageName, SyncChoice> choices)
-        => coordinator.Resolve(state, index, rows, choices, NoBoard);
 }

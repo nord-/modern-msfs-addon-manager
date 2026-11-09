@@ -5,7 +5,7 @@ using AddonManager.Core.State;
 namespace AddonManager.Core.Sync;
 
 /// <summary>
-/// The app never changes a link, so Community is the truth: the stored choices and the snapshot follow it in memory (plan 5a, D1).
+/// Community is the truth: the stored choices and the snapshot follow it in memory (plan 5a, D1). Now only the CLI uses it; the app adopts Community at every discovery through the sync check and changes links itself.
 /// The caller saves. Cards, sections and the pending mark are left alone.
 /// </summary>
 public static class CommunityFollower

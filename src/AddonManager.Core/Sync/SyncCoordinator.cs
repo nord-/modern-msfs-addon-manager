@@ -7,15 +7,25 @@ using AddonManager.Core.State;
 
 namespace AddonManager.Core.Sync;
 
-/// <param name="Flushed">The result of applying the pending set, <c>Deferred</c> while the sim runs, or <c>null</c> when there was nothing pending.</param>
-public sealed record StartupOutcome(bool FirstRun, IReadOnlyList<SyncRow> Rows, ApplyResult? Flushed);
+/// <param name="Flushed">The result of applying the pending set, <c>Deferred</c> while the sim runs, or <c>null</c> when there was nothing pending. Only data from older versions can be pending: no change is made while the sim runs any more.</param>
+/// <param name="Repaired">The result of re-pointing the links to moved add-ons (decision D10: of Packages that are on, and of Packages that are off but still linked, which Community turns on), or <c>null</c> when none was attempted. Failed or rejected re-points are tried again at the next discovery.</param>
+/// <param name="RepairsWaiting">Links to moved add-ons were left alone because the sim runs; the next discovery re-points them.</param>
+public sealed record StartupOutcome(bool FirstRun, ApplyResult? Flushed, ApplyResult? Repaired = null, bool RepairsWaiting = false);
+
+/// <summary>The outcome of <see cref="SyncCoordinator.RegisterLibrary"/>: the repair of the stale links it adopted.</summary>
+public sealed record RegisterOutcome(ApplyResult? Repaired, bool RepairsWaiting);
 
 /// <summary>
-/// The startup, sync-dialog and sim-exit sequence (spec 7.2 and 12). The UI calls <see cref="Start"/> at launch,
-/// <see cref="Resolve"/> with the user's sync-dialog choices, and <see cref="OnSimExited"/> when the sim process ends.
+/// The sync check at every discovery (spec 7.2 and 12): Community always wins, so every change made outside the app is adopted without
+/// asking. It does not watch the sim any more, so <see cref="OnSimExited"/> is only kept for flushing a pending set stored by older versions.
 /// </summary>
 public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource community, IUserStateStore store)
 {
+    /// <summary>
+    /// Adopts Community: the stored choices follow it (also while the sim runs, since only the user data changes), the snapshot is
+    /// accepted, a pending set from older data is flushed, and the links to moved add-ons are re-pointed (decision D10), which waits while
+    /// the sim runs.
+    /// </summary>
     public StartupOutcome Start(UserState state, PackageIndex index, Board board)
     {
         using var change = store.BeginChange();
@@ -25,33 +35,56 @@ public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource comm
         {
             Reconciler.Adopt(state, current, index);
             applier.AcceptSnapshot(state);
-            return new StartupOutcome(true, Reconciler.StaleRows(state, current, index), null);
+            var (adoptedRepair, adoptedWaiting) = Repair(state, index, Reconciler.StaleRepairs(state, current, index));
+            return new StartupOutcome(true, null, adoptedRepair, adoptedWaiting);
         }
 
+        // Diff skips the repair set and pending Packages, so the re-points below never overlap and the pending set is left alone.
+        var repairs = new Dictionary<PackageName, DesiredLink>(Reconciler.StaleRepairs(state, current, index));
         var rows = Reconciler.Diff(state, current, index, NotFoundNames(board), NotShownNames(board));
-        if (rows.Count == 0)
-            applier.AcceptSnapshot(state); // records silent External and Fixed changes
-        else
-            store.Save(state);
+        foreach (var (name, link) in Reconciler.KeepCommunity(state, rows))
+            repairs[name] = link;
+        applier.AcceptSnapshot(state);
 
-        // Diff skips pending Packages, so the pending set never overlaps a row awaiting the user's decision.
         var flushed = state.Pending.Count > 0 ? applier.FlushPending(state, index) : null;
-        return new StartupOutcome(false, rows, flushed);
+        var (repaired, waiting) = Repair(state, index, repairs);
+        return new StartupOutcome(false, flushed, repaired, waiting);
+    }
+
+    /// <summary>
+    /// Re-points the links to moved add-ons (decision D10). While the sim runs nothing is touched and the repair waits; a sim that starts
+    /// between the check and the call gives the same answer. A rejected or failed repair is in the result and tried again next time.
+    /// </summary>
+    private (ApplyResult? Repaired, bool Waiting) Repair(UserState state, PackageIndex index, IReadOnlyDictionary<PackageName, DesiredLink> repairs)
+    {
+        if (repairs.Count == 0)
+            return (null, false);
+        if (applier.IsSimRunning)
+            return (null, true);
+
+        try
+        {
+            return (applier.ApplyLinks(state, index, repairs), false);
+        }
+        catch (SimRunningException)
+        {
+            return (null, true);
+        }
     }
 
     /// <summary>
     /// Registers a Library folder for one menu section after first run (spec 6.1 "Registering a Library later"). On a new path the folder
-    /// is added last and its Packages are adopted from the current Community; the rows returned are the decisions left to the user: Stale
-    /// links to re-point, and links to another copy than the stored active copy. On a known path only the section is added: the folder
-    /// keeps its position (the order decides which Duplicate copy is active), nothing is adopted, no rows are returned and no stored
-    /// choice changes. Cards are never touched.
+    /// is added last and its Packages are adopted from the current Community (a linked copy becomes the stored active copy); the Stale
+    /// links it adopts are repaired (decision D10, or left for the next start while the sim runs). On a known path only the section is
+    /// added: the folder keeps its position (the order decides which Duplicate copy is active), nothing is adopted and no stored choice
+    /// changes. Cards are never touched.
     /// </summary>
     /// <remarks>
     /// Plan 5 follows a known folder gaining a section by running <c>Settlement.Apply</c> on the last completed input (re-analysed) inside one
     /// <c>BeginChange</c>, so Packages that became eligible get cards without waiting for a scan. A new folder's Packages are placed by the
     /// next scan, which the registration starts (spec 6.1, "like first run").
     /// </remarks>
-    public IReadOnlyList<SyncRow> RegisterLibrary(UserState state, string path, Category section, PackageIndex index)
+    public RegisterOutcome RegisterLibrary(UserState state, string path, Category section, PackageIndex index)
     {
         using var change = store.BeginChange();
         var known = state.Libraries.FindIndex(l => PathNormalizer.AreEqual(l.Path, path));
@@ -63,7 +96,7 @@ public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource comm
                 store.Save(state);
             }
 
-            return [];
+            return new RegisterOutcome(null, false);
         }
 
         var library = new LibraryRoot(path, [section]);
@@ -74,9 +107,9 @@ public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource comm
         Reconciler.Adopt(state, current, index, names);
         applier.AcceptSnapshot(state, names);
 
-        // A pending Package gets no row, as in Diff: its change waits for the sim to exit.
-        var decidable = names.Where(n => !state.Pending.Contains(n)).ToList();
-        return [.. Reconciler.StaleRows(state, current, index, decidable), .. Reconciler.RetargetedRows(state, current, index, decidable)];
+        // A pending Package gets no repair, as in Start: its change waits for the sim to exit.
+        var (repaired, waiting) = Repair(state, index, Reconciler.StaleRepairs(state, current, index, names));
+        return new RegisterOutcome(repaired, waiting);
     }
 
     /// <summary>
@@ -101,30 +134,11 @@ public sealed class SyncCoordinator(ChangeApplier applier, ICommunitySource comm
         store.Save(state);
     }
 
-    /// <summary>
-    /// Applies the sync-dialog choices, then accepts the resolved Packages so their rows don't come back. A Package whose
-    /// link change failed, and any change made while the dialog was open, keeps its old snapshot entry and is offered again.
-    /// </summary>
-    public ApplyResult Resolve(UserState state, PackageIndex index, IReadOnlyList<SyncRow> rows, IReadOnlyDictionary<PackageName, SyncChoice> choices, Board board)
-    {
-        using var change = store.BeginChange();
-        var desired = Reconciler.Resolve(state, rows, choices);
-        var result = applier.ApplyLinks(state, index, desired);
-
-        var failed = result.Failed.Select(f => f.Package).ToHashSet();
-        applier.AcceptSnapshot(state, rows.Select(r => r.Package).Where(p => !failed.Contains(p)).ToList());
-
-        // Nothing left undecided: also record the silent entries, as Start does.
-        if (Reconciler.Diff(state, CommunityClassifier.Classify(community.Read(), index), index, NotFoundNames(board), NotShownNames(board)).Count == 0)
-            applier.AcceptSnapshot(state);
-        return result;
-    }
-
     /// <summary>The folder Packages the board shows as Not found: their snapshot entries are compared too, but never self-checked.</summary>
     private static HashSet<PackageName> NotFoundNames(Board board)
         => [.. board.Cards.SelectMany(c => c.Packages).Where(p => p.Kind == PackageKind.Folder && p.Presence == Presence.NotFound).Select(p => p.Name)];
 
-    /// <summary>The folder Packages the board shows as Not shown: their rows offer only "Keep Community" (spec 7.4).</summary>
+    /// <summary>The folder Packages the board shows as Not shown: the app never re-points their stale links (spec 7.4).</summary>
     private static HashSet<PackageName> NotShownNames(Board board) => [.. board.NotShown.Select(p => p.Name)];
 
     public ApplyResult OnSimExited(UserState state, PackageIndex index) => applier.FlushPending(state, index);

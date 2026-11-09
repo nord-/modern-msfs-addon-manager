@@ -1,3 +1,4 @@
+using AddonManager.Core.Linking;
 using AddonManager.Infrastructure;
 using AddonManager.Sim2020;
 
@@ -29,6 +30,34 @@ public class AppServicesTests
         Assert.True(File.Exists(databaseFile));
         Assert.Equal(communityBefore, ListCommunity(community));
         Assert.Equal(gsxBefore, ListFolder(gsx));
+    }
+
+    [Fact]
+    public void UseSim_composes_the_write_path_with_the_set_sim()
+    {
+        using var temp = new TempFolder();
+        var community = Directory.CreateDirectory(Path.Combine(temp.Root, "Community")).FullName;
+        var gsx = Directory.CreateDirectory(Path.Combine(temp.Root, "Gsx")).FullName;
+        var databaseFile = Path.Combine(temp.Root, "data", "userdata.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(databaseFile)!);
+        var sim = new StoppedSim();
+
+        using var services = AppServices.Open(databaseFile);
+        Assert.Null(services.Links);
+        Assert.IsType<SimProcessMonitor>(services.Sim);
+        services.Sim = sim;
+        services.UseSim(new SimPaths(null, temp.Root, community, null), gsx);
+
+        Assert.NotNull(services.Links);
+        Assert.Same(sim, services.Links!.Sim);
+        Assert.NotNull(services.Links.Applier);
+        Assert.NotNull(services.Links.Sync);
+        Assert.NotNull(services.Links.Remover);
+    }
+
+    private sealed class StoppedSim : ISimProcessMonitor
+    {
+        public bool IsRunning => false;
     }
 
     private static List<string> ListCommunity(string community) =>

@@ -53,7 +53,7 @@ public static class BoardBuilder
         }
 
         var provisional = cards.Where(c => c.Id is null).ToList();
-        var banner = MakeBanner(state, input, summaries, provisional.Count, GroupingCount(state, input, provisional));
+        var banner = MakeBanner(state, input, summaries, provisional.Count, GroupingCount(state, input, provisional), notShown);
         return new Board(WithBuiltIns(Ordered(cards), banner, facts), [.. notShown.OrderBy(n => n.Name.Value, Names)], banner)
         {
             GsxNotRecognised = ProfileCatalog.NotRecognised(state, input),
@@ -167,7 +167,7 @@ public static class BoardBuilder
             ? provisional.Count(c => c.Packages.Any(p => p.Path.Length > 0 && input.Unsettled.Contains(PathNormalizer.Normalize(p.Path))))
             : provisional.Count;
 
-    private static Banner MakeBanner(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries, int provisionalCards, int grouping)
+    private static Banner MakeBanner(UserState state, BoardInput input, IReadOnlyDictionary<PackageName, PackageSummary> summaries, int provisionalCards, int grouping, List<NotShownPackage> notShown)
     {
         List<ClassifiedEntry> Of(EntryClass entryClass)
             => [.. input.Community.Where(e => e.Class == entryClass).OrderBy(e => e.Entry.Name, Names)];
@@ -187,8 +187,8 @@ public static class BoardBuilder
         {
             // Plan 4, D3: only a machine that has stored profiles on cards can have lost the folder.
             GsxFolderMissing = !input.GsxFolderFound && state.Profiles.Any(p => p.Value.CardId is not null),
-            StaleLinks = Of(EntryClass.Stale),
             Grouping = grouping,
+            OnButNotShown = [.. notShown.Where(n => state.IsOn(n.Name)).Select(n => n.Name).OrderBy(n => n.Value, Names)],
         };
     }
 

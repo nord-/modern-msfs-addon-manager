@@ -22,8 +22,6 @@ public class ReconcilerTests
     private readonly PackageIndex index;
     private readonly UserState state = new() { Snapshot = [] };
 
-    private static readonly Dictionary<PackageName, SyncChoice> Defaults = [];
-
     public ReconcilerTests()
         => index = new PackageIndex([a, b, xOwn, xNeofly, mNew, lk, offCopy], [SimAddons, Neofly, Fsdt, Unplugged], [Unplugged]);
 
@@ -85,16 +83,27 @@ public class ReconcilerTests
     }
 
     [Fact]
-    public void Adopt_then_default_choice_on_a_moved_row_repoints_instead_of_removing()
+    public void Keeping_community_on_a_moved_row_of_an_off_package_re_points_the_link_and_stores_nothing_yet()
     {
-        Reconciler.Adopt(state, Classify(MovedLink), index);
+        state.SetOn(M, false);
         Accept(MovedLink);
         var moved = Diff(MovedLink).Single();
 
-        var relink = Reconciler.Resolve(state, [moved], Defaults);
+        var relink = Reconciler.KeepCommunity(state, [moved]);
 
-        Assert.Equal(new DesiredLink(true, mNew.Path), relink[M]);
-        Assert.Equal(mNew.Path, Assert.Single(relink).Value.CopyPath);
+        Assert.Equal(new DesiredLink(true, mNew.Path), Assert.Single(relink).Value);
+        Assert.False(state.IsOn(M));
+    }
+
+    [Fact]
+    public void Diff_gives_no_row_for_a_package_in_the_repair_set()
+    {
+        Reconciler.Adopt(state, Classify(MovedLink), index);
+        Accept(MovedLink);
+
+        Assert.True(state.IsOn(M));
+        Assert.Empty(Diff(MovedLink));
+        Assert.Equal(new DesiredLink(true, mNew.Path), Reconciler.StaleRepairs(state, Classify(MovedLink), index)[M]);
     }
 
     [Fact]
@@ -130,7 +139,16 @@ public class ReconcilerTests
         var row = Diff(J(a)).Single();
 
         Assert.Equal(new SyncRow(A, SyncReason.LinkAppeared, a.Path), row);
-        Assert.Equal(SyncChoice.KeepCommunity, row.DefaultChoice);
+    }
+
+    [Fact]
+    public void Keeping_community_turns_on_a_package_whose_link_appeared_and_stores_its_copy()
+    {
+        var relink = Reconciler.KeepCommunity(state, Diff(J(a)));
+
+        Assert.Empty(relink);
+        Assert.True(state.IsOn(A));
+        Assert.Equal(a.Path, state.Packages[A].ActiveCopyPath);
     }
 
     [Fact]
@@ -152,7 +170,7 @@ public class ReconcilerTests
         Accept(J(xOwn));
 
         var row = Diff(J(xNeofly)).Single();
-        Reconciler.Resolve(state, [row], Defaults);
+        Reconciler.KeepCommunity(state, [row]);
 
         Assert.Equal(new SyncRow(X, SyncReason.LinkRetargeted, xNeofly.Path), row);
         Assert.Equal(xNeofly.Path, state.Packages[X].ActiveCopyPath);
@@ -183,16 +201,43 @@ public class ReconcilerTests
     }
 
     [Fact]
-    public void Moved_package_defaults_to_restoring_the_link_at_the_new_location()
+    public void Moved_package_that_is_off_gives_a_moved_row_to_the_new_location()
     {
-        state.SetOn(M, true);
+        state.SetOn(M, false);
         Accept(MovedLink);
 
         var row = Diff(MovedLink).Single();
 
         Assert.Equal(SyncReason.Moved, row.Reason);
         Assert.Equal(mNew.Path, row.NewTarget);
-        Assert.Equal(SyncChoice.RestoreApp, row.DefaultChoice);
+    }
+
+    [Fact]
+    public void A_not_shown_moved_package_that_is_off_gives_no_row()
+    {
+        state.SetOn(M, false);
+        Accept(MovedLink);
+
+        Assert.Empty(DiffNotShown(M, MovedLink));
+    }
+
+    [Fact]
+    public void A_moved_package_that_is_on_gives_no_row_but_a_repair()
+    {
+        state.SetOn(M, true);
+        Accept(MovedLink);
+
+        Assert.Empty(Diff(MovedLink));
+        Assert.Equal([M], Reconciler.StaleRepairs(state, Classify(MovedLink), index).Keys);
+    }
+
+    [Fact]
+    public void A_pending_package_is_not_repaired()
+    {
+        state.SetOn(M, true);
+        state.Pending.Add(M);
+
+        Assert.Empty(Reconciler.StaleRepairs(state, Classify(MovedLink), index));
     }
 
     [Fact]
@@ -207,7 +252,7 @@ public class ReconcilerTests
     }
 
     [Fact]
-    public void A_link_changed_by_another_tool_in_a_registered_library_gives_a_sync_row()
+    public void A_link_changed_by_another_tool_in_a_registered_library_gives_a_row()
     {
         state.SetOn(Lk, true, lk.Path);
         Accept(J(lk));
@@ -218,33 +263,29 @@ public class ReconcilerTests
     }
 
     [Fact]
-    public void KeepCommunity_on_a_moved_row_turns_off_and_returns_the_package_so_the_stale_link_is_removed()
-    {
-        state.SetOn(M, true);
-        Accept(MovedLink);
-        var row = Diff(MovedLink).Single();
-
-        var relink = Reconciler.Resolve(state, [row], new Dictionary<PackageName, SyncChoice> { [M] = SyncChoice.KeepCommunity });
-
-        Assert.Equal(new DesiredLink(false), relink[M]);
-        Assert.True(state.IsOn(M));
-    }
-
-    [Fact]
-    public void KeepCommunity_sets_the_choice_and_RestoreApp_returns_the_package_to_relink()
+    public void Keeping_community_stores_every_change_and_returns_no_link_change()
     {
         state.SetOn(B, true);
         Accept(J(b));
-        var rows = Diff(J(a));
-        var appeared = rows.Single(r => r.Package == A);
-        var disappeared = rows.Single(r => r.Package == B);
 
-        var relink = Reconciler.Resolve(state, [appeared, disappeared],
-            new Dictionary<PackageName, SyncChoice> { [A] = SyncChoice.KeepCommunity, [B] = SyncChoice.RestoreApp });
+        var relink = Reconciler.KeepCommunity(state, Diff(J(a)));
 
-        Assert.True(state.Packages[A].On);
-        Assert.True(state.Packages[B].On);
-        Assert.Equal([B], relink.Keys);
+        Assert.True(state.IsOn(A));
+        Assert.False(state.IsOn(B));
+        Assert.Empty(relink);
+    }
+
+    [Fact]
+    public void Keeping_community_turns_off_a_package_that_is_on_but_not_linked_and_on_one_that_is_linked()
+    {
+        state.SetOn(A, true);
+        Accept(J(b));
+
+        Reconciler.KeepCommunity(state, Diff(J(b)));
+
+        Assert.False(state.IsOn(A));
+        Assert.True(state.IsOn(B));
+        Assert.Equal(b.Path, state.Packages[B].ActiveCopyPath);
     }
 
     [Fact]
@@ -256,9 +297,9 @@ public class ReconcilerTests
         var stale = CommunityClassifier.Classify([MovedLink], twoCopies);
         Accept(MovedLink);
 
-        var row = Reconciler.Diff(state, stale, twoCopies, new HashSet<PackageName>(), new HashSet<PackageName>()).Single();
+        var repair = Reconciler.StaleRepairs(state, stale, twoCopies).Single();
 
-        Assert.Equal(mOther.Path, row.NewTarget);
+        Assert.Equal(new DesiredLink(true, mOther.Path), repair.Value);
     }
 
     private static readonly PackageName Vanished = new("orbx-eham-1-3");
@@ -300,14 +341,14 @@ public class ReconcilerTests
         var row = Assert.Single(DiffNotFound(Vanished, J("orbx-eham-1-3", @"D:\Elsewhere\orbx-eham-1-3", exists: false)));
 
         Assert.Equal(SyncReason.LinkRetargeted, row.Reason);
-        Assert.False(row.Restorable);
-        Reconciler.Resolve(state, [row], Defaults);
+        Assert.True(row.NotFound);
+        Reconciler.KeepCommunity(state, [row]);
         Assert.True(state.IsOn(Vanished));
         Assert.Null(state.Packages[Vanished].ActiveCopyPath);
     }
 
     [Fact]
-    public void A_not_found_packages_link_removed_by_another_tool_offers_only_keep_community()
+    public void A_not_found_packages_link_removed_by_another_tool_turns_it_off()
     {
         state.SetOn(Vanished, true);
         Accept(VanishedLink());
@@ -316,41 +357,38 @@ public class ReconcilerTests
 
         Assert.Equal(Vanished, row.Package);
         Assert.Equal(SyncReason.LinkDisappeared, row.Reason);
-        Assert.False(row.Restorable);
         Assert.Empty(Diff());
 
-        var relink = Reconciler.Resolve(state, [row], new Dictionary<PackageName, SyncChoice> { [Vanished] = SyncChoice.RestoreApp });
+        var relink = Reconciler.KeepCommunity(state, [row]);
 
         Assert.Empty(relink);
         Assert.False(state.IsOn(Vanished));
     }
 
     [Fact]
-    public void A_sync_row_for_a_not_shown_package_offers_only_keep_community()
+    public void A_link_that_appeared_for_a_not_shown_package_turns_it_on_with_that_copy()
     {
         var row = Assert.Single(DiffNotShown(A, J(a)));
 
         Assert.Equal(SyncReason.LinkAppeared, row.Reason);
-        Assert.False(row.Restorable);
-        Assert.True(Diff(J(a)).Single().Restorable);
 
-        var relink = Reconciler.Resolve(state, [row], new Dictionary<PackageName, SyncChoice> { [A] = SyncChoice.RestoreApp });
+        var relink = Reconciler.KeepCommunity(state, [row]);
 
         Assert.Empty(relink);
         Assert.True(state.IsOn(A));
+        Assert.Equal(a.Path, state.Packages[A].ActiveCopyPath);
     }
 
     [Fact]
-    public void A_not_shown_packages_link_re_pointed_to_a_real_duplicate_stores_that_copy_when_kept()
+    public void A_not_shown_packages_link_re_pointed_to_a_real_duplicate_stores_that_copy()
     {
         state.SetOn(X, true, xOwn.Path);
         Accept(J(xOwn));
 
         var row = Assert.Single(DiffNotShown(X, J(xNeofly)));
-        Reconciler.Resolve(state, [row], Defaults);
+        Reconciler.KeepCommunity(state, [row]);
 
         Assert.Equal(SyncReason.LinkRetargeted, row.Reason);
-        Assert.False(row.Restorable);
         Assert.Equal(xNeofly.Path, state.Packages[X].ActiveCopyPath);
     }
 

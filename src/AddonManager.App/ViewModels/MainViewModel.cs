@@ -30,6 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly Action<Action> post;
     private readonly string gsxFolder;
     private readonly Func<string?, Task<ImageSource?>> loadImage;
+    private readonly Func<string, bool> confirm;
     private readonly Dictionary<MenuSection, CardTab> rememberedTabs = [];
     private Board? lastBoard;
     private int queued;
@@ -67,12 +68,17 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string databaseFile = "";
 
-    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, Func<string?, Task<ImageSource?>> loadImage)
+    /// <summary>The open card dialog, or <c>null</c>.</summary>
+    [ObservableProperty]
+    private CardDialogViewModel? cardDialog;
+
+    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, Func<string?, Task<ImageSource?>> loadImage, Func<string, bool> confirm)
     {
         this.session = session;
         this.post = post;
         this.gsxFolder = gsxFolder;
         this.loadImage = loadImage;
+        this.confirm = confirm;
         session.Changed += OnSessionChanged;
         Apply(session.Current);
     }
@@ -99,6 +105,18 @@ public sealed partial class MainViewModel : ObservableObject
     public bool ShowRetryHint => Phase == SessionPhase.Failed && CanRetry;
 
     private bool CanRescan => Phase == SessionPhase.Ready || (Phase == SessionPhase.Failed && CanRetry);
+
+    [RelayCommand]
+    private void OpenCard(CardViewModel? card)
+    {
+        // A card opens only on the current board.
+        if (card is null || lastBoard is null || card.Ref.In(lastBoard) is null)
+            return;
+        CardDialog = new CardDialogViewModel(session, lastBoard, card.Ref, confirm);
+    }
+
+    [RelayCommand]
+    private void CloseCard() => CardDialog = null;
 
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task Rescan() => session.RescanAsync(full: true);
@@ -143,8 +161,10 @@ public sealed partial class MainViewModel : ObservableObject
 
         CanRetry = view.CanRetry;
         ErrorText = view.Phase == SessionPhase.Ready ? null : view.Error;
-        BannerLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder);
+        BannerLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder, view.LinksWaiting);
         Phase = view.Phase;
+        if (boardChanged && CardDialog is not null && !CardDialog.Update(lastBoard!))
+            CardDialog = null;
 
         if (view.Phase == SessionPhase.Ready && (boardChanged || !wasReady))
             RefreshSettings();

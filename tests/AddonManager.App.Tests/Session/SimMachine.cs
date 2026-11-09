@@ -72,6 +72,16 @@ public sealed class SimMachine : IDisposable
         Quiet(Community);
     }
 
+    /// <summary>Moves a Package folder to another Library, so a link to its old place is left Stale.</summary>
+    public void MovePackage(string name, string fromLibrary, string toLibrary)
+    {
+        var target = Path.Combine(temp.Root, toLibrary, name);
+        Directory.Move(Path.Combine(temp.Root, fromLibrary, name), target);
+        Quiet(target);
+        Quiet(Path.Combine(temp.Root, toLibrary));
+        Quiet(Path.Combine(temp.Root, fromLibrary));
+    }
+
     public void WriteGsx(string fileName)
     {
         var file = Path.Combine(Gsx, fileName);

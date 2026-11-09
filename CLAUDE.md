@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Plans 1 (link engine), 2 (content scan), 3 (the card wall) and 3b (card model) are done; their sim-machine runs were the handover issues #15 and #17. Plan 4 (GSX, plan on PR #19) is implemented and its scenario tests run on the re-exported fixture. Plan 5a (the WPF app shell: main window, first run, banner, single instance) is implemented; plan 5b is next, tracked in issue #22 — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
+Plans 1 (link engine), 2 (content scan), 3 (the card wall) and 3b (card model) are done; their sim-machine runs were the handover issues #15 and #17. Plan 4 (GSX, plan on PR #19) is implemented and its scenario tests run on the re-exported fixture. Plan 5a (the WPF app shell: main window, first run, banner, single instance) and plan 5b (a switch per card, Remove, every change refused while MSFS runs, Community always adopted silently at every discovery, links to moved add-ons repaired) are implemented; 5c (card editing, GSX) and 5d (Settings) are next, tracked in issue #22 — see `docs/superpowers/plans/`. Spec: `docs/superpowers/specs/2026-10-25-mvp-design.md`. `ANALYS.md` (Swedish) is the source of truth for background, decisions and open questions; read it before proposing designs. When a decision is made, record it there (with date).
 
 ## Commands
 

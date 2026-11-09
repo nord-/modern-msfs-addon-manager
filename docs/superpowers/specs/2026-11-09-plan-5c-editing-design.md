@@ -37,7 +37,7 @@ Layout, always editable (no edit mode):
 └─────────────────────────────────────────────┘
 ```
 
-- **Name:** a text box. The text is trimmed, then saved (`CardEditor.Rename`) on Enter, when focus leaves the box, when the dialog closes by ✕ or a click outside, and when the dialog switches to another card (section 5); the save happens before the dialog closes or changes card. Nothing is saved when the trimmed text equals the name the card shows, so clicking through the box never pins the computed name. An empty box clears the user's name, so the computed name returns. Esc is the one exit that drops text not yet saved; it closes the dialog as before.
+- **Name:** a text box. The text is trimmed, then saved (`CardEditor.Rename`) on Enter, when focus leaves the box, when the dialog closes by ✕ or a click outside, and when the dialog switches to another card (section 5); the save happens before the dialog closes or changes card. Nothing is saved unless the user changed the text since the box was last filled from the card, so clicking through the box never pins the computed name, even when a scan changes the computed name meanwhile. An empty box clears the user's name, so the computed name returns. Esc is the one exit that drops text not yet saved; it closes the dialog as before.
 - **A new board while typing:** the dialog refreshes on every board change (watcher, F5, the user's own edits). A text box that has focus keeps its text; it is refreshed when it loses focus.
 - **Image:** the button "Image ▾" opens a menu with one item per Package of the card that has a thumbnail (thumbnail and display name), then "Choose file…" (an open-file dialog for `.jpg`, `.jpeg`, `.png`; only the path is stored, the file is never copied or moved), then "Automatic" (clears the user's image). `CardEditor.SetImage`. A picked file that is gone later shows the placeholder of the card's type. Core: `CardPackage` gets the Package's `ThumbnailPath`, which the menu needs.
 - **ICAO code field (Scenery cards only):** the card's ICAO codes as chips, each with ×, which runs `CardEditor.RemoveCode`. A text box after the chips suggests known Airports with their names, from `ContentAnalysis.Airports` through the existing `AirportSuggestions.Find` (codes starting with the text first, then names containing it, at most 10), so typing "Schip" offers EHAM. Up and Down select a suggestion; Enter adds the selected suggestion, or the typed text when none is selected; a click on a suggestion adds it; Esc closes the suggestions before it closes the dialog. Adding runs `CardEditor.AddCode`, which also moves the card to the Airports tab (MVP spec 6.5); the dialog stays open on the card. The outcome is shown under the field: `Invalid` → "Use 3–5 letters or digits."; `Taken` → "EHAM is already on EHAM Schiphol." (the code and the holder's name), or "EHAM is already on another card." when the holder is not on the board. The text box is cleared only when the code is added; a refusal keeps the text.
@@ -65,7 +65,9 @@ WPF's built-in `DragDrop`; no new dependency.
 6. Provisional cards cannot be dragged and accept no drop.
 7. Tabs do not open while hovering during a drag. Merging cards on two tabs takes two drags (move, then merge), as spec 6.5 says.
 
-Merge and moves work while MSFS runs: they change only the app's data.
+Merge, moves and Split work while MSFS runs: they change only the app's data. After a drop on a tab header or a menu section the wall stays on the current section and tab; the card leaves the view.
+
+A drop that is refused (a locked `userdata.db`, a card that is gone) changes nothing and shows its message as a line in the banner, where a locked file is already reported during a run (plan 5a D9). The line stays until the next change or the next board.
 
 ## 5. The rest of the card dialog
 
@@ -77,7 +79,7 @@ Below the Package rows, in this order. A part is shown only when it has content.
    - **other cards at the same Airport** (`Board.CardsAt`, without this card) as clickable names; a click switches the dialog to that card.
 3. **Tags:** one comma-separated line, read-only. Tags come from the folder structure and aircraft type designators, so they are not edited in the dialog.
 
-No new Core rules: `Card` already carries `BuiltIns`, `Tags`, `CardPackage.Codes` and `CardPackage.ReplacesBuiltIn`; Airport names come from `ContentAnalysis.Airports`.
+No new Core rules: `Card` already carries `BuiltIns`, `Tags`, `CardPackage.Codes` and `CardPackage.ReplacesBuiltIn`.
 
 ## 6. The GSX section (display only)
 
@@ -97,9 +99,9 @@ GSX
 - **Active profiles on another card:** an active profile for one of the card's ICAO codes that sits on another card (automation may give two cards the same code, MVP 6.5) also gets a row, with "on <card name>" as a clickable name that switches the dialog to that card, like the other cards of section 5. So the dialog always shows the profiles behind the wall's Two profiles warning.
 - **Two active profiles:** more than one active `.ini` for one ICAO code (`GsxAirport.Active`, on any card) puts a yellow `Warning` icon at each of those profile rows, with the tooltip "Two GSX profiles for EHAM".
 - **Disabled (`.off`)** profile Packages and **shipped** profiles are dimmed and never counted. A `.off` variant of an active profile (both `lpma.ini` and `lpma.off`) is not a row of its own.
-- **A shipped profile** is a row named after its `.ini` file without extension, labelled "shipped with scenery". A shipped profile whose name is already in the GSX folder (`ShippedProfile.InGsxFolder`) is not shown: the installed profile already has its row.
+- **A shipped profile** is a row named after its `.ini` file without extension, labelled "shipped with scenery". A shipped profile whose name is already in the GSX folder (`ShippedProfile.InGsxFolder`) is not shown when the installed profile has a row here (on this card, or active on another card); otherwise it is shown, so it never vanishes without trace.
 - **An ICAO code with no active profile:** the code and an icon-only search button (Fluent `Search20`) with the tooltip "Search flightsim.to for EHRD GSX profiles"; it opens `GsxAirport.SearchLink` in the browser. No text on the button.
-- **Errors** are never shown in a dialog (Rickard, 2026-11-09). The section only displays, so its one error is a search link the browser could not open: a yellow `Warning` icon then appears after that search button, with the error as its tooltip, until the dialog shows another card.
+- **Errors** are never shown in a message box or popup (Rickard, 2026-11-09). The section only displays, so its one error is a search link the browser could not open: a yellow `Warning` icon then appears after that search button, with the error as its tooltip, until the dialog shows another card.
 
 ### 6.1 Shipped profiles are not active (spec 15 closed)
 
@@ -107,6 +109,7 @@ GSX Pro with the SU10 Navdata API option reads custom airport profiles only from
 
 ## 7. Deviations from the MVP spec and issue #23
 
+- **Merge asks for confirmation** (Rickard, 2026-11-09); MVP 6.5 merged on the drop.
 - **"Move out" is called "Split"** everywhere (UI, spec, `CardEditor.Split`). Rickard, 2026-11-09: rename it as the opposite of "Merge".
 - **No copy of a shipped profile in 5c.** Issue #23 and spec 8 had a copy action with the Two profiles question. Rickard, 2026-11-09: there is only on/off for a profile, and on/off is not part of 5c. `GsxProfileCopier` stays unused until on/off for profiles is designed.
 - **GSX section shows no file details** (`.py` files, disabled variants per file) and the search link is an icon only.
@@ -122,7 +125,7 @@ GSX Pro with the SU10 Navdata API option reads custom airport profiles only from
 - **Session:** `IAppSession` gets one method per edit (rename, set image, add code, remove code, split, merge, move to tab, move to section), each through the existing `AppSession.Change(...)` path: run under the session lock, publish the board it leaves, return the message to show or `null`. `AddCode` returns its `CodeOutcome` so the dialog can word a rejection. The session also exposes the known Airports for suggestions.
 - **Dialog:** the card dialog is split into four `UserControl`s with their view-model parts: header, Package rows, info, GSX. The dialog view model stays the owner of the card and of `Update(board)`.
 - **Drag and drop:** `CardView` starts the drag with the card's `CardRef`; the card wall, the tab headers and the left menu handle `DragOver`/`Drop` and call the main view model, which calls the session.
-- **Errors:** as in 5b, a change returns a message instead of throwing; the dialog shows it as `Message`. A locked user-data file is reported the same way.
+- **Errors:** as in 5b, a change returns a message instead of throwing. The dialog shows it as `Message`; a drop on the wall shows it in the banner (4.2). A locked user-data file is reported the same way.
 
 ## 9. Testing
 

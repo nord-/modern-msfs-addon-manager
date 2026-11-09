@@ -2,6 +2,7 @@ using AddonManager.Core.Cards;
 using AddonManager.Core.Community;
 using AddonManager.Core.Content;
 using AddonManager.Core.FirstRun;
+using AddonManager.Core.Linking;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Core.Sync;
@@ -11,12 +12,12 @@ using AddonManager.Sim2020;
 namespace AddonManager.App.Session;
 
 /// <summary>
-/// The WPF-free heart of the app: startup, first run, scans, following Community and watching (plan 5a). One lock guards the state, the
+/// The WPF-free heart of the app: startup, first run, scans, adopting Community at every discovery and watching (plans 5a and 5b). One lock guards the state, the
 /// phase, the current view and the watcher reference. It is held while a run is requested and while its discovery and completion are
 /// handled, never while a watcher is disposed or <see cref="Changed"/> is raised. The UI thread never takes it while a run can hold it:
 /// <see cref="RescanAsync"/> and <see cref="CompleteFirstRunAsync"/> move to the thread pool first.
 /// </summary>
-public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
+public sealed partial class AppSession(Func<AppServices> openServices, Func<SimPaths?> locate, string gsxFolder) : IAppSession, IDisposable
 {
     private readonly object gate = new();
     private readonly UserState emptyState = new();
@@ -26,6 +27,8 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
     private IReadOnlyList<CommunityEntryInfo>? community;
     private string? pickedRoot;
     private DiscoveryOutcome? latestDiscovery;
+    private BoardInput? latestInput;
+    private string? repairError;
     private ScanOutcome? lastHandled;
     private Task<ScanOutcome>? latestTask;
     private IReadOnlyList<PackageContent> cachedContents = [];
@@ -135,6 +138,8 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
     });
 
     public Task RescanAsync(bool full) => Task.Run(() => RunAsync(full));
+
+    public bool IsSimRunning => services?.Links?.Sim.IsRunning ?? false;
 
     public void Dispose()
     {
@@ -298,13 +303,31 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             watcher ??= NewWatcher(discovery);
 
             var state = State;
-            SaveStep(() => CommunityFollower.Follow(state, discovery.Community, discovery.Index));
+            var links = services!.Links!;
+            var input = latestInput = discovery.ToBoardInput(cachedContents, cachedAnalysis!, GsxFolderReader.Read(gsxFolder));
 
-            if (StartupRules.ShowsWallAtDiscovery(state, cachedContents.Count))
+            // Community is adopted at every discovery, the first run's too, and that needs a board even when the wall is not shown yet (D4).
+            StartupOutcome started;
+            try
             {
-                var input = discovery.ToBoardInput(cachedContents, cachedAnalysis!, GsxFolderReader.Read(gsxFolder)).Reanalyze(state);
-                raise = Publish(view with { Phase = SessionPhase.Ready, Board = BoardBuilder.Build(state, input), CanRetry = false });
+                started = links.Sync.Start(state, discovery.Index, BuildBoard(input));
             }
+            catch
+            {
+                // Start may have changed the state before its save failed; the next step saves it again.
+                unsaved = true;
+                throw;
+            }
+
+            // Start changed the state (adoption) and Community (repairs), so the board is built again from Community as it is now.
+            var board = BuildBoard(input);
+            repairError = started.Repaired is { Failed.Count: > 0 } repaired ? Describe(repaired.Failed) : null;
+
+            var next = view with { LinksWaiting = started.RepairsWaiting, Error = repairError };
+            if (StartupRules.ShowsWallAtDiscovery(state, cachedContents.Count))
+                next = next with { Phase = SessionPhase.Ready, Board = board, CanRetry = false };
+            if (!Equals(next, view))
+                raise = Publish(next);
         }
 
         Raise(raise);
@@ -324,9 +347,10 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             lastHandled = outcome;
             Interlocked.Increment(ref handledOutcomes);
             var state = State;
-            var input = outcome.ToBoardInput();
-            SaveStep(() => Settlement.Apply(state, input.Reanalyze(state), DateTimeOffset.UtcNow));
-            raise = Publish(new SessionView(SessionPhase.Ready, BoardBuilder.Build(state, input.Reanalyze(state)), null, null));
+            var input = latestInput = outcome.ToBoardInput();
+            SaveStep(() => Settlement.Apply(state, Reanalyzed(input), DateTimeOffset.UtcNow));
+            // The waiting line and the repair error outlive the run's completion.
+            raise = Publish(new SessionView(SessionPhase.Ready, BuildBoard(input), null, repairError, LinksWaiting: view.LinksWaiting));
 
             replaced = watcher;
             current = watcher = NewWatcher(outcome.Discovery);
@@ -367,8 +391,8 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             if (watcher is null && services?.Scans is not null)
                 watcher = NewWatcher(null);
             raise = Publish(view.Board is null
-                ? new SessionView(SessionPhase.Failed, null, null, error, CanRetry: true)
-                : new SessionView(SessionPhase.Ready, view.Board, null, error));
+                ? new SessionView(SessionPhase.Failed, null, null, error, CanRetry: true, LinksWaiting: view.LinksWaiting)
+                : new SessionView(SessionPhase.Ready, view.Board, null, error, LinksWaiting: view.LinksWaiting));
         }
 
         Raise(raise);
@@ -403,6 +427,29 @@ public sealed class AppSession(Func<AppServices> openServices, Func<SimPaths?> l
             throw;
         }
     }
+
+    /// <summary>"1 link could not be repaired: message", "3 links could not be repaired: message" (the first failure's message).</summary>
+    private static string Describe(IReadOnlyList<(PackageName Package, string Error)> failed)
+        => $"{failed.Count} {(failed.Count == 1 ? "link" : "links")} could not be repaired: {failed[0].Error}";
+
+    /// <summary>The input with Community read now, under the lock: the run's copy can predate a change of our own (D3).</summary>
+    private BoardInput WithCurrentCommunity(BoardInput input)
+    {
+        try
+        {
+            return input with { Community = CommunityClassifier.Classify(services!.ReadCommunity(), input.Index) };
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return input;
+        }
+    }
+
+    /// <summary>The input as every board and settlement takes it: Community as it is now, analysed with the current cards. Caller holds the lock.</summary>
+    private BoardInput Reanalyzed(BoardInput input) => WithCurrentCommunity(input).Reanalyze(State);
+
+    /// <summary>A board from the given input, never empty, also when the wall is not shown. Caller holds the lock.</summary>
+    private Board BuildBoard(BoardInput input) => BoardBuilder.Build(State, Reanalyzed(input));
 
     private IContentWatcher NewWatcher(DiscoveryOutcome? discovery)
     {

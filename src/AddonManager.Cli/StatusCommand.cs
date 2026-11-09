@@ -122,9 +122,9 @@ internal static class StatusCommand
         {
             // `status` has no content scan, so it knows no Not found or Not shown Packages.
             var rows = Reconciler.Diff(state, classified, index, new HashSet<PackageName>(), new HashSet<PackageName>());
-            output.WriteLine($"Sync rows: {rows.Count}");
+            output.WriteLine($"Changes to adopt from Community: {rows.Count}");
             foreach (var row in rows)
-                output.WriteLine($"  {row.Package}: {row.Reason}{(row.NewTarget is null ? "" : " -> " + row.NewTarget)} (default {row.DefaultChoice})");
+                output.WriteLine($"  {row.Package}: {row.Reason}{(row.NewTarget is null ? "" : " -> " + row.NewTarget)}");
         }
 
         return 0;

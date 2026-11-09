@@ -15,11 +15,22 @@ public sealed record ApplyResult(
 
 /// <summary>
 /// The one apply path for every link change (spec 6.8): the link is changed first, then choice and snapshot
-/// are saved in one write. While the sim runs, nothing is written to Community and the change is Pending. Every entry point that saves
-/// opens <see cref="IUserStateStore.BeginChange"/> first, so a locked file refuses the change before any link is touched.
+/// are saved in one write. While the sim runs every change is refused with <see cref="SimRunningException"/> before anything is
+/// changed or stored; only <see cref="FlushPending"/>, for leftovers from older data, answers <see cref="ApplyResult.Deferred"/>.
+/// Every entry point that saves opens <see cref="IUserStateStore.BeginChange"/> first, so a locked file refuses the change before any link is touched.
 /// </summary>
 public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community, IUserStateStore store, ISimProcessMonitor sim, string communityPath)
 {
+    /// <summary>Whether the sim runs right now; the answer can change before the next call.</summary>
+    public bool IsSimRunning => sim.IsRunning;
+
+    /// <summary>Throws <see cref="SimRunningException"/> while the sim runs; every entry point starts with it.</summary>
+    public void EnsureSimClosed()
+    {
+        if (sim.IsRunning)
+            throw new SimRunningException();
+    }
+
     public ApplyResult SetChoices(UserState state, PackageIndex index, IReadOnlyDictionary<PackageName, bool> choices)
         => Apply(state, index, choices.ToDictionary(c => c.Key, c => new DesiredLink(c.Value)), Mode.Choices);
 
@@ -27,7 +38,7 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
     public ApplyResult Relink(UserState state, PackageIndex index, IEnumerable<PackageName> packages)
         => ApplyLinks(state, index, packages.Distinct().ToDictionary(p => p, p => new DesiredLink(state.IsOn(p))));
 
-    /// <summary>Applies the link changes of resolved sync rows (RestoreApp, Moved). Nothing is stored until its link has changed or the change is deferred.</summary>
+    /// <summary>Re-points the links to moved add-ons (D10), also those of off Packages that Community still links. Nothing is stored until its link has changed.</summary>
     public ApplyResult ApplyLinks(UserState state, PackageIndex index, IReadOnlyDictionary<PackageName, DesiredLink> desired)
         => Apply(state, index, desired.ToDictionary(d => d.Key, d => d.Value), Mode.Relink);
 
@@ -43,11 +54,10 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
         return Apply(state, index, state.Pending.ToDictionary(p => p, p => new DesiredLink(state.IsOn(p))), Mode.Flush);
     }
 
-    /// <remarks>While the sim runs nothing is recorded: the result is <see cref="ApplyResult.DeferredEmpty"/> and the caller should disable the action instead of promising a later removal.</remarks>
+    /// <remarks>Throws <see cref="SimRunningException"/> while the sim runs; nothing is recorded.</remarks>
     public ApplyResult RemoveBrokenLink(UserState state, PackageIndex index, string entryName)
     {
-        if (sim.IsRunning)
-            return ApplyResult.DeferredEmpty;
+        EnsureSimClosed();
 
         using var change = store.BeginChange();
         var name = new PackageName(entryName);
@@ -81,6 +91,8 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
 
     private ApplyResult Apply(UserState state, PackageIndex index, Dictionary<PackageName, DesiredLink> desired, Mode mode)
     {
+        EnsureSimClosed();
+
         // Before any link or state change: a locked file refuses the whole change here.
         using var change = store.BeginChange();
         var current = CommunityClassifier.Classify(community.Read(), index);
@@ -93,8 +105,16 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
                 state.SetOn(r.Package, false);
         }
 
-        if (sim.IsRunning)
-            return Defer(state, desired, plan);
+        // D2b: the index can still list a copy deleted since the last discovery; never link to a folder that is gone.
+        var gone = plan.Ops.Where(o => o.Kind != LinkOpKind.Remove && !fs.DirectoryExists(o.TargetPath!)).Select(o => o.Package).ToHashSet();
+        if (gone.Count > 0)
+        {
+            plan = plan with
+            {
+                Ops = [.. plan.Ops.Where(o => !gone.Contains(o.Package))],
+                Rejections = [.. plan.Rejections, .. gone.Select(g => new Rejection(g, RejectReason.TargetGone))],
+            };
+        }
 
         var applied = new List<PackageName>();
         var failed = new List<(PackageName, string)>();
@@ -136,23 +156,9 @@ public sealed class ChangeApplier(ILinkFileSystem fs, ICommunitySource community
             state.Pending.ExceptWith(applied);
         }
 
-        UpdateSnapshot(state, changed);
+        UpdateSnapshot(state, [.. changed, .. plan.NoOp]);
         store.Save(state);
         return new ApplyResult(applied, plan.Rejections, failed, false);
-    }
-
-    private ApplyResult Defer(UserState state, Dictionary<PackageName, DesiredLink> desired, LinkPlan plan)
-    {
-        foreach (var op in plan.Ops)
-        {
-            state.SetOn(op.Package, desired[op.Package].On, desired[op.Package].CopyPath);
-            state.Pending.Add(op.Package);
-        }
-        foreach (var name in plan.NoOp)
-            state.SetOn(name, desired[name].On, desired[name].CopyPath);
-
-        store.Save(state);
-        return new ApplyResult(plan.Ops.Select(o => o.Package).Concat(plan.NoOp).ToList(), plan.Rejections, [], true);
     }
 
     private void Execute(LinkOp op, IReadOnlyList<ClassifiedEntry> current)

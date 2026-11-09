@@ -49,6 +49,12 @@ internal sealed class FirstRunFakeSession : IAppSession
 
     public Task RescanAsync(bool full) => Task.CompletedTask;
 
+    public bool IsSimRunning => false;
+
+    public Task<string?> SwitchCardAsync(CardRef card) => Task.FromResult<string?>(null);
+
+    public Task<string?> RemoveAsync(CardRef card, PackageKey package) => Task.FromResult<string?>(null);
+
     public void Publish(SessionView view)
     {
         Current = view;

@@ -1,15 +1,21 @@
 using AddonManager.Core.Community;
+using AddonManager.Core.Cards;
 using AddonManager.Core.Content;
+using AddonManager.Core.Linking;
 using AddonManager.Core.State;
+using AddonManager.Core.Sync;
 using AddonManager.Infrastructure;
 using AddonManager.Sim2020;
 using AddonManager.Sim2020.Content;
 
 namespace AddonManager.App;
 
+/// <summary>The composed write path: every Community change goes through these.</summary>
+public sealed record AppLinks(ChangeApplier Applier, SyncCoordinator Sync, PackageRemover Remover, ISimProcessMonitor Sim);
+
 /// <summary>
 /// The composition root: the only place the app creates services. It opens the user database and
-/// the scan service and reads Community; it never creates a link writer or a GSX writer.
+/// the scan service and reads Community; it creates the link writer only here, for <see cref="ChangeApplier"/>, and never a GSX writer.
 /// </summary>
 public sealed class AppServices : IDisposable
 {
@@ -36,6 +42,15 @@ public sealed class AppServices : IDisposable
     public string? GsxFolder { get; private set; }
 
     public ScanService? Scans { get; private set; }
+
+    /// <summary>The write path, composed by <c>UseSim</c> from the current <see cref="Store"/> and <see cref="Sim"/>; null before it.</summary>
+    public AppLinks? Links { get; private set; }
+
+    /// <summary>The sim process monitor; tests set it before <c>UseSim</c>.</summary>
+    internal ISimProcessMonitor Sim { get; set; } = new SimProcessMonitor();
+
+    /// <summary>Creates the link writer for <c>ChangeApplier</c>; tests set it before <c>UseSim</c> to make a link change fail.</summary>
+    internal Func<ILinkFileSystem> LinkFileSystem { get; set; } = () => new JunctionFileSystem();
 
     /// <summary>Creates the content watcher for the given Library paths; tests replace it.</summary>
     internal Func<IReadOnlyList<string>, IContentWatcher> CreateWatcher { get; set; }
@@ -66,6 +81,10 @@ public sealed class AppServices : IDisposable
         Paths = paths;
         GsxFolder = gsxFolder;
         Scans = scans;
+
+        var community = new CommunityReader(paths.CommunityPath);
+        var applier = new ChangeApplier(LinkFileSystem(), community, Store, Sim, paths.CommunityPath);
+        Links = new AppLinks(applier, new SyncCoordinator(applier, community, Store), new PackageRemover(applier, community, Sim, Store), Sim);
     }
 
     public IReadOnlyList<CommunityEntryInfo> ReadCommunity() => new CommunityReader(Paths!.CommunityPath).Read();

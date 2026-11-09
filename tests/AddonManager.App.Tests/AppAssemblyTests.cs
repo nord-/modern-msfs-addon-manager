@@ -9,12 +9,13 @@ public class AppAssemblyTests
 {
     private static readonly string[] ForbiddenTypes =
     [
-        "AddonManager.Core.Linking.ChangeApplier",
+        "AddonManager.Infrastructure.GsxProfileCopier"
+    ];
+
+    private static readonly string[] LinkWriterTypes =
+    [
         "AddonManager.Core.Linking.ILinkFileSystem",
-        "AddonManager.Infrastructure.JunctionFileSystem",
-        "AddonManager.Core.Sync.SyncCoordinator",
-        "AddonManager.Infrastructure.GsxProfileCopier",
-        "AddonManager.Sim2020.SimProcessMonitor"
+        "AddonManager.Infrastructure.JunctionFileSystem"
     ];
 
     private static readonly string[] FileSystemTypes =
@@ -27,11 +28,14 @@ public class AppAssemblyTests
     private static readonly string[] WriteNames = ["Delete", "Replace", "Open", "OpenHandle", "OpenWrite"];
 
     [Fact]
-    public void The_app_never_names_a_community_or_gsx_writer()
+    public void The_app_writes_community_only_through_the_apply_path()
     {
         var scan = ScanAssembly();
 
         Assert.Empty(ForbiddenTypes.Where(scan.Types.Contains).ToList());
+
+        // The link writer is only ever constructed (the default factory); no member of it is called.
+        Assert.DoesNotContain(scan.Members, m => LinkWriterTypes.Contains(m.Type) && m.Name != ".ctor");
 
         var writes = scan.Members.Where(m =>
             FileSystemTypes.Contains(m.Type)

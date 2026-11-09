@@ -45,7 +45,8 @@ public partial class App : Application
 
         Action<Action> post = action => Dispatcher.InvokeAsync(action);
         var thumbnails = new ThumbnailCache();
-        var main = new MainViewModel(session, post, AppPaths.GsxProfileFolder, thumbnails.LoadAsync);
+        var main = new MainViewModel(session, post, AppPaths.GsxProfileFolder, thumbnails.LoadAsync,
+            text => MessageBox.Show(text, "Remove", MessageBoxButton.YesNo) == MessageBoxResult.Yes);
         var firstRun = new FirstRunViewModel(session, post, PickFolder);
 
         MainWindow = new MainWindow(main, firstRun);

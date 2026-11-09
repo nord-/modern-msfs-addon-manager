@@ -22,7 +22,7 @@ public sealed class MainViewModelTests
         {
             loads.Add(path);
             return loader(path);
-        });
+        }, _ => true);
 
     private static string[] Names(MainViewModel vm) => [.. vm.Cards.Select(c => c.Name)];
 
@@ -400,5 +400,51 @@ public sealed class MainViewModelTests
         Assert.Empty(vm.SettingsLibraries[2].Folders);
         Assert.Equal(@"D:\Packages", vm.PackagesRoot);
         Assert.Equal(@"C:\Data\userdata.db", vm.DatabaseFile);
+    }
+
+    [Fact]
+    public void Clicking_a_card_opens_its_dialog()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+
+        vm.OpenCardCommand.Execute(vm.Cards[1]);
+
+        Assert.Equal("B", vm.CardDialog?.Title);
+
+        vm.CloseCardCommand.Execute(null);
+
+        Assert.Null(vm.CardDialog);
+    }
+
+    [Fact]
+    public void A_new_board_updates_the_open_dialog_and_closes_it_when_the_card_is_gone()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        vm.OpenCardCommand.Execute(vm.Cards[0]);
+        var dialog = vm.CardDialog;
+
+        Show(Ready(Board(Card(1, "A2", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+
+        Assert.Same(dialog, vm.CardDialog);
+        Assert.Equal("A2", vm.CardDialog!.Title);
+
+        Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
+
+        Assert.Null(vm.CardDialog);
+    }
+
+    [Fact]
+    public void The_banner_shows_the_line_for_links_waiting_for_the_sim()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+
+        Show(Ready(board) with { LinksWaiting = true });
+        Assert.Contains("Some links wait for MSFS to close. Close MSFS, then press F5.", vm.BannerLines);
+
+        Show(Ready(board));
+        Assert.DoesNotContain("Some links wait for MSFS to close. Close MSFS, then press F5.", vm.BannerLines);
     }
 }

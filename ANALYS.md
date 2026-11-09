@@ -380,6 +380,16 @@ Kontrollen gjordes på simmaskinen 2026-11-08 och på utvecklingsdatorn 2026-11-
 - **Kortdialogen har bara krysset i hörnet.** Close-knappen längst ner är borttagen. Esc och ett klick utanför dialogen stänger den fortfarande.
 - **Testmappen för kontrollen** innehåller `SCENERY`-paket utan BGL-filer, och appen klassar dem som Other. Skriptet `tools/dev-check/New-TestPackages.ps1` skriver nu ut att Library ska läggas till under Other.
 
+## Beslut för plan 5c (2026-11-09)
+
+Designen står i `docs/superpowers/specs/2026-11-09-plan-5c-editing-design.md` (issue #23). Alla fyra delarna är med: redigering av kortets huvud, Split och drag och släpp, dialogens övriga info och GSX-delen.
+
+- **"Move out" heter "Split"**, som motsats till "Merge", i gränssnittet, i spec och i koden (`CardEditor.Split`). Knappen har Fluent-ikonen `ArrowSplit20` framför texten. Appen använder WPF-UI:s ikoner (microsoft/fluentui-system-icons), inte MDI.
+- **Huvudet är alltid redigerbart**, utan redigeringsläge. Namnet sparas på Enter eller när fokus lämnar rutan; bilden väljs i en meny (paketens thumbnails, "Choose file…", "Automatic"); ICAO-koderna visas som chips med × och förslag medan man skriver.
+- **Merge utan bekräftelse.** Split är vägen tillbaka. Flikar öppnas inte när man hovrar över dem under ett drag.
+- **GSX-delen är bara visning i 5c.** Ingen kopiering av medföljande profiler och ingen on/off; Rickard, 2026-11-09: det finns bara on/off för en profil, och on/off ingår inte i 5c. En rad per profil med bara namnet, inga `.py`-filer. Två aktiva profiler för samma ICAO-kod ger en gul varningsikon vid varje profils namn. Fel visas aldrig som dialog; varningsikonen tänds och tooltipen säger felet. Söklänken till flightsim.to är bara en ikon (`Search20`). Avviker från spec 8 och issue #23.
+- **Medföljande profiler är inte aktiva (spec 15 stängd).** GSX Pro med SU10 Navdata API läser egna flygplatsprofiler bara från `%APPDATA%\Virtuali\GSX\MSFS`. Virtuali i FSDT:s forum, med citat ur GSX-manualen sida 83: "Custom profiles which were previously distributed by a scenery developer in the scenery package itself won't be used anymore" och "you need to be sure you have only ONE .INI for a given ICAO". Dave's GSX Profile Manager läser också bara GSX-mappen och installerar genom att kopiera dit.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

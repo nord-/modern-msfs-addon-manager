@@ -51,14 +51,14 @@ Layout, always editable (no edit mode):
 - Every Package row gets a **Split** button with the Fluent icon `ArrowSplit20` before the text (WPF-UI `ui:SymbolIcon`, from microsoft/fluentui-system-icons; the app has no other icon set).
 - Not shown on a card's only Package, on a GSX profile Package, or on a provisional card (the rules `CardEditor` already enforces).
 - Split gives the Package a new card of its own in the same menu section and tab, with no ICAO code and the old card's removed ICAO codes (spec 6.5 "Move out"). The dialog stays on the old card; the new card shows on the wall at once.
-- Core: `CardEditor.MoveOut` is renamed `Split`, so one name is used in the UI, the spec and the code. Split is the undo of a merge.
+- Core: `CardEditor.MoveOut` is renamed `Split`, so one name is used in the UI, the spec and the code. Split moves a Package out after a merge, but does not take back the ICAO codes the merge added (4.2).
 
 ### 4.2 Drag and drop
 
 WPF's built-in `DragDrop`; no new dependency.
 
 1. A drag starts when the pointer moves more than the system drag distance with the button down on a card. A drag never opens the dialog; a plain click opens it as today.
-2. **Drop on another card** on the wall → **Merge** (`CardEditor.Merge`): the wall shows one section and tab, so the target is always in the dragged card's section and tab. No confirmation; Split is the way back. A drop on the dragged card itself does nothing.
+2. **Drop on another card** on the wall → **Merge** (`CardEditor.Merge`) after a confirmation: "Merge EHRD Rotterdam into EHAM Schiphol?" with Yes and No, through the same confirm prompt as Remove in 5b. No changes nothing. The wall shows one section and tab, so the target is always in the dragged card's section and tab. A drop on the dragged card itself does nothing. The confirmation is there because a merge cannot be fully undone (Rickard, 2026-11-09): Split moves a Package back out, but the ICAO codes, removals and pinned name the merge gave the target stay and are fixed by hand.
 3. **Drop on a tab header** of the current menu section → move to that tab (`CardEditor.MoveToTab`). A drop on the card's own tab does nothing.
 4. **Drop on Scenery, Aircraft or Other** in the left menu → move to that section (`CardEditor.MoveToSection`); the card lands on the tab spec 6.4 gives. A drop on the card's own section does nothing. Settings is not a drop target.
 5. A valid target gets an accent border while the pointer is over it; everywhere else the pointer shows "no drop".

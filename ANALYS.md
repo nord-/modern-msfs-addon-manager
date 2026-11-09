@@ -139,7 +139,7 @@ Termerna definieras i [GLOSSARY.md](GLOSSARY.md).
 - **Duplicate copy**: samma Package i flera Libraries. Appen varnar och låter användaren välja vilken kopia som länkas. Förvalt är den som Community redan pekar på.
 
 **State och avstämning**
-- Hybridmodell: appen har eget state men stämmer av mot Community vid start. Vid avvikelse visas en synk-dialog där riktningen väljs per rad, och det finns knappar för att välja samma riktning för alla. "Behåll Community" är förvalt.
+- Hybridmodell: appen har eget state men stämmer av mot Community vid start. Vid avvikelse visas en synk-dialog där riktningen väljs per rad, och det finns knappar för att välja samma riktning för alla. "Behåll Community" är förvalt. (Ersatt 2026-11-09: Community vinner alltid och tas in utan dialog, se "Efter Rickards kontroll av 5b".)
 - Användardata (Libraries, Addons, kopplingar, dolda objekt, åsidosatta kategorier) sparas som JSON i `%APPDATA%`. Skanningscachen (paket, flygplatser, thumbnails) sparas i SQLite i `%LOCALAPPDATA%`.
 
 **Varningar**
@@ -355,12 +355,37 @@ Plan 5a bygger appens skal: huvudfönstret med kortväggen, första start, banne
 - **D13 Första start** avgörs som i spec 11: inga Libraries är registrerade och ingen ögonblicksbild finns. Ett tillstånd med ögonblicksbild men utan Libraries (bara möjligt genom att redigera filen för hand) startar som vanligt och visar bara korten för Community-poster och GSX-profiler. Både den här regeln och D3:s är Core-predikat (`StartupRules`, Task 2).
 - **D14 CLI:t använder en vald Packages-rot.** Varje CLI-kommando som hittar installationen använder den lagrade `PackagesRoot` via `InstallLocator.FromPackagesRoot` när den är satt. Då fungerar kontrollsteg 2 också på en dator där roten valts.
 
+## Beslut för plan 5b (2026-11-03)
+
+Rickard delade issue #22 i tre delar: 5b (slå kort av och på, Remove, sim-detektering, sync-dialogen; lagning av länkar till flyttade addons lades till 2026-11-06), 5c (redigera kort, drag och släpp, GSX-delen) och 5d (Settings och målet om ett fönster på ungefär 1 sekund). Designen för 5b står i `docs/superpowers/specs/2026-11-03-plan-5b-switches-design.md`. Ledstjärnan är Rickards, 2026-11-03: bygg bara det som används nu. Appen är oftast öppen en kort stund, och Rickard slutar med Addons Linker när 5b fungerar.
+
+- **En switch per kort.** Dialogen har en enda switch, för kortet. Paketraderna har ingen egen. Rickard, 2026-11-03: "Kortets switch är det enda du ska bygga nu i 5b. Inga globala switchar för alla kort på brädan, inga paket-switchar och ingen 'Switch all' för alla paket på ett kort." Switchens läge räknas bara på de paket som går att ändra: på när alla de är på, annars av, och ett klick slår då på dem. Ett kort som är Mixed bara på grund av ett paket som inte går att ändra (Not found, en urkopplad disk) visar alltså på och kan slås av. Avviker från spec 6.3 och 10.
+- **Inget antal överhoppade paket.** Varje rad som inte går att ändra säger själv varför, hela tiden. Avviker från spec 6.3.
+- **Inget val av aktiv kopia.** Standardregeln i spec 6.1 väljer alltid. Dialogen visar bara vilken kopia som är aktiv.
+- **Ingen Pending.** Medan simmen kör är switchen och Remove avstängda ("Close MSFS to change add-ons"), och `ChangeApplier` vägrar varje länkändring i stället för att skjuta upp den. Appen bevakar inte när simmen avslutas. Avviker från spec 6.8.
+- **En sync-dialog, en kodväg** (ersatt 2026-11-09: Community vinner alltid och dialogen är borttagen, se nedan). Varje upptäckt (start, bevakare, F5) kör `SyncCoordinator.Start` i stället för 5a:s `CommunityFollower.Follow`. Det finns inget särskilt meddelande för ändringar under körning och inget "don't ask again". Appens egna ändringar ger inga rader, eftersom `ChangeApplier` uppdaterar snapshoten i samma skrivning. Dialogen stängs bara med Apply. Medan simmen kör visas ingen dialog, bara en bannerrad. Avviker från spec 7.4.
+- **Sync-dialogen stängs bara med Apply** (ersatt 2026-11-09, dialogen finns inte längre). Förvalet är säkert: Keep Community behåller det som gäller. Bara ett aktivt val ändrar en länk ("Restore app state").
+- **Länkar till flyttade addons lagas utan fråga (2026-11-06).** En Stale-länk (länken pekar in i ett Library men målet är borta, och ett paket med samma namn finns på en ny plats) lagas vid varje upptäckt när paketet är på i appen, utan sync-rad. Vid första körningen och när ett Library registreras senare räknas en länkad Package som på, så även dess Stale-länk lagas. Medan simmen kör väntar lagningen med bannerraden "Community needs review…". En Package som är av i appen men har en Stale-länk får en "Off in the app, but linked"-rad. Rickard, 2026-11-06: "Om du hittar en trasig länk i Community, som härör till en flytt av en katalog och id:t för länken stämmer överens, så ska länken lagas - förutsatt att Addon:et är påslaget i appen." och "Första körningen är ju en synk som vilken som helst." Moved-raderna i spec 7.1 steg 5 och 7.4 försvinner. Skäl: appen ersätter MSFS Addons Linker, den ska inte arbeta sida vid sida med den ("Det vi bygger är en ersättare, inte ett komplement."). Ett tredje fall från samma diskussion (en länk till en addon som inget Library håller: föreslå sökvägen som Library, annars dölj addonen) är issue #26.
+- **Medan simmen kör** (ersatt 2026-11-09, se nedan) visas ingen sync-dialog, bara bannerraden "Community needs review. Close MSFS, then press F5." Efter att simmen stängts och före nästa upptäckt får ett kort slås av och på, och kortets switch avgör då paketens väntande rader. Det accepteras eftersom det kräver att ett annat verktyg ändrar Community medan både appen och simmen kör.
+- **CLI:t ändras inte.** `cards` följer fortfarande Community i minnet (5a D2), så lamporna stämmer med appens när inga sync-rader är öppna.
+- **Processnamn.** `SimProcessMonitor` behåller ett enda namn, `FlightSimulator` (Steam-utgåvan, `FlightSimulator.exe`). Rickard, 2026-11-03: ett namn, inte en lista. **Öppen fråga:** vad MS Store-utgåvans process heter. En forumtråd nämner bara startprogrammet `gamelaunchhelper.exe`.
+- **Målet om ett fönster på ungefär 1 sekund** (spec 7.2) flyttas från 5b till 5d.
+- **Ingen kontroll på simmaskinen** utöver `Get-Process FlightSimulator` medan MSFS kör. Rickard, 2026-11-03: "Du behöver ingen msfs för att testa att skapa en junction ifrån test-data." Resten kontrolleras med en kort körning på utvecklingsdatorn mot en genererad testmapp och `--data-dir`.
+
+### Efter Rickards kontroll av 5b (2026-11-09)
+
+Kontrollen gjordes på simmaskinen 2026-11-08 och på utvecklingsdatorn 2026-11-09. Den gav tre fynd.
+
+- **Community vinner alltid, och sync-dialogen är borttagen.** Varje upptäckt (start, bevakare, F5) och varje registrering av ett Library tar in Community i appens state utan att fråga. En borttagen länk slår av paketet. En tillagd länk slår på det, och den länkade kopian blir aktiv kopia. En Package som är av men har en Stale-länk slås på, och länken lagas på samma väg som D10-lagningarna. Det som bara ändrar appens state sker även medan simmen kör, eftersom det inte rör Community. Länkändringar väntar tills simmen är stängd, och under tiden visar bannern "Some links wait for MSFS to close. Close MSFS, then press F5." En Package som är Not shown och av, eller Not found, och har en Stale-länk ändrar ingenting (en Not shown som är på lagas som vanligt), så den återkommande raden från slutgranskningen (Important 3) försvinner. Felraden visar bara fel från lagningar, och varje upptäckt räknar om den. Rickard, 2026-11-09: "Tar jag bort en katalog/junction i Community behöver jag inte få en fråga om jag vill synka, den ska bara avaktiveras i appen --> Community vinner alltid." och "Jag vet inte vad jag ska ha synk-dialogen till?" Avviker från spec 7.4 och 12. CLI:t `status` skriver ut "Changes to adopt from Community: N".
+- **Kortdialogen har bara krysset i hörnet.** Close-knappen längst ner är borttagen. Esc och ett klick utanför dialogen stänger den fortfarande.
+- **Testmappen för kontrollen** innehåller `SCENERY`-paket utan BGL-filer, och appen klassar dem som Other. Skriptet `tools/dev-check/New-TestPackages.ps1` skriver nu ut att Library ska läggas till under Other.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |
 |---|---|---|
 | Libraries + Addons + av/på | Medel | Läsa `manifest.json`, junctions, Addons med delade Packages och Partial-läge. Ta över befintliga junctions från Addons Linker. |
-| Community-inventering och avstämning | Medel | Klassa poster, jämföra med sparat state, synk-dialog. |
+| Community-inventering och avstämning | Medel | Klassa poster, jämföra med sparat state, ta in Community i appens state. |
 | Bakgrundsskanning och cache | Medel | Inkrementell skanning, SQLite-cache, filbevakning, prioritetsordning. |
 | BGL-tolkning (flygplatser) | Medel–hög | Airport-poster ur Community-, Library- och Official-paket. Formatet är kartlagt (bl.a. Little Navmap, open source). |
 | Hierarki: Airport → Addons, flygplan → liveries | Medel | Kopplingsregler, manuella kopplingar. |

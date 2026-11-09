@@ -37,10 +37,10 @@ Layout, always editable (no edit mode):
 └─────────────────────────────────────────────┘
 ```
 
-- **Name:** a text box. Saved on Enter or when focus leaves the box (`CardEditor.Rename`). Nothing is saved when the text equals the name the card shows, so clicking through the box never pins the computed name. An empty box clears the user's name, so the computed name returns. Esc closes the dialog as before; text not yet committed is dropped.
+- **Name:** a text box. The text is trimmed, then saved (`CardEditor.Rename`) on Enter, when focus leaves the box, when the dialog closes by ✕ or a click outside, and when the dialog switches to another card (section 5); the save happens before the dialog closes or changes card. Nothing is saved when the trimmed text equals the name the card shows, so clicking through the box never pins the computed name. An empty box clears the user's name, so the computed name returns. Esc is the one exit that drops text not yet saved; it closes the dialog as before.
 - **A new board while typing:** the dialog refreshes on every board change (watcher, F5, the user's own edits). A text box that has focus keeps its text; it is refreshed when it loses focus.
 - **Image:** the button "Image ▾" opens a menu with one item per Package of the card that has a thumbnail (thumbnail and display name), then "Choose file…" (an open-file dialog for `.jpg`, `.jpeg`, `.png`; only the path is stored, the file is never copied or moved), then "Automatic" (clears the user's image). `CardEditor.SetImage`. A picked file that is gone later shows the placeholder of the card's type. Core: `CardPackage` gets the Package's `ThumbnailPath`, which the menu needs.
-- **ICAO code field (Scenery cards only):** the card's ICAO codes as chips, each with ×, which runs `CardEditor.RemoveCode`. A text box after the chips suggests known Airports with their names, from `ContentAnalysis.Airports` through the existing `AirportSuggestions.Find` (codes starting with the text first, then names containing it, at most 10), so typing "Schip" offers EHAM. Up and Down select a suggestion; Enter adds the selected suggestion, or the typed text when none is selected; a click on a suggestion adds it; Esc closes the suggestions before it closes the dialog. Adding runs `CardEditor.AddCode`. The outcome is shown under the field: `Invalid` → "Use 3–5 letters or digits."; `Taken` → "EHAM is already on EHAM Schiphol." (the code and the holder's name), or "EHAM is already on another card." when the holder is not on the board. The text box is cleared only when the code is added; a refusal keeps the text.
+- **ICAO code field (Scenery cards only):** the card's ICAO codes as chips, each with ×, which runs `CardEditor.RemoveCode`. A text box after the chips suggests known Airports with their names, from `ContentAnalysis.Airports` through the existing `AirportSuggestions.Find` (codes starting with the text first, then names containing it, at most 10), so typing "Schip" offers EHAM. Up and Down select a suggestion; Enter adds the selected suggestion, or the typed text when none is selected; a click on a suggestion adds it; Esc closes the suggestions before it closes the dialog. Adding runs `CardEditor.AddCode`, which also moves the card to the Airports tab (MVP spec 6.5); the dialog stays open on the card. The outcome is shown under the field: `Invalid` → "Use 3–5 letters or digits."; `Taken` → "EHAM is already on EHAM Schiphol." (the code and the holder's name), or "EHAM is already on another card." when the holder is not on the board. The text box is cleared only when the code is added; a refusal keeps the text.
 - **Provisional cards:** the header is read-only (spec 6.5).
 - **While MSFS runs:** every header edit works, since none of them touches Community.
 
@@ -49,7 +49,7 @@ Layout, always editable (no edit mode):
 ### 4.1 Split
 
 - Every Package row gets a **Split** button with the Fluent icon `ArrowSplit20` before the text (WPF-UI `ui:SymbolIcon`, from microsoft/fluentui-system-icons; the app has no other icon set).
-- Not shown on a card's only Package, on a GSX profile Package, or on a provisional card (the rules `CardEditor` already enforces).
+- Shown only when the card has at least two Packages that are not GSX profiles, and never on a provisional card. GSX profiles are not Package rows (section 6) and are never split. Core changes to match: `Split` refuses a card with fewer than two non-profile Packages (today it counts profiles too), so splitting `orbx-eham` off a card that holds only it and `EHAM-xyz.ini` cannot leave the scenery on a codeless card.
 - Split gives the Package a new card of its own in the same menu section and tab, with no ICAO code and the old card's removed ICAO codes (spec 6.5 "Move out"). The dialog stays on the old card; the new card shows on the wall at once.
 - Core: `CardEditor.MoveOut` is renamed `Split`, so one name is used in the UI, the spec and the code. Split moves a Package out after a merge, but does not take back the ICAO codes the merge added (4.2).
 
@@ -72,7 +72,7 @@ Merge and moves work while MSFS runs: they change only the app's data.
 Below the Package rows, in this order. A part is shown only when it has content.
 
 1. **Built-in parts:** listed under the Packages, dimmed, with the lock icon (`LockClosed16`): the display name and the package name with "(built-in)". Locked Package rows (spec 6.3) are dimmed too, besides the reason 5b already shows.
-2. **Airports:** one row per ICAO code that the card or one of its Packages has, with the Airport's name ("EHAM Amsterdam Schiphol"); a code no record knows is shown without a name. On the row:
+2. **Airports:** one row per ICAO code that the card or one of its Packages has, with the Airport's name ("EHAM Amsterdam Schiphol"); a code no record knows is shown without a name. Names are found as the card's own name is: from `ContentAnalysis.Airports`, falling back to the records remembered for a Not found Package, so a Not found "OrbX EHAM 1.3" still gives "EHAM Amsterdam Schiphol". On the row:
    - the label **Replaces built-in** when a Package of the card replaces the built-in Airport;
    - **other cards at the same Airport** (`Board.CardsAt`, without this card) as clickable names; a click switches the dialog to that card.
 3. **Tags:** one comma-separated line, read-only. Tags come from the folder structure and aircraft type designators, so they are not edited in the dialog.
@@ -81,7 +81,7 @@ No new Core rules: `Card` already carries `BuiltIns`, `Tags`, `CardPackage.Codes
 
 ## 6. The GSX section (display only)
 
-Shown on Scenery cards with ICAO codes, from `Card.GsxAirports`. When the GSX folder is missing or cannot be read, the section is not shown (spec 8; the banner says why).
+Shown when the card holds a GSX profile Package or has GSX facts (`Card.GsxAirports` is not empty), so a profile is never hidden: also on a provisional card, a card moved out of Scenery, or a card without ICAO codes. The parts that come from `Card.GsxAirports` (Two profiles, search icons, shipped profiles, profiles on other cards) appear only when it is not empty; it is empty when the card has no ICAO codes or the GSX folder is missing or cannot be read (spec 8; the banner says why). Rows are grouped per ICAO code in the order of the card's codes; profiles whose ICAO code the card does not have come last.
 
 ```
 GSX
@@ -94,7 +94,8 @@ GSX
 
 - **GSX profile Packages are listed only here**, not among the Package rows; the Packages part lists the card's other Packages. A profile that is Not found (its file was deleted) is dimmed with "Not found" and keeps its Remove button, as on a Package row in 5b.
 - One row per profile Package of the card, its name only (the Package's display name, the file name without extension). No `.py` files and no file details.
-- **Two active profiles:** more than one active `.ini` for one ICAO code puts a yellow `Warning` icon at each of those profiles, with the tooltip "Two GSX profiles for EHAM".
+- **Active profiles on another card:** an active profile for one of the card's ICAO codes that sits on another card (automation may give two cards the same code, MVP 6.5) also gets a row, with "on <card name>" as a clickable name that switches the dialog to that card, like the other cards of section 5. So the dialog always shows the profiles behind the wall's Two profiles warning.
+- **Two active profiles:** more than one active `.ini` for one ICAO code (`GsxAirport.Active`, on any card) puts a yellow `Warning` icon at each of those profile rows, with the tooltip "Two GSX profiles for EHAM".
 - **Disabled (`.off`)** profile Packages and **shipped** profiles are dimmed and never counted. A `.off` variant of an active profile (both `lpma.ini` and `lpma.off`) is not a row of its own.
 - **A shipped profile** is a row named after its `.ini` file without extension, labelled "shipped with scenery". A shipped profile whose name is already in the GSX folder (`ShippedProfile.InGsxFolder`) is not shown: the installed profile already has its row.
 - **An ICAO code with no active profile:** the code and an icon-only search button (Fluent `Search20`) with the tooltip "Search flightsim.to for EHRD GSX profiles"; it opens `GsxAirport.SearchLink` in the browser. No text on the button.
@@ -112,6 +113,7 @@ GSX Pro with the SU10 Navdata API option reads custom airport profiles only from
 - **Two profiles is shown at each profile's name**, not as one line per Airport, in the dialog. The wall's mark and warning are unchanged.
 - **GSX profile Packages move from the Package rows to the GSX section** (5b lists them as locked Package rows).
 - **Shipped profiles:** the label is "shipped with scenery" (spec 8: "shipped with scenery, not installed"), and one already in the GSX folder is not shown instead of being marked "already in the GSX folder".
+- **Split needs two Packages that are not GSX profiles** (MVP 6.5 "Move out" counted every Package).
 - **Suggestions match Airport names too** (the existing `AirportSuggestions.Find`), not only codes.
 - **Spec 15 is closed:** shipped profiles are not active (6.1).
 
@@ -124,6 +126,6 @@ GSX Pro with the SU10 Navdata API option reads custom airport profiles only from
 
 ## 9. Testing
 
-- Core: the rename `MoveOut` → `Split` keeps its tests; `CardPackage.ThumbnailPath` gets a builder test.
+- Core: the rename `MoveOut` → `Split` keeps its tests, and the new guard (fewer than two non-profile Packages) gets one; `CardPackage.ThumbnailPath` gets a builder test.
 - App: the view-model logic of all four dialog parts and of the drop targets (which drops are valid, which session call they make) is tested with a fake `IAppSession`, as 5b does.
 - Drag and drop and the dialog's look are checked by hand on the development machine with `--data-dir` and the generated test folder (`tools/dev-check/New-TestPackages.ps1`).

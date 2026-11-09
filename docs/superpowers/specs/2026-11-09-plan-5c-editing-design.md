@@ -37,9 +37,10 @@ Layout, always editable (no edit mode):
 └─────────────────────────────────────────────┘
 ```
 
-- **Name:** a text box. Saved on Enter or when focus leaves the box (`CardEditor.Rename`). An empty box clears the user's name, so the computed name returns. Esc closes the dialog as before; text not yet committed is dropped.
+- **Name:** a text box. Saved on Enter or when focus leaves the box (`CardEditor.Rename`). Nothing is saved when the text equals the name the card shows, so clicking through the box never pins the computed name. An empty box clears the user's name, so the computed name returns. Esc closes the dialog as before; text not yet committed is dropped.
+- **A new board while typing:** the dialog refreshes on every board change (watcher, F5, the user's own edits). A text box that has focus keeps its text; it is refreshed when it loses focus.
 - **Image:** the button "Image ▾" opens a menu with one item per Package of the card that has a thumbnail (thumbnail and display name), then "Choose file…" (an open-file dialog for `.jpg`, `.jpeg`, `.png`; only the path is stored, the file is never copied or moved), then "Automatic" (clears the user's image). `CardEditor.SetImage`. A picked file that is gone later shows the placeholder of the card's type. Core: `CardPackage` gets the Package's `ThumbnailPath`, which the menu needs.
-- **ICAO code field (Scenery cards only):** the card's ICAO codes as chips, each with ×, which runs `CardEditor.RemoveCode`. A text box after the chips suggests known ICAO codes that start with the typed text, with their Airport names, at most 8, from `ContentAnalysis.Airports`. Enter or a click on a suggestion runs `CardEditor.AddCode`. The outcome is shown under the field: `Invalid` → "Use 3–5 letters or digits."; `Taken` → "EHAM is already on EHAM Schiphol." (the code and the holder's name). An accepted code clears the text box.
+- **ICAO code field (Scenery cards only):** the card's ICAO codes as chips, each with ×, which runs `CardEditor.RemoveCode`. A text box after the chips suggests known Airports with their names, from `ContentAnalysis.Airports` through the existing `AirportSuggestions.Find` (codes starting with the text first, then names containing it, at most 10), so typing "Schip" offers EHAM. Up and Down select a suggestion; Enter adds the selected suggestion, or the typed text when none is selected; a click on a suggestion adds it; Esc closes the suggestions before it closes the dialog. Adding runs `CardEditor.AddCode`. The outcome is shown under the field: `Invalid` → "Use 3–5 letters or digits."; `Taken` → "EHAM is already on EHAM Schiphol." (the code and the holder's name), or "EHAM is already on another card." when the holder is not on the board. The text box is cleared only when the code is added; a refusal keeps the text.
 - **Provisional cards:** the header is read-only (spec 6.5).
 - **While MSFS runs:** every header edit works, since none of them touches Community.
 
@@ -91,11 +92,13 @@ GSX
   EHRD  🔍                             (no active profile for EHRD)
 ```
 
-- One row per profile, its name only. No `.py` files and no file details.
+- **GSX profile Packages are listed only here**, not among the Package rows; the Packages part lists the card's other Packages. A profile that is Not found (its file was deleted) is dimmed with "Not found" and keeps its Remove button, as on a Package row in 5b.
+- One row per profile Package of the card, its name only (the Package's display name, the file name without extension). No `.py` files and no file details.
 - **Two active profiles:** more than one active `.ini` for one ICAO code puts a yellow `Warning` icon at each of those profiles, with the tooltip "Two GSX profiles for EHAM".
-- **Disabled (`.off`)** and **shipped** profiles are dimmed and never counted. A shipped profile is labelled "shipped with scenery".
+- **Disabled (`.off`)** profile Packages and **shipped** profiles are dimmed and never counted. A `.off` variant of an active profile (both `lpma.ini` and `lpma.off`) is not a row of its own.
+- **A shipped profile** is a row named after its `.ini` file without extension, labelled "shipped with scenery". A shipped profile whose name is already in the GSX folder (`ShippedProfile.InGsxFolder`) is not shown: the installed profile already has its row.
 - **An ICAO code with no active profile:** the code and an icon-only search button (Fluent `Search20`) with the tooltip "Search flightsim.to for EHRD GSX profiles"; it opens `GsxAirport.SearchLink` in the browser. No text on the button.
-- **Errors** are never shown in a dialog. An error lights the warning icon and its tooltip says what went wrong.
+- **Errors** are never shown in a dialog (Rickard, 2026-11-09). The section only displays, so its one error is a search link the browser could not open: a yellow `Warning` icon then appears after that search button, with the error as its tooltip, until the dialog shows another card.
 
 ### 6.1 Shipped profiles are not active (spec 15 closed)
 
@@ -107,6 +110,9 @@ GSX Pro with the SU10 Navdata API option reads custom airport profiles only from
 - **No copy of a shipped profile in 5c.** Issue #23 and spec 8 had a copy action with the Two profiles question. Rickard, 2026-11-09: there is only on/off for a profile, and on/off is not part of 5c. `GsxProfileCopier` stays unused until on/off for profiles is designed.
 - **GSX section shows no file details** (`.py` files, disabled variants per file) and the search link is an icon only.
 - **Two profiles is shown at each profile's name**, not as one line per Airport, in the dialog. The wall's mark and warning are unchanged.
+- **GSX profile Packages move from the Package rows to the GSX section** (5b lists them as locked Package rows).
+- **Shipped profiles:** the label is "shipped with scenery" (spec 8: "shipped with scenery, not installed"), and one already in the GSX folder is not shown instead of being marked "already in the GSX folder".
+- **Suggestions match Airport names too** (the existing `AirportSuggestions.Find`), not only codes.
 - **Spec 15 is closed:** shipped profiles are not active (6.1).
 
 ## 8. Architecture

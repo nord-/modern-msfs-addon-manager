@@ -15,7 +15,8 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
     </UserControl.Resources>
-    <Border x:Name="Frame" CornerRadius="8" Background="#2B2B2B" Cursor="Hand" MouseLeftButtonDown="OnPress" MouseLeftButtonUp="OnRelease" LostMouseCapture="OnCaptureLost">
+    <Border x:Name="Frame" CornerRadius="8" Background="#2B2B2B" Cursor="Hand" MouseLeftButtonDown="OnPress" MouseLeftButtonUp="OnRelease" LostMouseCapture="OnCaptureLost"
+            MouseMove="OnMove" AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop">
         <Grid>
             <ui:SymbolIcon FontSize="64" Symbol="{Binding Tab, Converter={StaticResource TabSymbol}}"
                            Foreground="#55FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"

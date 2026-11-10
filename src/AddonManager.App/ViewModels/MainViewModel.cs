@@ -156,6 +156,46 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void UpdateBanner() => BannerLines = notice is null ? sessionLines : [.. sessionLines, notice];
 
+    /// <summary>A card takes a drop of another stored card; the wall shows one section and tab, so both are always there.</summary>
+    public bool CanDropOnCard(CardViewModel dragged, CardViewModel target)
+        => dragged.CanDrag && target.CanDrag && dragged.Ref.Id != target.Ref.Id;
+
+    /// <summary>A tab header of the current section takes a drop of a stored card from another tab.</summary>
+    public bool CanDropOnTab(CardViewModel dragged, TabViewModel tab)
+        => dragged.CanDrag && Tabs.Contains(tab) && tab.Tab != dragged.Tab;
+
+    /// <summary>Scenery, Aircraft and Other take a drop of a stored card from another section; Settings never does.</summary>
+    public bool CanDropOnSection(CardViewModel dragged, MenuSection section)
+        => dragged.CanDrag && CategoryOf(section) is { } category && category != dragged.Section;
+
+    /// <summary>Merges the dragged card into the target after a confirmation.</summary>
+    public Task DropOnCardAsync(CardViewModel dragged, CardViewModel target)
+        => DropAsync(
+            CanDropOnCard(dragged, target),
+            ("Merge", $"Merge {dragged.Name} into {target.Name}?"),
+            () => session.MergeAsync(dragged.Ref, target.Ref));
+
+    /// <summary>Moves the card to another tab of the current section; the wall stays on its tab.</summary>
+    public Task DropOnTabAsync(CardViewModel dragged, TabViewModel tab)
+        => DropAsync(CanDropOnTab(dragged, tab), null, () => session.MoveToTabAsync(dragged.Ref, tab.Tab));
+
+    /// <summary>Moves the card to another section, asking first when it would lose its ICAO codes; the wall stays where it is.</summary>
+    public Task DropOnSectionAsync(CardViewModel dragged, MenuSection section)
+        => DropAsync(
+            CanDropOnSection(dragged, section),
+            dragged.Section == Category.Scenery && dragged.HasCodes ? ("Move", $"Move {dragged.Name} to {section}? It loses its ICAO codes.") : null,
+            () => session.MoveToSectionAsync(dragged.Ref, CategoryOf(section)!.Value));
+
+    /// <summary>Clears the notice, then sends the change when the drop is valid and any confirmation says Yes; a refusal goes to the banner.</summary>
+    private async Task DropAsync(bool valid, (string Caption, string Text)? confirm, Func<Task<string?>> change)
+    {
+        ClearNotice();
+        if (!valid || (confirm is { } c && !services.Confirm(c.Caption, c.Text)))
+            return;
+        if (await change() is { } refused)
+            ShowNotice(refused);
+    }
+
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task Rescan() => session.RescanAsync(full: true);
 

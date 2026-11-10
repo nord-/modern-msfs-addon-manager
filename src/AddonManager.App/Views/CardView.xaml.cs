@@ -18,11 +18,15 @@ public partial class CardView : UserControl
     }
 
     private bool pressed;
+    private Point start;
+
+    private MainViewModel? Main => Window.GetWindow(this)?.DataContext as MainViewModel;
 
     /// <summary>Starts a click: only a press that began on this card can open it. The mouse is captured so the release comes back here.</summary>
     private void OnPress(object sender, MouseButtonEventArgs e)
     {
         pressed = true;
+        start = e.GetPosition(Frame);
         Frame.CaptureMouse();
     }
 
@@ -33,9 +37,37 @@ public partial class CardView : UserControl
         var click = pressed && Frame.IsMouseOver;
         pressed = false;
         Frame.ReleaseMouseCapture();
-        if (click && DataContext is CardViewModel card && Window.GetWindow(this)?.DataContext is MainViewModel main)
+        if (click && DataContext is CardViewModel card && Main is { } main)
             main.OpenCardCommand.Execute(card);
     }
 
     private void OnCaptureLost(object sender, MouseEventArgs e) => pressed = false;
+
+    /// <summary>A press that moves past the system drag distance starts a drag instead of a click. A provisional card cannot be dragged,
+    /// so it still opens on a click that moved a little.</summary>
+    private void OnMove(object sender, MouseEventArgs e)
+    {
+        if (!pressed || DataContext is not CardViewModel { CanDrag: true } card)
+            return;
+        var moved = e.GetPosition(Frame) - start;
+        if (Math.Abs(moved.X) <= SystemParameters.MinimumHorizontalDragDistance && Math.Abs(moved.Y) <= SystemParameters.MinimumVerticalDragDistance)
+            return;
+        pressed = false;
+        Frame.ReleaseMouseCapture();
+        DragDrop.DoDragDrop(Frame, new DataObject(typeof(CardViewModel), card), DragDropEffects.Move);
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+        => DropHighlight.Over(e, Frame, DropHighlight.Dragged(e) is { } dragged && DataContext is CardViewModel target && Main?.CanDropOnCard(dragged, target) == true);
+
+    private void OnDragLeave(object sender, DragEventArgs e) => DropHighlight.Leave(e, Frame, Frame);
+
+    /// <summary>The merge runs after <c>DoDragDrop</c> has returned, so its confirm prompt does not show inside the drag.</summary>
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        DropHighlight.Clear(Frame);
+        e.Handled = true;
+        if (DropHighlight.Dragged(e) is { } dragged && DataContext is CardViewModel target && Main is { } main)
+            Dispatcher.BeginInvoke(new Action(() => _ = main.DropOnCardAsync(dragged, target)));
+    }
 }

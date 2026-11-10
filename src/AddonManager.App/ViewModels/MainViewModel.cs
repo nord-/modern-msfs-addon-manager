@@ -275,8 +275,8 @@ public sealed partial class MainViewModel : ObservableObject
                 kept[key] = vm;
             }
 
-            // A thumbnail that was not readable yet (Image still null) is tried again with every new board.
-            if (vm.ImagePath is { } path && vm.Image is null)
+            // Every board asks again: a cache hit is cheap, and a file that is gone clears the image.
+            if (vm.ImagePath is { } path)
                 _ = LoadImageAsync(vm, path);
         }
     }
@@ -294,8 +294,6 @@ public sealed partial class MainViewModel : ObservableObject
             result = null;
         }
 
-        if (result is null)
-            return;
         post(() =>
         {
             if (vm.ImagePath == path)

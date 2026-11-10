@@ -313,7 +313,23 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
-    public void A_loaded_thumbnail_is_not_loaded_again()
+    public void A_card_whose_image_loads_as_null_on_a_new_board_loses_its_image()
+    {
+        var image = new DrawingImage();
+        loader = _ => Task.FromResult<ImageSource?>(image);
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"], image: "a.png"));
+        Show(Ready(board));
+        Assert.Same(image, vm.Cards[0].Image);
+
+        loader = _ => Task.FromResult<ImageSource?>(null);
+        Show(Ready(board with { }));
+
+        Assert.Null(vm.Cards[0].Image);
+    }
+
+    [Fact]
+    public void A_loaded_thumbnail_is_asked_for_again_on_every_board()
     {
         var image = new DrawingImage();
         loader = _ => Task.FromResult<ImageSource?>(image);
@@ -323,7 +339,7 @@ public sealed class MainViewModelTests
 
         Show(Ready(Board(a)));
 
-        Assert.Equal(["a.png"], loads);
+        Assert.Equal(["a.png", "a.png"], loads);
         Assert.Same(image, vm.Cards[0].Image);
     }
 

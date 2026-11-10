@@ -10,8 +10,8 @@ using AddonManager.Sim2020.Content;
 
 namespace AddonManager.App;
 
-/// <summary>The composed write path: every Community change goes through these.</summary>
-public sealed record AppLinks(ChangeApplier Applier, SyncCoordinator Sync, PackageRemover Remover, ISimProcessMonitor Sim);
+/// <summary>The composed write path: every Community change and every card edit goes through these.</summary>
+public sealed record AppLinks(ChangeApplier Applier, SyncCoordinator Sync, PackageRemover Remover, ISimProcessMonitor Sim, CardEditor Editor);
 
 /// <summary>
 /// The composition root: the only place the app creates services. It opens the user database and
@@ -84,7 +84,8 @@ public sealed class AppServices : IDisposable
 
         var community = new CommunityReader(paths.CommunityPath);
         var applier = new ChangeApplier(LinkFileSystem(), community, Store, Sim, paths.CommunityPath);
-        Links = new AppLinks(applier, new SyncCoordinator(applier, community, Store), new PackageRemover(applier, community, Sim, Store), Sim);
+        Links = new AppLinks(applier, new SyncCoordinator(applier, community, Store), new PackageRemover(applier, community, Sim, Store), Sim,
+            new CardEditor(Store, TimeProvider.System));
     }
 
     public IReadOnlyList<CommunityEntryInfo> ReadCommunity() => new CommunityReader(Paths!.CommunityPath).Read();

@@ -87,6 +87,104 @@ internal sealed class FakeSession : IAppSession
         return Task.FromResult(RemoveMessage);
     }
 
+    public IReadOnlyDictionary<AirportCode, Airport> Airports { get; set; } = new Dictionary<AirportCode, Airport>();
+
+    /// <summary>The card and name of each <c>RenameAsync</c> call.</summary>
+    public List<(CardRef Card, string? Name)> Renamed { get; } = [];
+
+    /// <summary>What <c>RenameAsync</c> returns.</summary>
+    public string? RenameMessage { get; set; }
+
+    public Task<string?> RenameAsync(CardRef card, string? name)
+    {
+        Renamed.Add((card, name));
+        return Task.FromResult(RenameMessage);
+    }
+
+    /// <summary>The card and path of each <c>SetImageAsync</c> call.</summary>
+    public List<(CardRef Card, string? Path)> ImagesSet { get; } = [];
+
+    /// <summary>What <c>SetImageAsync</c> returns.</summary>
+    public string? SetImageMessage { get; set; }
+
+    public Task<string?> SetImageAsync(CardRef card, string? path)
+    {
+        ImagesSet.Add((card, path));
+        return Task.FromResult(SetImageMessage);
+    }
+
+    /// <summary>The card and text of each <c>AddCodeAsync</c> call.</summary>
+    public List<(CardRef Card, string Text)> CodesAdded { get; } = [];
+
+    /// <summary>What <c>AddCodeAsync</c> returns.</summary>
+    public (CodeOutcome? Outcome, string? Message) AddCodeResult { get; set; } = (new CodeOutcome(CodeResult.Added), null);
+
+    public Task<(CodeOutcome? Outcome, string? Message)> AddCodeAsync(CardRef card, string text)
+    {
+        CodesAdded.Add((card, text));
+        return Task.FromResult(AddCodeResult);
+    }
+
+    /// <summary>The card and ICAO code of each <c>RemoveCodeAsync</c> call.</summary>
+    public List<(CardRef Card, AirportCode Code)> CodesRemoved { get; } = [];
+
+    /// <summary>What <c>RemoveCodeAsync</c> returns.</summary>
+    public string? RemoveCodeMessage { get; set; }
+
+    public Task<string?> RemoveCodeAsync(CardRef card, AirportCode code)
+    {
+        CodesRemoved.Add((card, code));
+        return Task.FromResult(RemoveCodeMessage);
+    }
+
+    /// <summary>The card and Package of each <c>SplitAsync</c> call.</summary>
+    public List<(CardRef Card, PackageKey Package)> Splits { get; } = [];
+
+    /// <summary>What <c>SplitAsync</c> returns.</summary>
+    public string? SplitMessage { get; set; }
+
+    public Task<string?> SplitAsync(CardRef card, PackageKey package)
+    {
+        Splits.Add((card, package));
+        return Task.FromResult(SplitMessage);
+    }
+
+    /// <summary>The dragged and target card of each <c>MergeAsync</c> call.</summary>
+    public List<(CardRef Dragged, CardRef Target)> Merges { get; } = [];
+
+    /// <summary>What <c>MergeAsync</c> returns.</summary>
+    public string? MergeMessage { get; set; }
+
+    public Task<string?> MergeAsync(CardRef dragged, CardRef target)
+    {
+        Merges.Add((dragged, target));
+        return Task.FromResult(MergeMessage);
+    }
+
+    /// <summary>The card and tab of each <c>MoveToTabAsync</c> call.</summary>
+    public List<(CardRef Card, CardTab Tab)> TabMoves { get; } = [];
+
+    /// <summary>What <c>MoveToTabAsync</c> returns.</summary>
+    public string? MoveToTabMessage { get; set; }
+
+    public Task<string?> MoveToTabAsync(CardRef card, CardTab tab)
+    {
+        TabMoves.Add((card, tab));
+        return Task.FromResult(MoveToTabMessage);
+    }
+
+    /// <summary>The card and section of each <c>MoveToSectionAsync</c> call.</summary>
+    public List<(CardRef Card, Category Section)> SectionMoves { get; } = [];
+
+    /// <summary>What <c>MoveToSectionAsync</c> returns.</summary>
+    public string? MoveToSectionMessage { get; set; }
+
+    public Task<string?> MoveToSectionAsync(CardRef card, Category section)
+    {
+        SectionMoves.Add((card, section));
+        return Task.FromResult(MoveToSectionMessage);
+    }
+
     public void Raise(SessionView view) => Changed?.Invoke(view);
 }
 

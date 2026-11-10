@@ -1,10 +1,12 @@
 using AddonManager.App.Session;
 using AddonManager.Core.Cards;
+using AddonManager.Core.Content;
 using AddonManager.Core.Linking;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Infrastructure;
 using AddonManager.Sim2020;
+using AddonManager.Sim2020.Content;
 using Microsoft.Data.Sqlite;
 
 namespace AddonManager.App.Tests.Session;
@@ -100,10 +102,10 @@ public sealed class AppSessionTests : IDisposable
     }
 
     private AppSession NewSession(Func<SimPaths?>? locate = null, bool useGate = false, bool flakyStore = false,
-        ISimProcessMonitor? sim = null, ILinkFileSystem? linkFs = null)
+        ISimProcessMonitor? sim = null, ILinkFileSystem? linkFs = null, IPackageContentReader? reader = null)
     {
         if (useGate)
-            gated = new GatedReader(machine.Paths.OfficialPath);
+            reader = gated = new GatedReader(machine.Paths.OfficialPath);
         var session = new AppSession(() =>
         {
             var services = AppServices.Open(machine.DatabaseFile);
@@ -113,8 +115,8 @@ public sealed class AppSessionTests : IDisposable
                 services.LinkFileSystem = () => linkFs;
             if (flakyStore)
                 services.Store = store = new FlakyStore(services.Store);
-            if (useGate)
-                services.UseSim(machine.Paths, machine.Gsx, gated!);
+            if (reader is not null)
+                services.UseSim(machine.Paths, machine.Gsx, reader);
             return services;
         }, locate ?? (() => machine.Paths), machine.Gsx);
         session.Changed += v =>
@@ -1052,6 +1054,229 @@ public sealed class AppSessionTests : IDisposable
 
         Assert.Equal(SimRunningException.Text, message);
         Assert.NotNull(session.Current.Board!.CardOf(Pkg("a")));
+    }
+
+    /// <summary>The real reader, except that the named Packages read as Scenery with a BGL file holding one airport record each.</summary>
+    private sealed class AirportReader(string? officialPath, params (string Package, string Code, string Name)[] airports) : IPackageContentReader
+    {
+        private readonly PackageContentReader inner = new(new AirportNames(officialPath));
+
+        public ChangeMarker? ReadMarker(string packagePath) => inner.ReadMarker(packagePath);
+
+        public bool? HasBgl(string packagePath) => Find(Path.GetFileName(packagePath)) is null ? inner.HasBgl(packagePath) : true;
+
+        public PackageContent? Read(ScanTarget target, ChangeMarker marker)
+        {
+            var content = inner.Read(target, marker);
+            return content is null || Find(target.Name.Value) is not { } airport
+                ? content
+                : content with { HasBgl = true, BglSectionTypes = [0x03], Airports = [new AirportRecord(Code(airport.Code), airport.Name, new GeoPoint(52, 4))] };
+        }
+
+        public DateTimeOffset? NewestWrite(string packagePath) => inner.NewestWrite(packagePath);
+
+        private (string Package, string Code, string Name)? Find(string package)
+            => airports.Where(a => string.Equals(a.Package, package, StringComparison.OrdinalIgnoreCase)).Cast<(string, string, string)?>().FirstOrDefault();
+    }
+
+    private static AirportCode Code(string value) => AirportCode.TryParse(value, out var code) ? code : throw new ArgumentException(value);
+
+    /// <summary>A started session over two Scenery cards on Airports: <c>eham-x</c> (EHAM Amsterdam Schiphol) and <c>ehrd-x</c> (EHRD Rotterdam).</summary>
+    private async Task<AppSession> AirportsStartedAsync()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("eham-x");
+        machine.AddPackage("ehrd-x");
+        var reader = new AirportReader(machine.Paths.OfficialPath, ("eham-x", "EHAM", "Amsterdam Schiphol"), ("ehrd-x", "EHRD", "Rotterdam"));
+        return await StartedAsync(NewSession(reader: reader), lib);
+    }
+
+    /// <summary>Every edit as one call on a stored card, by name for the theories below; each is one the card can take when nothing refuses it.</summary>
+    private static readonly Dictionary<string, Func<AppSession, CardRef, Task<string?>>> EditCalls = new()
+    {
+        ["Rename"] = (session, card) => session.RenameAsync(card, "Home"),
+        ["SetImage"] = (session, card) => session.SetImageAsync(card, @"C:\Images\home.png"),
+        ["AddCode"] = async (session, card) => (await session.AddCodeAsync(card, "EHGG")).Message,
+        ["RemoveCode"] = (session, card) => session.RemoveCodeAsync(card, Code("EHAM")),
+        ["Split"] = (session, card) => session.SplitAsync(card, Pkg("ehrd-x")),
+        ["Merge"] = (session, card) => session.MergeAsync(card, CardRef.Of(CardOf(session.Current, "ehle-x"))),
+        ["MoveToTab"] = (session, card) => session.MoveToTabAsync(card, CardTab.Landscapes),
+        ["MoveToSection"] = (session, card) => session.MoveToSectionAsync(card, Category.Other),
+    };
+
+    public static TheoryData<string> Edits => [.. EditCalls.Keys];
+
+    /// <summary>
+    /// A started session (with the flaky store) whose stored card holds <c>eham-x</c> and <c>ehrd-x</c> (EHAM and EHRD, merged), so every
+    /// call in <see cref="EditCalls"/> can be made on it, next to the Scenery card of <c>ehle-x</c> (EHLE) to merge it into.
+    /// </summary>
+    private async Task<(AppSession Session, CardRef Card)> EditableAsync()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("eham-x");
+        machine.AddPackage("ehrd-x");
+        machine.AddPackage("ehle-x");
+        var reader = new AirportReader(
+            machine.Paths.OfficialPath, ("eham-x", "EHAM", "Amsterdam Schiphol"), ("ehrd-x", "EHRD", "Rotterdam"), ("ehle-x", "EHLE", "Lelystad"));
+        var session = await StartedAsync(NewSession(flakyStore: true, reader: reader), lib);
+        var card = CardRef.Of(CardOf(session.Current, "eham-x"));
+        Assert.Null(await Bounded(session.MergeAsync(CardRef.Of(CardOf(session.Current, "ehrd-x")), card)));
+        return (session, card);
+    }
+
+    /// <summary>The stored cards and the Packages on each, as text to compare.</summary>
+    private static IReadOnlyList<string> CardsOf(UserState state)
+        => [.. state.Cards.Select(c =>
+            $"{c.Id}|{c.Section}|{c.Tab}|{c.Name}|{c.ImagePath}|{string.Join(",", c.Codes.Select(x => x.Value))}|{string.Join(",", state.PackagesOn(c.Id))}")];
+
+    [Fact]
+    public async Task Rename_saves_the_name_and_the_wall_shows_it_at_once()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardOf(session.Current, "a");
+
+        var message = await Bounded(session.RenameAsync(CardRef.Of(card), "Home"));
+
+        Assert.Null(message);
+        Assert.Equal("Home", CardOf(session.Current, "a").Name);
+        Assert.Equal("Home", Reload().FindCard(card.Id!.Value)!.Name);
+    }
+
+    [Theory]
+    [MemberData(nameof(Edits))]
+    public async Task A_locked_database_refuses_every_edit_and_changes_nothing(string edit)
+    {
+        var (session, card) = await EditableAsync();
+        var before = CardsOf(Reload());
+        store!.FailBeginCall = store.BeginCalls + 1;
+
+        var message = await Bounded(EditCalls[edit](session, card));
+
+        Assert.Contains("userdata.db", message);
+        Assert.Equal(before, CardsOf(Reload()));
+    }
+
+    [Theory]
+    [MemberData(nameof(Edits))]
+    public async Task Every_edit_of_a_card_that_is_gone_returns_the_gone_text(string edit)
+    {
+        var (session, _) = await EditableAsync();
+        var before = CardsOf(Reload());
+
+        var message = await Bounded(EditCalls[edit](session, new CardRef(999, null)));
+
+        Assert.Equal(AppSession.CardGoneText, message);
+        Assert.Equal(before, CardsOf(Reload()));
+    }
+
+    [Fact]
+    public async Task A_merge_with_a_card_that_is_gone_returns_the_gone_text()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var before = CardsOf(Reload());
+
+        var message = await Bounded(session.MergeAsync(CardRef.Of(CardOf(session.Current, "a")), new CardRef(999, null)));
+
+        Assert.Equal(AppSession.CardGoneText, message);
+        Assert.Equal(before, CardsOf(Reload()));
+        Assert.NotNull(CardOf(session.Current, "a").Id);
+    }
+
+    [Fact]
+    public async Task Merging_a_card_into_itself_returns_a_message_and_throws_nothing()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+
+        var message = await Bounded(session.MergeAsync(card, card));
+
+        // The ArgumentException's text, without its " (Parameter 'target')" suffix.
+        Assert.Equal("A card cannot be merged into itself.", message);
+    }
+
+    [Fact]
+    public async Task AddCode_returns_the_outcome_and_a_taken_code_names_the_holder()
+    {
+        var session = await AirportsStartedAsync();
+
+        var added = await Bounded(session.AddCodeAsync(CardRef.Of(CardOf(session.Current, "eham-x")), "EHLE"));
+        var taken = await Bounded(session.AddCodeAsync(CardRef.Of(CardOf(session.Current, "ehrd-x")), "EHLE"));
+
+        Assert.Equal((new CodeOutcome(CodeResult.Added), (string?)null), added);
+        Assert.Null(taken.Message);
+        Assert.Equal(CodeResult.Taken, taken.Outcome!.Result);
+        Assert.Equal(CardOf(session.Current, "eham-x").Name, taken.Outcome.HolderName);
+        Assert.Contains(Code("EHLE"), CardOf(session.Current, "eham-x").Codes);
+    }
+
+    [Fact]
+    public async Task Split_works_while_the_sim_runs()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        machine.AddPackage("b");
+        var sim = new ToggleSim();
+        var session = await StartedAsync(NewSession(sim: sim), lib);
+        var a = CardRef.Of(CardOf(session.Current, "a"));
+        Assert.Null(await Bounded(session.MergeAsync(CardRef.Of(CardOf(session.Current, "b")), a)));
+        Assert.Single(session.Current.Board!.Cards);
+        sim.Running = true;
+
+        var message = await Bounded(session.SplitAsync(a, Pkg("b")));
+
+        Assert.Null(message);
+        Assert.Equal(2, session.Current.Board!.Cards.Count);
+        Assert.NotEqual(CardOf(session.Current, "a").Id, CardOf(session.Current, "b").Id);
+    }
+
+    [Fact]
+    public async Task Moving_to_a_section_puts_the_card_on_its_initial_tab()
+    {
+        var session = await AirportsStartedAsync();
+
+        var message = await Bounded(session.MoveToSectionAsync(CardRef.Of(CardOf(session.Current, "eham-x")), Category.Other));
+
+        Assert.Null(message);
+        var card = CardOf(session.Current, "eham-x");
+        Assert.Equal((Category.Other, CardTab.Other), (card.Section, card.Tab));
+        Assert.Empty(card.Codes);
+    }
+
+    [Fact]
+    public async Task MoveToTab_and_SetImage_and_RemoveCode_reach_the_editor()
+    {
+        var session = await AirportsStartedAsync();
+        var card = CardRef.Of(CardOf(session.Current, "eham-x"));
+
+        Assert.Null(await Bounded(session.MoveToTabAsync(card, CardTab.Landscapes)));
+        Assert.Equal(CardTab.Landscapes, CardOf(session.Current, "eham-x").Tab);
+
+        Assert.Null(await Bounded(session.SetImageAsync(card, @"C:\Images\home.png")));
+        Assert.Equal(@"C:\Images\home.png", CardOf(session.Current, "eham-x").ImagePath);
+
+        Assert.Null(await Bounded(session.RemoveCodeAsync(card, Code("EHAM"))));
+        Assert.Empty(CardOf(session.Current, "eham-x").Codes);
+    }
+
+    [Fact]
+    public async Task Airports_lists_the_known_airports_after_discovery()
+    {
+        var session = NewSession(reader: new AirportReader(machine.Paths.OfficialPath, ("eham-x", "EHAM", "Amsterdam Schiphol"), ("ehrd-x", "EHRD", "Rotterdam")));
+        Assert.Empty(session.Airports);
+        var lib = machine.AddLibrary();
+        machine.AddPackage("eham-x");
+        machine.AddPackage("ehrd-x");
+
+        await StartedAsync(session, lib);
+
+        Assert.Equal("Amsterdam Schiphol", session.Airports[Code("EHAM")].Name);
+        Assert.Equal("Rotterdam", session.Airports[Code("EHRD")].Name);
     }
 
     /// <summary>A second, unpooled connection holding the write lock of the user database until it is disposed.</summary>

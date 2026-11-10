@@ -124,14 +124,15 @@ public void A_card_package_carries_its_thumbnail_and_airport_records_also_when_n
 ### Task 3: `ThumbnailCache` forgets a file that is gone
 
 **Files:**
-- Modify: `src/AddonManager.App/Thumbnails/ThumbnailCache.cs`
-- Test: `tests/AddonManager.App.Tests/Thumbnails/ThumbnailCacheTests.cs`
+- Modify: `src/AddonManager.App/Thumbnails/ThumbnailCache.cs`, `src/AddonManager.App/ViewModels/MainViewModel.cs` (`RebuildCards`, `LoadImageAsync`)
+- Test: `tests/AddonManager.App.Tests/Thumbnails/ThumbnailCacheTests.cs`, `tests/AddonManager.App.Tests/ViewModels/MainViewModelTests.cs`
 
-Carried item R3-10: a picked image deleted later must show the tab placeholder on the next board, not a cached picture.
+Carried item R3-10: a picked image deleted later must show the tab placeholder on the next board, not a cached picture. The cache alone is not enough: the wall asks again only while `vm.Image` is null, and a null result never clears it. So every new board asks again for every card with an `ImagePath` (a cache hit is cheap), and a null result sets `vm.Image = null` when the path is unchanged.
 
 - [ ] **Step 1: Write the failing test** `A_cached_image_whose_file_is_gone_loads_as_null`: load a real PNG from a temp folder (use the existing test's PNG helper), delete the file, load again → `null`; recreate it → not null.
-- [ ] **Step 2: Run `--filter FullyQualifiedName~ThumbnailCacheTests`**, expect FAIL (cached image returned).
-- [ ] **Step 3: In `LoadAsync`, a cache hit whose `File.Exists(path)` is false removes the key and returns `null`.** Update the class doc.
+  Add to `MainViewModelTests`: `A_card_whose_image_loads_as_null_on_a_new_board_loses_its_image` (the fake loader returns an image, then `null`; after the second board `Cards[0].Image` is null).
+- [ ] **Step 2: Run `--filter FullyQualifiedName~ThumbnailCacheTests|FullyQualifiedName~MainViewModelTests`**, expect FAIL.
+- [ ] **Step 3: In `LoadAsync`, a cache hit whose `File.Exists(path)` is false removes the key and returns `null`.** Update the class doc. In `RebuildCards`, call `LoadImageAsync` for every card with an `ImagePath` on each board (drop the `vm.Image is null` condition); in `LoadImageAsync`, a null result is posted too and clears `vm.Image` while `vm.ImagePath == path`.
 - [ ] **Step 4: Run the filter**, expect PASS.
 - [ ] **Step 5: Commit** `fix: a thumbnail whose file is gone shows the placeholder`.
 
@@ -141,12 +142,12 @@ Carried item R3-10: a picked image deleted later must show the tab placeholder o
 
 **Files:**
 - Modify: `src/AddonManager.App/AppServices.cs` (`AppLinks`, `UseSim`), `src/AddonManager.App/Session/IAppSession.cs`, `src/AddonManager.App/Session/AppSession.Changes.cs`, `src/AddonManager.App/Session/AppSession.cs` (`Airports` only)
-- Test: `tests/AddonManager.App.Tests/Session/AppSessionTests.cs`; extend `tests/AddonManager.App.Tests/ViewModels/FakeSession.cs`
+- Test: `tests/AddonManager.App.Tests/Session/AppSessionTests.cs`; extend `tests/AddonManager.App.Tests/ViewModels/FakeSession.cs`; stub the new members in `tests/AddonManager.App.Tests/ViewModels/FirstRunFakeSession.cs` (return `null`, `(null, null)` or an empty dictionary)
 
 **Interfaces:**
 - Consumes: `CardEditor.Split` (Task 1).
 - Produces on `IAppSession` (each runs on the thread pool, never throws, returns the message to show or `null`):
-  - `IReadOnlyDictionary<AirportCode, Airport> Airports { get; }` — `latestInput.Analysis.Airports` read under the lock; empty before the first discovery.
+  - `IReadOnlyDictionary<AirportCode, Airport> Airports { get; }` — the Airports of the latest input, read **without** the session lock (the UI thread reads it on every keystroke, and the class promises the UI thread never waits on a run): a private `IReadOnlyDictionary<AirportCode, Airport> airports` field, written with `Volatile.Write` wherever `latestInput` is set and read with `Volatile.Read`; empty before the first discovery.
   - `Task<string?> RenameAsync(CardRef card, string? name)`
   - `Task<string?> SetImageAsync(CardRef card, string? path)`
   - `Task<(CodeOutcome? Outcome, string? Message)> AddCodeAsync(CardRef card, string text)`
@@ -161,14 +162,14 @@ Carried item R3-10: a picked image deleted later must show the tab placeholder o
 
 Carried items covered here: 8, 9, 13, R2-5, R3-3, R4-1, R5-2, R5-3.
 
-- [ ] **Step 1: Write the failing session tests** (same machine helpers as the switch tests; card pairs come from two Packages of one Airport, e.g. `machine.AddPackage("eham-a")`, `machine.AddPackage("eham-b")`):
+- [ ] **Step 1: Write the failing session tests** (same machine helpers as the switch tests). `SimMachine` Packages have no BGL and no known code, so `machine.AddPackage("a")` and `machine.AddPackage("b")` give two code-less Scenery cards; a card with two Packages is made by `MergeAsync` first. `Edit` is the one path every method takes, so the locked-file and gone-card cases are a `[Theory]` over all eight methods (each case a lambda calling one method on a stored card):
   - `Rename_saves_the_name_and_the_wall_shows_it_at_once` — `RenameAsync(ref, "Home")` → `null`; `CardOf(...).Name == "Home"`; `Reload()` has the name.
-  - `A_locked_database_refuses_an_edit_and_changes_nothing` — `store.FailBeginCall = store.BeginCalls + 1`; `RenameAsync` → message contains `"userdata.db"`; name unchanged.
-  - `An_edit_of_a_card_that_is_gone_returns_the_gone_text` — `RenameAsync(new CardRef(999, null), "x")` → `AppSession.CardGoneText`.
+  - `[Theory] A_locked_database_refuses_every_edit_and_changes_nothing` — `store.FailBeginCall = store.BeginCalls + 1`; the call → message contains `"userdata.db"`; `Reload()` equals the state before.
+  - `[Theory] Every_edit_of_a_card_that_is_gone_returns_the_gone_text` — the card ref is `new CardRef(999, null)` → `AppSession.CardGoneText`.
   - `A_merge_with_a_card_that_is_gone_returns_the_gone_text` — target ref `new CardRef(999, null)` → `CardGoneText`, dragged card unchanged.
   - `Merging_a_card_into_itself_returns_a_message_and_throws_nothing` — `MergeAsync(a, a)` → non-null message (the `ArgumentException`'s).
   - `AddCode_returns_the_outcome_and_a_taken_code_names_the_holder` — first card gets `EHRD` → `(Added, null)`; second card `EHRD` → `Outcome.Result == Taken`, `HolderName` is the first card's shown name.
-  - `Split_works_while_the_sim_runs` — `ToggleSim.Running = true`; two Packages on one card; `SplitAsync` → `null`, the board has two cards.
+  - `Split_works_while_the_sim_runs` — merge card b into card a, then `ToggleSim.Running = true`; `SplitAsync(a, Pkg("b"))` → `null`, the board has two cards again.
   - `Moving_to_a_section_puts_the_card_on_its_initial_tab` — `MoveToSectionAsync(ref, Category.Other)` → card on Other/Other, no codes.
   - `MoveToTab_and_SetImage_and_RemoveCode_reach_the_editor` — one test, three calls, each observable on the next board.
   - `Airports_lists_the_known_airports_after_discovery`.
@@ -199,10 +200,10 @@ Carried items covered here: 8, 9, 13, R2-5, R3-3, R4-1, R5-2, R5-3.
   - `sealed record GsxProfileRow(string Name, PackageKey? Key, bool Dimmed, string? Label, OtherCard? OnCard, string? TwoProfilesTip, bool CanRemove)` — implements `IRemovableRow` (below).
   - `sealed record GsxSearchRow(AirportCode Code, string Link, string Tip, string? Error)` — `Tip` is the search tooltip.
   - `sealed record GsxSectionViewModel(IReadOnlyList<object> Rows)` with `bool IsVisible` (rows not empty) and `static GsxSectionViewModel Build(Card card, Board board, IReadOnlyDictionary<AirportCode, string> searchErrors)`.
-  - `interface IRemovableRow { PackageKey Key { get; } string FolderName { get; } bool CanRemove { get; } }` (in `PackageRowViewModel.cs`; `PackageRowViewModel` implements it in Task 6). For a profile row `FolderName` is `Name`.
+  - `interface IRemovableRow { PackageKey? Key { get; } string FolderName { get; } bool CanRemove { get; } }` (in `PackageRowViewModel.cs`; `PackageRowViewModel` implements it in Task 6 with a nullable `Key`; `PackageKey` is a `readonly record struct`, so the interface uses the nullable type). A profile row has `Key` only for the card's own profile Packages (`null` for rows on another card and shipped rows); `FolderName` is `Name`.
 
 Rules (spec 5 and 6), each pinned by one test:
-- Airport codes: the card's codes in order, then the Packages' other codes by ordinal value. Name: `airports[code].Name` when not blank, else the first non-blank `CardPackage.Airports` record name (Not found fallback). `ReplacesBuiltIn`: any Package's `ReplacesBuiltIn` contains the code. `OtherCards`: `board.CardsAt(code)` without this card (`CardRef.Of(c) != CardRef.Of(card)`).
+- Airport codes: the card's codes in order, then the Packages' other codes by ordinal value. Name: `airports[code].Name` when not blank, else the first non-blank name among the card's Packages' `Airports` records whose `Code` equals the row's code (Not found fallback). `ReplacesBuiltIn`: any Package's `ReplacesBuiltIn` contains the code. `OtherCards`: `board.CardsAt(code)` without this card (`CardRef.Of(c) != CardRef.Of(card)`).
 - Tags: `string.Join(", ", card.Tags)`, `null` when empty. Built-ins: one row per `card.BuiltIns`.
 - GSX rows per card code (order of `card.Codes`): the card's own profile Packages whose `Codes` contain the code (Found + not `Disabled` + in `GsxAirport.Active` with `Active.Count > 1` → `TwoProfilesTip = "Two GSX profiles for EHAM"`; `Disabled` → dimmed; Not found → dimmed, label `Not found`, `CanRemove = Removable`); then active profiles of `GsxAirport.Active` that sit on another card (`board.CardOf(new PackageKey(PackageKind.GsxProfile, name))`), with `OnCard` and the same two-profiles tip; then shipped profiles, named by `Path.GetFileNameWithoutExtension(IniPath)`, dimmed, label `shipped with scenery`, left out when `InGsxFolder` and a row of this code already has that name (case-insensitive); then, when `Active` is empty, one `GsxSearchRow` with `searchErrors.GetValueOrDefault(code)`. Profile Packages with none of the card's codes come last. With empty `GsxAirports`, only the card's own profile rows show.
 
@@ -226,13 +227,13 @@ Rules (spec 5 and 6), each pinned by one test:
 - Produces:
   - `public sealed record DialogServices(Func<string, bool> Confirm, Func<string?, Task<ImageSource?>> LoadImage, Func<string?> PickImage, Action<string> OpenLink)`.
   - `MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, DialogServices services)` (replaces the `loadImage, confirm` parameters; update the test factory in `MainViewModelTests` and `App.xaml.cs`).
-  - `CardDialogViewModel(IAppSession session, Board board, CardRef card, DialogServices services, Action<string> notice)`; `notice` is `MainViewModel.ShowNotice`.
-  - `MainViewModel`: `CloseCardCommand` (saves: ✕ and scrim), `DiscardCardCommand` (Esc), `void ShowNotice(string message)`. The notice is appended to `BannerLines` after `BannerText.Lines(...)`; it is cleared when the next user change starts (`ClearNotice()` at the start of every drop, Task 9) and when `Apply` sees a new board; a view without a new board (progress) keeps it.
-  - `CardDialogViewModel`: `string NameText` (two-way), `bool CanEdit` (`card.Id is not null`), `Task<string?> CommitNameAsync()`, `void DiscardName()`, `void Detach()` (after it, `CommitNameAsync` does nothing), `ImageSource? Image`, `CardTab Tab` (placeholder), `IReadOnlyList<ImageChoice> ImageChoices`, `IAsyncRelayCommand<string?> SetImageCommand` (`null` = Automatic), `IAsyncRelayCommand ChooseImageCommand`, `IAsyncRelayCommand<IRemovableRow> RemoveCommand`, `IAsyncRelayCommand<PackageRowViewModel> SplitCommand`, `IAsyncRelayCommand<CardRef> ShowCardCommand` (switch to another card), `IRelayCommand<GsxSearchRow> SearchCommand`, `CardInfoViewModel Info`, `GsxSectionViewModel Gsx`.
-  - `sealed record ImageChoice(string DisplayName, string Path)` with an observable `Image` loaded through `LoadImage`.
+  - `CardDialogViewModel(IAppSession session, Board board, CardRef card, DialogServices services, Action<string> notice, Action changeStarting)`; `notice` is `MainViewModel.ShowNotice`, `changeStarting` is `MainViewModel.ClearNotice`.
+  - `MainViewModel`: `CloseCardCommand` (saves: ✕ and scrim), `DiscardCardCommand` (Esc), `void ShowNotice(string message)`. The notice is appended to `BannerLines` after `BannerText.Lines(...)`; it is cleared when the next user change starts and when `Apply` sees a new board. "A user change" is every command that calls the session: the dialog calls `changeStarting()` first in its switch, remove, rename, image, code, split and card-switch commands, and every drop calls `ClearNotice()` first (Task 9); a view without a new board (progress) keeps it.
+  - `CardDialogViewModel`: `string NameText` (two-way), `bool CanEdit` (`card.Id is not null`), `Task<string?> CommitNameAsync()`, `void DiscardName()`, `void Detach()` (after it, `CommitNameAsync` does nothing), `ImageSource? Image`, `CardTab Tab` (placeholder), `IReadOnlyList<ImageChoice> ImageChoices`, `IAsyncRelayCommand<string?> SetImageCommand` (`null` = Automatic), `IAsyncRelayCommand ChooseImageCommand` (both can execute only when `CanEdit`), `IAsyncRelayCommand<IRemovableRow> RemoveCommand` (does nothing for a row without `Key`), `IAsyncRelayCommand<PackageRowViewModel> SplitCommand`, `IAsyncRelayCommand<CardRef> ShowCardCommand` (switch to another card), `IRelayCommand<GsxSearchRow> SearchCommand`, `CardInfoViewModel Info`, `GsxSectionViewModel Gsx`.
+  - `sealed partial class ImageChoice(string displayName, string path) : ObservableObject` with `DisplayName`, `Path` and `[ObservableProperty] ImageSource? image` loaded through `LoadImage`.
   - `PackageRowViewModel` gains `bool Dimmed` (`Lock != LockReason.None`) and implements `IRemovableRow`; `Rows` lists only Packages with `Kind != PackageKind.GsxProfile`; `bool CanSplit` on the dialog = `CanEdit` and at least two such rows.
 
-Name rules (carried R3-5): `bool NameFocused` is set by the view on focus in and out; `Update` refreshes `NameText` only while the box has no focus and the text equals the text last filled from the card, and losing focus commits and then refreshes; `CommitNameAsync` sends `RenameAsync(card, trimmed)` only when the trimmed text differs from that filled text (empty sends `null`), and on success the filled text becomes the new name. `CloseCard`: `await CommitNameAsync()`, `Detach()`, `CardDialog = null`, a message goes to `ShowNotice`. `DiscardCard`: `DiscardName()`, `Detach()`, `CardDialog = null`. `ShowCardCommand`: commit (message to `notice`), clear the search errors, show the target card from the dialog's last board. A board without the card closes the dialog and drops the text (existing `Update` returns `false`). Search (carried R2-9): `OpenLink(row.Link)` inside `try`; an exception stores its message under the row's code and rebuilds `Gsx`. Image (carried R4-9): `LoadImage(card.ImagePath)`; `null` leaves `Image` null so the view shows the tab placeholder.
+Name rules (carried R3-5): `bool NameFocused` is set by the view on focus in and out; `Update` refreshes `NameText` only while the box has no focus and the text equals the text last filled from the card, and losing focus commits and then refreshes; `CommitNameAsync` sends `RenameAsync(card, trimmed)` only when the trimmed text differs from that filled text (empty sends `null`), and on success the filled text becomes the new name. `CloseCard`: `await CommitNameAsync()`, `Detach()`, `CardDialog = null`, a message goes to `ShowNotice`. `DiscardCard`: `DiscardName()`, `Detach()`, `CardDialog = null`. `ShowCardCommand`: commit (message to `notice`), then show the target card from the dialog's last board and reset everything that belonged to the old card, whatever the commit returned: `NameText` and the filled text from the new card, `CodeText` empty, suggestions closed, `CodeMessage`, `Message` and the search errors cleared. A second `CommitNameAsync` while one is in flight awaits the first instead of sending again (✕ fires focus loss and then the close command). A board without the card closes the dialog and drops the text (existing `Update` returns `false`). Search (carried R2-9): `OpenLink(row.Link)` inside `try`; an exception stores its message under the row's code and rebuilds `Gsx`. Image (carried R4-9): `LoadImage(card.ImagePath)`; `null` leaves `Image` null so the view shows the tab placeholder.
 
 - [ ] **Step 1: Write the failing tests:**
   - `Clicking_through_the_name_saves_nothing` — commit with untouched text → `Renamed` empty.
@@ -243,7 +244,10 @@ Name rules (carried R3-5): `bool NameFocused` is set by the view on focus in and
   - `A_refused_name_save_on_close_still_closes_and_goes_to_the_banner` — `RenameMessage = "userdata.db is locked"` → dialog null, `BannerLines` ends with it.
   - `The_notice_is_kept_by_progress_and_cleared_by_a_new_board`.
   - `Switching_to_another_card_saves_the_name_and_shows_that_card`.
-  - `Provisional_cards_are_read_only` (`CanEdit` false, `CanSplit` false).
+  - `A_refused_save_on_switch_does_not_carry_the_text_to_the_other_card` — locked rename on card A, switch to B → `NameText` is B's name, `CodeText` empty, the refusal in the banner.
+  - `Two_commits_at_once_send_one_rename` — the fake session holds `RenameAsync` open; two `CommitNameAsync` calls → one entry in `Renamed`.
+  - `Every_session_command_clears_the_notice_first`.
+  - `Provisional_cards_are_read_only` (`CanEdit` false, `CanSplit` false, `SetImageCommand` and `ChooseImageCommand` cannot execute; Task 7 adds the code commands to this test).
   - `Profiles_are_not_package_rows_and_split_needs_two_other_packages`.
   - `Split_calls_the_session_with_the_row` and `Locked_rows_are_dimmed`.
   - `Image_choices_list_packages_with_thumbnails_and_automatic_clears` and `Choose_file_sets_the_picked_path_and_cancel_does_nothing`.
@@ -265,6 +269,8 @@ Name rules (carried R3-5): `bool NameFocused` is set by the view on focus in and
 - Consumes: `IAppSession.Airports`, `AddCodeAsync`, `RemoveCodeAsync` (Task 4); `AirportSuggestions.Find`.
 - Produces: `bool ShowCodes` (Scenery card), `IReadOnlyList<AirportCode> CodeChips`, `string CodeText` (two-way, on every keystroke), `IReadOnlyList<Airport> Suggestions`, `Airport? SelectedSuggestion`, `bool SuggestionsOpen`, `string? CodeMessage`, `void MoveSelection(int delta)` (clamped), `bool CloseSuggestions()` (true when it closed an open list, so the view marks Esc handled), `IAsyncRelayCommand AddCodeCommand`, `IAsyncRelayCommand<Airport> PickSuggestionCommand`, `IAsyncRelayCommand<AirportCode> RemoveCodeCommand`.
 
+`AddCodeCommand`, `PickSuggestionCommand` and `RemoveCodeCommand` can execute only when `CanEdit`; on a provisional card the view shows the chips without × and no text box.
+
 Rules: each `CodeText` change recomputes `Suggestions = AirportSuggestions.Find(session.Airports, CodeText)` (max 10), selects the first and opens the list when not empty. `AddCodeCommand` adds `SelectedSuggestion.Code.Value` while the list is open and something is selected, else `CodeText`. The result: `Added` → `CodeText = ""`, list closed, `CodeMessage = null`; `Invalid` → `CodeMessage = "Use 3–5 letters or digits."`; `Taken` → `"{CODE} is already on {HolderName}."` or `"… on another card."`; `(null, message)` → `Message = message`, text kept; `(null, null)` → nothing. Text is kept on every refusal.
 
 - [ ] **Step 1: Write the failing tests:** `Typing_suggests_names_and_codes_and_selects_the_first`, `Up_and_down_move_the_selection_within_the_list`, `Enter_adds_the_selected_suggestion`, `Escape_closes_the_list_and_enter_then_adds_the_typed_text` ("YALR" with YALR1 known → `AddedCodes` has "YALR"), `An_invalid_code_shows_the_rule_and_keeps_the_text`, `A_taken_code_names_the_holder_and_keeps_the_text` (typed "eham" → "EHAM is already on EHAM Schiphol."), `A_taken_code_whose_holder_is_not_shown_says_another_card`, `A_session_refusal_shows_the_message`, `Removing_a_chip_calls_the_session`, `Only_scenery_cards_show_the_code_field`.
@@ -285,13 +291,13 @@ Rules: each `CodeText` change recomputes `Suggestions = AirportSuggestions.Find(
 
 Layout (carried R5-8): `CardDialog` keeps `Width="640" MaxHeight="620"`; the header is docked at the top and does not scroll; one `ScrollViewer` holds Packages, Info and GSX. ✕ runs `CloseCardCommand`.
 
-- **Header** (spec 3 drawing): image 120×90 with the `TabSymbolConverter` placeholder when `Image` is null; `Image ▾` is a `ui:DropDownButton` (or a `Button` with a `ContextMenu`) listing `ImageChoices` (thumbnail + name), a separator, `Choose file…`, `Automatic`. The name `TextBox` binds `NameText` (`UpdateSourceTrigger=PropertyChanged`), Enter and `LostKeyboardFocus` call `CommitNameAsync` (the result goes to `Message`), `IsReadOnly = !CanEdit`. `ICAO:` row: chips (`ItemsControl` of code + `×` button), then a `TextBox` bound to `CodeText` with a `Popup` list of suggestions ("EHGG  Groningen Eelde"); `PreviewKeyDown` handles Up/Down (`MoveSelection`), Enter (`AddCodeCommand`), Esc (`CloseSuggestions()`; mark handled only when it returns true). `CodeMessage` below in `#FFB000`. The switch, `SwitchReason` and `Message` stay as in 5b.
+- **Header** (spec 3 drawing): image 120×90 with the `TabSymbolConverter` placeholder when `Image` is null; `Image ▾` is a `ui:DropDownButton` (or a `Button` with a `ContextMenu`) listing `ImageChoices` (thumbnail + name), a separator, `Choose file…`, `Automatic`. The name `TextBox` binds `NameText` (`UpdateSourceTrigger=PropertyChanged`), Enter and `LostKeyboardFocus` call `CommitNameAsync` (the result goes to `Message`), `IsReadOnly = !CanEdit`; `Image ▾` is disabled when `!CanEdit`. `ICAO:` row: chips (`ItemsControl` of code + `×` button), then a `TextBox` bound to `CodeText` with a `Popup` list of suggestions ("EHGG  Groningen Eelde"); `PreviewKeyDown` handles Up/Down (`MoveSelection`), Enter (`AddCodeCommand`), Esc (`CloseSuggestions()`; mark handled only when it returns true). `CodeMessage` below in `#FFB000`. The switch, `SwitchReason` and `Message` stay as in 5b.
 - **Packages:** the 5b row template plus `Opacity=0.5` when `Dimmed`, and a `Split` button (`ui:SymbolIcon ArrowSplit20` + text) visible when the dialog's `CanSplit`.
 - **Info:** built-ins dimmed with `LockClosed16`; Airport rows: `Title`, `Replaces built-in`, other cards as hyperlink-style buttons running `ShowCardCommand`; the tags line. Each part collapses when empty.
 - **GSX:** header `GSX`; `DataTemplate`s per row type: profile row (name, `Warning16` in `#FFB000` with `TwoProfilesTip` as tooltip, label, `on <card>` link, Remove), search row (code, icon-only `ui:Button` with `Search20` and `Tip` as tooltip, then `Warning16` with `Error` as tooltip when set). The section collapses when `Gsx.IsVisible` is false.
 
 - [ ] **Step 1: Build the four controls and the new `CardDialog`.**
-- [ ] **Step 2: `dotnet build ModernMsfsAddonManager.slnx`**, expect 0 errors and 0 new warnings; `--filter FullyQualifiedName~AppAssemblyTests` passes (XAML loads).
+- [ ] **Step 2: `dotnet build ModernMsfsAddonManager.slnx`**, expect 0 errors and 0 new warnings. XAML errors show only at run time, so Step 3 is the load check.
 - [ ] **Step 3: Run the app with `--data-dir` on the generated test folder** (`tools/dev-check/New-TestPackages.ps1`) and check: header fixed while the rest scrolls; rename by Enter, by clicking outside, Esc drops; suggestions with Up/Down/Enter/Esc; image menu; Split; GSX rows. Screenshot the dialog.
 - [ ] **Step 4: Commit** `feat: card dialog views for header, packages, info and GSX`.
 
@@ -325,7 +331,7 @@ Views (carried R4-11): `CardView` starts the drag in `MouseMove` when `pressed` 
 ### Task 10: Documentation and the full check
 
 **Files:**
-- Modify: `README.md`, `CLAUDE.md` (project status: 5c implemented, 5d next), `ANALYS.md` (5c implemented, date), `docs/superpowers/specs/2026-10-25-mvp-design.md` (6.5 "Move out" → "Split", merge confirmation, pointer to the 5c spec), `GLOSSARY.md` (add **Split** if the glossary lists Merge)
+- Modify: `README.md`, `CLAUDE.md` (project status: 5c implemented, 5d next), `ANALYS.md` (5c implemented, date), `docs/superpowers/specs/2026-10-25-mvp-design.md` (a short "changed by the 5c spec" note with the 5c section numbers in sections 2 (goal 3), 6.5 (Move out → Split, merge confirmation, the ICAO field), 8 (no copy action, shipped-profile label), 10 (card dialog list) and 15 (closed by 5c 6.1)), `GLOSSARY.md` (add **Split** if the glossary lists Merge)
 
 - [ ] **Step 1: Update the docs** in one pass; English except `ANALYS.md`.
 - [ ] **Step 2: Run the whole suite** `dotnet test ModernMsfsAddonManager.slnx`, expect all PASS, and `dotnet build` with no new warnings.

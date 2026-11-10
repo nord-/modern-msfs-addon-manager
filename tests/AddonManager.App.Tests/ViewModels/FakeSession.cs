@@ -95,10 +95,13 @@ internal sealed class FakeSession : IAppSession
     /// <summary>What <c>RenameAsync</c> returns.</summary>
     public string? RenameMessage { get; set; }
 
+    /// <summary>When set, <c>RenameAsync</c> records the call and returns this task instead of <c>RenameMessage</c>.</summary>
+    public TaskCompletionSource<string?>? RenameHold { get; set; }
+
     public Task<string?> RenameAsync(CardRef card, string? name)
     {
         Renamed.Add((card, name));
-        return Task.FromResult(RenameMessage);
+        return RenameHold?.Task ?? Task.FromResult(RenameMessage);
     }
 
     /// <summary>The card and path of each <c>SetImageAsync</c> call.</summary>

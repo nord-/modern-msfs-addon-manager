@@ -18,11 +18,11 @@ public sealed class MainViewModelTests
     public MainViewModelTests() => loader = _ => Task.FromResult<ImageSource?>(null);
 
     private MainViewModel Create(Action<Action>? post = null)
-        => new(session, post ?? (a => a()), @"C:\GSX", path =>
+        => new(session, post ?? (a => a()), @"C:\GSX", new DialogServices((_, _) => true, path =>
         {
             loads.Add(path);
             return loader(path);
-        }, _ => true);
+        }, () => null, _ => { }));
 
     private static string[] Names(MainViewModel vm) => [.. vm.Cards.Select(c => c.Name)];
 
@@ -426,7 +426,7 @@ public sealed class MainViewModelTests
 
         vm.OpenCardCommand.Execute(vm.Cards[1]);
 
-        Assert.Equal("B", vm.CardDialog?.Title);
+        Assert.Equal("B", vm.CardDialog?.NameText);
 
         vm.CloseCardCommand.Execute(null);
 
@@ -444,7 +444,7 @@ public sealed class MainViewModelTests
         Show(Ready(Board(Card(1, "A2", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
 
         Assert.Same(dialog, vm.CardDialog);
-        Assert.Equal("A2", vm.CardDialog!.Title);
+        Assert.Equal("A2", vm.CardDialog!.NameText);
 
         Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
 
@@ -462,5 +462,195 @@ public sealed class MainViewModelTests
 
         Show(Ready(board));
         Assert.DoesNotContain("Some links wait for MSFS to close. Close MSFS, then press F5.", vm.BannerLines);
+    }
+
+    private const string Locked = "userdata.db is locked";
+
+    private CardDialogViewModel Open(MainViewModel vm, int index = 0)
+    {
+        vm.OpenCardCommand.Execute(vm.Cards[index]);
+        return vm.CardDialog!;
+    }
+
+    [Fact]
+    public async Task A_card_gone_from_the_board_closes_the_dialog_and_drops_the_text()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameFocused = true;
+        dialog.NameText = "typed";
+
+        Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
+        // The unloading name box loses focus after the dialog closed.
+        await dialog.NameLostFocusAsync();
+
+        Assert.Null(vm.CardDialog);
+        Assert.Empty(session.Renamed);
+    }
+
+    [Fact]
+    public async Task Escape_discards_the_name_and_closes()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "typed";
+
+        vm.DiscardCardCommand.Execute(null);
+        await dialog.NameLostFocusAsync();
+
+        Assert.Null(vm.CardDialog);
+        Assert.Empty(session.Renamed);
+        Assert.Equal("A", dialog.NameText);
+    }
+
+    [Fact]
+    public async Task Close_saves_the_name_first()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        Assert.Same(dialog, vm.CardDialog);
+        hold.SetResult(null);
+        await close;
+
+        Assert.Equal([(new CardRef(1, null), (string?)"Home")], session.Renamed);
+        Assert.Null(vm.CardDialog);
+        Assert.Null(await dialog.CommitNameAsync());
+        Assert.Single(session.Renamed);
+    }
+
+    [Fact]
+    public async Task A_refused_name_save_on_close_still_closes_and_goes_to_the_banner()
+    {
+        session.RenameMessage = Locked;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        Open(vm).NameText = "Home";
+
+        await vm.CloseCardCommand.ExecuteAsync(null);
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+    }
+
+    [Fact]
+    public async Task A_close_whose_commit_finishes_after_another_card_opened_leaves_that_card_open()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        Open(vm).NameText = "Home";
+
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        var other = Open(vm, 1);
+        hold.SetResult(null);
+        await close;
+
+        Assert.Same(other, vm.CardDialog);
+    }
+
+    [Fact]
+    public void The_notice_is_kept_by_progress_and_cleared_by_a_new_board()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+        Show(Ready(board));
+
+        vm.ShowNotice(Locked);
+        Assert.Equal([Locked], vm.BannerLines);
+
+        Show(Ready(board, new ScanProgress(5, 10, null)));
+        Assert.Equal(["Scanning… 5 of 10", Locked], vm.BannerLines);
+
+        Show(Ready(board with { }));
+        Assert.Empty(vm.BannerLines);
+
+        vm.ShowNotice(Locked);
+        vm.ClearNotice();
+        Assert.Empty(vm.BannerLines);
+    }
+
+    [Fact]
+    public async Task A_dialog_command_clears_the_notice()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        vm.ShowNotice(Locked);
+        IReadOnlyList<string>? seen = null;
+        session.OnSwitch = _ => seen = vm.BannerLines;
+
+        await dialog.ToggleCommand.ExecuteAsync(null);
+
+        Assert.Equal([], seen);
+    }
+
+    [Fact]
+    public async Task A_refused_save_on_switch_does_not_carry_the_text_to_the_other_card()
+    {
+        session.RenameMessage = Locked;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+        dialog.CodeText = "EH";
+
+        await dialog.ShowCardCommand.ExecuteAsync(new CardRef(2, null));
+
+        Assert.Same(dialog, vm.CardDialog);
+        Assert.Equal("B", dialog.NameText);
+        Assert.Equal("", dialog.CodeText);
+        Assert.Null(dialog.Message);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+    }
+
+    [Fact]
+    public async Task A_refusal_of_the_focus_loss_commit_reaches_the_banner_on_close()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameFocused = true;
+        dialog.NameText = "Home";
+
+        var focusLoss = dialog.NameLostFocusAsync();
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        hold.SetResult(Locked);
+        await focusLoss;
+        await close;
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+        Assert.Single(session.Renamed);
+    }
+
+    [Fact]
+    public async Task A_switch_whose_commit_finishes_after_escape_does_nothing_more()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+
+        var show = dialog.ShowCardCommand.ExecuteAsync(new CardRef(2, null));
+        vm.DiscardCardCommand.Execute(null);
+        hold.SetResult(Locked);
+        await show;
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal("A", dialog.NameText);
+        Assert.Empty(vm.BannerLines);
     }
 }

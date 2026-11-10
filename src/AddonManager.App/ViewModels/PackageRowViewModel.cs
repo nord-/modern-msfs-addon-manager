@@ -14,9 +14,11 @@ public interface IRemovableRow
 }
 
 /// <summary>One Package row of the card dialog.</summary>
-public sealed class PackageRowViewModel(CardPackage package)
+public sealed class PackageRowViewModel(CardPackage package) : IRemovableRow
 {
     public PackageKey Key { get; } = new(package.Kind, package.Name);
+
+    PackageKey? IRemovableRow.Key => Key;
 
     public string DisplayName { get; } = package.DisplayName;
 
@@ -36,4 +38,7 @@ public sealed class PackageRowViewModel(CardPackage package)
     public string? Reason { get; } = package.DisabledReason;
 
     public bool CanRemove { get; } = package.Removable;
+
+    /// <summary>A locked Package (spec 6.3) is dimmed, besides its reason.</summary>
+    public bool Dimmed { get; } = package.Lock != LockReason.None;
 }

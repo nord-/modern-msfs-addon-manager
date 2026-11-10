@@ -29,10 +29,11 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IAppSession session;
     private readonly Action<Action> post;
     private readonly string gsxFolder;
-    private readonly Func<string?, Task<ImageSource?>> loadImage;
-    private readonly Func<string, bool> confirm;
+    private readonly DialogServices services;
     private readonly Dictionary<MenuSection, CardTab> rememberedTabs = [];
     private Board? lastBoard;
+    private IReadOnlyList<string> sessionLines = [];
+    private string? notice;
     private int queued;
     private bool applying;
 
@@ -72,13 +73,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private CardDialogViewModel? cardDialog;
 
-    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, Func<string?, Task<ImageSource?>> loadImage, Func<string, bool> confirm)
+    public MainViewModel(IAppSession session, Action<Action> post, string gsxFolder, DialogServices services)
     {
         this.session = session;
         this.post = post;
         this.gsxFolder = gsxFolder;
-        this.loadImage = loadImage;
-        this.confirm = confirm;
+        this.services = services;
         session.Changed += OnSessionChanged;
         Apply(session.Current);
     }
@@ -112,11 +112,49 @@ public sealed partial class MainViewModel : ObservableObject
         // A card opens only on the current board.
         if (card is null || lastBoard is null || card.Ref.In(lastBoard) is null)
             return;
-        CardDialog = new CardDialogViewModel(session, lastBoard, card.Ref, confirm);
+        CardDialog = new CardDialogViewModel(session, lastBoard, card.Ref, services, ShowNotice, ClearNotice);
     }
 
+    /// <summary>✕ and a click outside: saves the name first, then closes. A refused save still closes and goes to the banner.</summary>
     [RelayCommand]
-    private void CloseCard() => CardDialog = null;
+    private async Task CloseCard()
+    {
+        if (CardDialog is not { } dialog)
+            return;
+        var refused = await dialog.CommitNameAsync();
+        dialog.Detach();
+        // Esc or another card may have replaced the dialog while the name was saved.
+        if (ReferenceEquals(CardDialog, dialog))
+            CardDialog = null;
+        if (refused is not null)
+            ShowNotice(refused);
+    }
+
+    /// <summary>Esc: drops the name not yet saved and closes.</summary>
+    [RelayCommand]
+    private void DiscardCard()
+    {
+        if (CardDialog is not { } dialog)
+            return;
+        dialog.DiscardName();
+        dialog.Detach();
+        CardDialog = null;
+    }
+
+    /// <summary>Shows a refused user change as the last banner line, until the next user change starts or a new board is shown.</summary>
+    public void ShowNotice(string message)
+    {
+        notice = message;
+        UpdateBanner();
+    }
+
+    public void ClearNotice()
+    {
+        notice = null;
+        UpdateBanner();
+    }
+
+    private void UpdateBanner() => BannerLines = notice is null ? sessionLines : [.. sessionLines, notice];
 
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task Rescan() => session.RescanAsync(full: true);
@@ -157,14 +195,22 @@ public sealed partial class MainViewModel : ObservableObject
         var board = view.Board;
         var boardChanged = board is not null && !ReferenceEquals(board, lastBoard);
         if (boardChanged)
+        {
             lastBoard = board;
+            notice = null;
+        }
 
         CanRetry = view.CanRetry;
         ErrorText = view.Phase == SessionPhase.Ready ? null : view.Error;
-        BannerLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder, view.LinksWaiting);
+        sessionLines = BannerText.Lines(board?.Banner, view.Progress, view.Error, gsxFolder, view.LinksWaiting);
+        UpdateBanner();
         Phase = view.Phase;
-        if (boardChanged && CardDialog is not null && !CardDialog.Update(lastBoard!))
+        if (boardChanged && CardDialog is { } dialog && !dialog.Update(lastBoard!))
+        {
+            // The card is gone: its unsaved name is dropped, so the unloading name box must not send it.
+            dialog.Detach();
             CardDialog = null;
+        }
 
         if (view.Phase == SessionPhase.Ready && (boardChanged || !wasReady))
             RefreshSettings();
@@ -286,7 +332,7 @@ public sealed partial class MainViewModel : ObservableObject
         ImageSource? result;
         try
         {
-            result = await loadImage(path).ConfigureAwait(false);
+            result = await services.LoadImage(path).ConfigureAwait(false);
         }
         catch (Exception)
         {

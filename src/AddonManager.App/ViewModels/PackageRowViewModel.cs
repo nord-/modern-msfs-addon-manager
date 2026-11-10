@@ -3,6 +3,16 @@ using AddonManager.Core.Packages;
 
 namespace AddonManager.App.ViewModels;
 
+/// <summary>A dialog row that may offer "Remove": a Package row, or a GSX profile row. <c>Key</c> is null for rows that are not the card's own Packages.</summary>
+public interface IRemovableRow
+{
+    PackageKey? Key { get; }
+
+    string FolderName { get; }
+
+    bool CanRemove { get; }
+}
+
 /// <summary>One Package row of the card dialog.</summary>
 public sealed class PackageRowViewModel(CardPackage package)
 {

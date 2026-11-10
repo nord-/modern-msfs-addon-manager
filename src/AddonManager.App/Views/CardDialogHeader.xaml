@@ -88,7 +88,7 @@
                                     <Border Background="#3A3A3A" CornerRadius="4" Padding="8,2,2,2" Margin="0,0,6,4" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Value}" VerticalAlignment="Center" />
-                                            <ui:Button Content="&#x00D7;" Padding="6,0" Margin="4,0,0,0" ToolTip="Remove"
+                                            <ui:Button Content="&#x00D7;" Padding="6,0" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}" Margin="4,0,0,0" ToolTip="Remove"
                                                        Appearance="Transparent" BorderThickness="0"
                                                        Command="{Binding DataContext.RemoveCodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                        CommandParameter="{Binding}" />
@@ -97,7 +97,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBox x:Name="CodeBox" Style="{StaticResource EditableBox}" Width="120" Margin="0,0,0,4" Text="{Binding CodeText, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox x:Name="CodeBox" Style="{StaticResource EditableBox}" Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" Width="120" Margin="0,0,0,4" Text="{Binding CodeText, UpdateSourceTrigger=PropertyChanged}"
                                  PreviewKeyDown="OnCodePreviewKeyDown" LostKeyboardFocus="OnCodeLostFocus" />
                     </WrapPanel>
                 </DockPanel>

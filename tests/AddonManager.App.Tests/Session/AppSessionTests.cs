@@ -1172,6 +1172,34 @@ public sealed class AppSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task An_edit_of_a_card_the_state_no_longer_has_returns_the_gone_text()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+        session.State.Cards.RemoveAll(c => c.Id == card.Id);
+
+        var message = await Bounded(session.RenameAsync(card, "Home"));
+
+        Assert.Equal(AppSession.CardGoneText, message);
+    }
+
+    [Fact]
+    public async Task An_edit_on_a_disposed_session_returns_a_message_instead_of_success()
+    {
+        var lib = machine.AddLibrary();
+        machine.AddPackage("a");
+        var session = await StartedAsync(lib);
+        var card = CardRef.Of(CardOf(session.Current, "a"));
+        session.Dispose();
+
+        var message = await Bounded(session.RenameAsync(card, "Home"));
+
+        Assert.NotNull(message);
+    }
+
+    [Fact]
     public async Task A_merge_with_a_card_that_is_gone_returns_the_gone_text()
     {
         var lib = machine.AddLibrary();

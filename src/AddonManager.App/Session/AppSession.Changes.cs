@@ -55,7 +55,7 @@ public sealed partial class AppSession
     /// Runs one user change under the lock and publishes the board it leaves, from the latest input with Community read now (D3), so a run that
     /// is still going shows the change when it completes. Returns the change's value and the message to show (or <c>null</c>); nothing escapes.
     /// </summary>
-    private (T? Value, string? Message) Change<T>(Func<AppLinks, (T Value, ApplyResult? Applied)> change)
+    private (T? Value, string? Message) Change<T>(Func<AppLinks, (T Value, ApplyResult? Applied)> change, string? notRunMessage = null)
     {
         SessionView? raise;
         T value;
@@ -63,7 +63,7 @@ public sealed partial class AppSession
         lock (gate)
         {
             if (disposed || services?.Links is not { } links || latestDiscovery is null || latestInput is null)
-                return (default, null);
+                return (default, notRunMessage);
 
             ApplyResult? result;
             try
@@ -103,17 +103,19 @@ public sealed partial class AppSession
 
     /// <summary>
     /// Runs a card edit through <see cref="Change{T}"/> on the stored cards the references name on the shown board; a reference to a card that
-    /// is gone, or only provisional, refuses the edit with <see cref="CardGoneText"/> before anything is called.
+    /// is gone, or only provisional, refuses the edit with <see cref="CardGoneText"/> before anything is called; so does an edit that
+    /// cannot run at all (a disposed session or none discovered yet), so a caller never takes it for saved.
     /// </summary>
     private (T? Value, string? Message) Edit<T>(IReadOnlyList<CardRef> cards, Func<AppLinks, Board, long[], T> edit)
         => Change(links =>
         {
             if (view.Board is not { } shown)
-                return (default(T)!, (ApplyResult?)null);
+                throw new CardGoneException();
 
-            var ids = cards.Select(c => c.In(shown)?.Id ?? throw new CardGoneException()).ToArray();
-            return (edit(links, shown, ids), null);
-        });
+            // A card the shown board lists but the state no longer has is as gone as one the board does not list.
+            var ids = cards.Select(c => c.In(shown)?.Id is { } id && State.FindCard(id) is not null ? id : throw new CardGoneException()).ToArray();
+            return (edit(links, shown, ids), (ApplyResult?)null);
+        }, CardGoneText);
 
     private string? Edit(IReadOnlyList<CardRef> cards, Action<AppLinks, Board, long[]> edit)
         => Edit(cards, (links, board, ids) =>

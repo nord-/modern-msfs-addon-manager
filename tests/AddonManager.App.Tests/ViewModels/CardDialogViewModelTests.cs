@@ -562,6 +562,20 @@ public sealed class CardDialogViewModelTests
     }
 
     [Fact]
+    public async Task Editing_the_code_text_clears_the_refusal()
+    {
+        var (session, vm) = CodeDialog();
+        session.AddCodeResult = (new CodeOutcome(CodeResult.Invalid), null);
+        vm.CodeText = "A";
+        await vm.AddCodeCommand.ExecuteAsync(null);
+        Assert.NotNull(vm.CodeMessage);
+
+        vm.CodeText = "AB";
+
+        Assert.Null(vm.CodeMessage);
+    }
+
+    [Fact]
     public async Task A_taken_code_whose_holder_is_not_shown_says_another_card()
     {
         var (session, vm) = CodeDialog();

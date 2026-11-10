@@ -152,6 +152,8 @@ public sealed partial class CardDialogViewModel
 
     partial void OnCodeTextChanged(string value)
     {
+        // A refusal is about the text that was sent; typing makes it stale.
+        CodeMessage = null;
         Suggestions = AirportSuggestions.Find(session.Airports, value);
         SelectedSuggestion = Suggestions.Count > 0 ? Suggestions[0] : null;
         SuggestionsOpen = Suggestions.Count > 0;

@@ -2,6 +2,7 @@ using System.Windows.Media;
 using AddonManager.App.Session;
 using AddonManager.App.ViewModels;
 using AddonManager.Core.Cards;
+using AddonManager.Core.Content;
 using AddonManager.Core.Gsx;
 using AddonManager.Core.Packages;
 using static AddonManager.App.Tests.ViewModels.Boards;
@@ -447,11 +448,172 @@ public sealed class CardDialogViewModelTests
     }
 
     [Fact]
+    public async Task Code_commands_clear_the_notice_first()
+    {
+        var session = new FakeSession();
+        var clears = new List<int>();
+        var vm = Dialog(session, CardOf(1, "A", With("a")), changeStarting: () => clears.Add(session.CodesAdded.Count + session.CodesRemoved.Count));
+        session.Airports = Known(("YALR", "Alpha Rock"));
+
+        vm.CodeText = "yalr";
+        await vm.AddCodeCommand.ExecuteAsync(null);
+        await vm.PickSuggestionCommand.ExecuteAsync(session.Airports.Values.First());
+        await vm.RemoveCodeCommand.ExecuteAsync(Code("EHAM"));
+
+        Assert.Equal([0, 1, 2], clears);
+    }
+
+    private static IReadOnlyDictionary<AirportCode, Airport> Known(params (string Code, string? Name)[] airports)
+        => airports.ToDictionary(a => Code(a.Code), a => new Airport(Code(a.Code), a.Name, null, false, false));
+
+    private static (FakeSession Session, CardDialogViewModel Vm) CodeDialog(params (string Code, string? Name)[] airports)
+    {
+        var session = new FakeSession { Airports = Known(airports) };
+        return (session, Dialog(session, CardOf(1, "A", With("a"))));
+    }
+
+    [Fact]
+    public void Typing_suggests_names_and_codes_and_selects_the_first()
+    {
+        var (_, vm) = CodeDialog(("EHAM", "Amsterdam Schiphol"), ("YALR", "Alpha Rock"), ("EHRD", "Rotterdam"));
+
+        vm.CodeText = "ams";
+
+        Assert.Equal(["EHAM"], vm.Suggestions.Select(a => a.Code.Value));
+        Assert.Equal("EHAM", vm.SelectedSuggestion?.Code.Value);
+        Assert.True(vm.SuggestionsOpen);
+
+        vm.CodeText = "EH";
+        Assert.Equal(["EHAM", "EHRD"], vm.Suggestions.Select(a => a.Code.Value));
+
+        vm.CodeText = "zzz";
+        Assert.Empty(vm.Suggestions);
+        Assert.Null(vm.SelectedSuggestion);
+        Assert.False(vm.SuggestionsOpen);
+    }
+
+    [Fact]
+    public void Up_and_down_move_the_selection_within_the_list()
+    {
+        var (_, vm) = CodeDialog(("EHAM", null), ("EHRD", null), ("EHBK", null));
+        vm.CodeText = "EH";
+
+        vm.MoveSelection(-1);
+        Assert.Equal("EHAM", vm.SelectedSuggestion?.Code.Value);
+        vm.MoveSelection(1);
+        vm.MoveSelection(1);
+        vm.MoveSelection(1);
+        Assert.Equal("EHRD", vm.SelectedSuggestion?.Code.Value);
+    }
+
+    [Fact]
+    public async Task Enter_adds_the_selected_suggestion()
+    {
+        var (session, vm) = CodeDialog(("EHAM", null), ("EHRD", null));
+        vm.CodeText = "EH";
+        vm.MoveSelection(1);
+
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("EHRD", session.CodesAdded.Single().Text);
+        Assert.Equal("", vm.CodeText);
+        Assert.False(vm.SuggestionsOpen);
+        Assert.Null(vm.CodeMessage);
+    }
+
+    [Fact]
+    public async Task Escape_closes_the_list_and_enter_then_adds_the_typed_text()
+    {
+        var (session, vm) = CodeDialog(("YALR1", "Alpha"));
+        vm.CodeText = "YALR";
+        Assert.True(vm.SuggestionsOpen);
+
+        Assert.True(vm.CloseSuggestions());
+        Assert.False(vm.CloseSuggestions());
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("YALR", session.CodesAdded.Single().Text);
+    }
+
+    [Fact]
+    public async Task An_invalid_code_shows_the_rule_and_keeps_the_text()
+    {
+        var (session, vm) = CodeDialog();
+        session.AddCodeResult = (new CodeOutcome(CodeResult.Invalid), null);
+        vm.CodeText = "A";
+
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("Use 3–5 letters or digits.", vm.CodeMessage);
+        Assert.Equal("A", vm.CodeText);
+    }
+
+    [Fact]
+    public async Task A_taken_code_names_the_holder_and_keeps_the_text()
+    {
+        var (session, vm) = CodeDialog();
+        session.AddCodeResult = (new CodeOutcome(CodeResult.Taken, 2, "EHAM Schiphol"), null);
+        vm.CodeText = "eham";
+
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("EHAM is already on EHAM Schiphol.", vm.CodeMessage);
+        Assert.Equal("eham", vm.CodeText);
+    }
+
+    [Fact]
+    public async Task A_taken_code_whose_holder_is_not_shown_says_another_card()
+    {
+        var (session, vm) = CodeDialog();
+        session.AddCodeResult = (new CodeOutcome(CodeResult.Taken, 2), null);
+        vm.CodeText = "EHAM";
+
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("EHAM is already on another card.", vm.CodeMessage);
+    }
+
+    [Fact]
+    public async Task A_session_refusal_shows_the_message()
+    {
+        var (session, vm) = CodeDialog();
+        session.AddCodeResult = (null, "userdata.db is locked");
+        vm.CodeText = "EHAM";
+
+        await vm.AddCodeCommand.ExecuteAsync(null);
+
+        Assert.Equal("userdata.db is locked", vm.Message);
+        Assert.Equal("EHAM", vm.CodeText);
+        Assert.Null(vm.CodeMessage);
+    }
+
+    [Fact]
+    public async Task Removing_a_chip_calls_the_session()
+    {
+        var (session, vm) = CodeDialog();
+
+        await vm.RemoveCodeCommand.ExecuteAsync(Code("EHAM"));
+
+        Assert.Equal(Code("EHAM"), session.CodesRemoved.Single().Code);
+        Assert.Equal([Code("EHAM")], vm.CodeChips);
+    }
+
+    [Fact]
+    public void Only_scenery_cards_show_the_code_field()
+    {
+        Assert.True(Dialog(new FakeSession(), Card(1, "S")).ShowCodes);
+        Assert.False(Dialog(new FakeSession(), Card(1, "Plane", section: Category.Aircraft)).ShowCodes);
+    }
+
+    [Fact]
     public void Provisional_cards_are_read_only()
     {
         var provisional = Card(null, "pkg-a", packages: ["pkg-a", "pkg-b"]);
         var vm = Dialog(new FakeSession(), provisional);
 
+        Assert.False(vm.AddCodeCommand.CanExecute(null));
+        Assert.False(vm.PickSuggestionCommand.CanExecute(null));
+        Assert.False(vm.RemoveCodeCommand.CanExecute(Code("EHAM")));
         Assert.False(vm.CanEdit);
         Assert.False(vm.CanSplit);
         Assert.False(vm.SetImageCommand.CanExecute(null));

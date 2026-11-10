@@ -1,5 +1,7 @@
 using System.Windows.Media;
 using AddonManager.Core.Cards;
+using AddonManager.Core.Content;
+using AddonManager.Core.Packages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -31,12 +33,39 @@ public sealed partial class CardDialogViewModel
     [ObservableProperty]
     private IReadOnlyList<ImageChoice> imageChoices = [];
 
-    /// <summary>The ICAO code text box; Task 7 adds its suggestions.</summary>
+    /// <summary>The ICAO code text box; two-way, on every keystroke. Each change recomputes <see cref="Suggestions"/>.</summary>
     [ObservableProperty]
     private string codeText = "";
 
+    /// <summary>The refusal of the last code the user tried to add, shown under the code field; the text is kept.</summary>
     [ObservableProperty]
     private string? codeMessage;
+
+    /// <summary>The known Airports that match <see cref="CodeText"/>, at most ten.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<Airport> suggestions = [];
+
+    /// <summary>The highlighted suggestion; Enter adds it while the list is open.</summary>
+    [ObservableProperty]
+    private Airport? selectedSuggestion;
+
+    [ObservableProperty]
+    private bool suggestionsOpen;
+
+    /// <summary>The code field belongs to Scenery cards only.</summary>
+    public bool ShowCodes => card.Section == Category.Scenery;
+
+    /// <summary>The ICAO codes of the card, shown as chips.</summary>
+    public IReadOnlyList<AirportCode> CodeChips => card.Codes;
+
+    /// <summary>Adds the selected suggestion while the list is open, else the typed text.</summary>
+    public IAsyncRelayCommand AddCodeCommand { get; }
+
+    /// <summary>Adds the code of a clicked suggestion.</summary>
+    public IAsyncRelayCommand<Airport> PickSuggestionCommand { get; }
+
+    /// <summary>Removes the code of a chip.</summary>
+    public IAsyncRelayCommand<AirportCode> RemoveCodeCommand { get; }
 
     /// <summary>Set by the view when the name box gets and loses keyboard focus. A new board does not refresh a focused box.</summary>
     public bool NameFocused { get; set; }
@@ -114,12 +143,67 @@ public sealed partial class CardDialogViewModel
         NameText = card.Name;
     }
 
-    /// <summary>Task 7 closes the suggestions here too.</summary>
     private void ResetCodeField()
     {
         CodeText = "";
         CodeMessage = null;
+        SuggestionsOpen = false;
     }
+
+    partial void OnCodeTextChanged(string value)
+    {
+        Suggestions = AirportSuggestions.Find(session.Airports, value);
+        SelectedSuggestion = Suggestions.Count > 0 ? Suggestions[0] : null;
+        SuggestionsOpen = Suggestions.Count > 0;
+    }
+
+    /// <summary>Moves the highlight by <paramref name="delta"/> within the open list, never past either end.</summary>
+    public void MoveSelection(int delta)
+    {
+        if (!SuggestionsOpen || Suggestions.Count == 0)
+            return;
+        var index = SelectedSuggestion is null ? -1 : Suggestions.ToList().IndexOf(SelectedSuggestion);
+        SelectedSuggestion = Suggestions[Math.Clamp(index + delta, 0, Suggestions.Count - 1)];
+    }
+
+    /// <summary>Closes the list; <c>true</c> when it was open, so the view marks Esc handled.</summary>
+    public bool CloseSuggestions()
+    {
+        var wasOpen = SuggestionsOpen;
+        SuggestionsOpen = false;
+        return wasOpen;
+    }
+
+    private Task AddSelectedOrTypedAsync()
+        => AddCodeAsync(SuggestionsOpen && SelectedSuggestion is { } selected ? selected.Code.Value : CodeText);
+
+    private Task PickSuggestionAsync(Airport? airport) => airport is null ? Task.CompletedTask : AddCodeAsync(airport.Code.Value);
+
+    private async Task AddCodeAsync(string text)
+    {
+        CodeMessage = null;
+        (CodeOutcome? Outcome, string? Message) result = default;
+        await SendAsync(async () =>
+        {
+            result = await session.AddCodeAsync(cardRef, text);
+            return result.Message;
+        });
+        switch (result.Outcome)
+        {
+            case { Result: CodeResult.Added }:
+                CodeText = "";
+                break;
+            case { Result: CodeResult.Invalid }:
+                CodeMessage = "Use 3–5 letters or digits.";
+                break;
+            case { Result: CodeResult.Taken } taken:
+                var code = text.Trim().ToUpperInvariant();
+                CodeMessage = taken.HolderName is { } holder ? $"{code} is already on {holder}." : $"{code} is already on another card.";
+                break;
+        }
+    }
+
+    private Task RemoveCodeAsync(AirportCode code) => SendAsync(() => session.RemoveCodeAsync(cardRef, code));
 
     /// <summary>Loads the card's image again on every board, so a file that is gone shows the placeholder, and rebuilds the image menu.</summary>
     private void RefreshImages()

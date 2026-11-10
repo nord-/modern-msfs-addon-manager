@@ -53,6 +53,9 @@ public sealed partial class CardDialogViewModel : ObservableObject
         SplitCommand = new AsyncRelayCommand<PackageRowViewModel>(SplitAsync, row => row is not null && CanSplit);
         SetImageCommand = new AsyncRelayCommand<string?>(SetImageAsync, _ => CanEdit);
         ChooseImageCommand = new AsyncRelayCommand(ChooseImageAsync, () => CanEdit);
+        AddCodeCommand = new AsyncRelayCommand(AddSelectedOrTypedAsync, () => CanEdit);
+        PickSuggestionCommand = new AsyncRelayCommand<Airport>(PickSuggestionAsync, _ => CanEdit);
+        RemoveCodeCommand = new AsyncRelayCommand<AirportCode>(RemoveCodeAsync, _ => CanEdit);
         ShowCardCommand = new AsyncRelayCommand<CardRef>(ShowCardAsync);
         SearchCommand = new RelayCommand<GsxSearchRow>(Search);
         if (!Update(board))
@@ -184,10 +187,15 @@ public sealed partial class CardDialogViewModel : ObservableObject
         OnPropertyChanged(nameof(CanToggle));
         OnPropertyChanged(nameof(CanEdit));
         OnPropertyChanged(nameof(CanSplit));
+        OnPropertyChanged(nameof(ShowCodes));
+        OnPropertyChanged(nameof(CodeChips));
         ToggleCommand.NotifyCanExecuteChanged();
         RemoveCommand.NotifyCanExecuteChanged();
         SplitCommand.NotifyCanExecuteChanged();
         SetImageCommand.NotifyCanExecuteChanged();
         ChooseImageCommand.NotifyCanExecuteChanged();
+        AddCodeCommand.NotifyCanExecuteChanged();
+        PickSuggestionCommand.NotifyCanExecuteChanged();
+        RemoveCodeCommand.NotifyCanExecuteChanged();
     }
 }

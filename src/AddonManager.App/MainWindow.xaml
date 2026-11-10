@@ -8,7 +8,7 @@
                  WindowStartupLocation="CenterScreen">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RescanCommand}" />
-        <KeyBinding Key="Escape" Command="{Binding CloseCardCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding DiscardCardCommand}" />
     </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />

@@ -152,6 +152,22 @@ public sealed class BoardLayoutTests
     }
 
     [Fact]
+    public void A_card_package_carries_its_thumbnail_and_airport_records_also_when_not_found()
+    {
+        var w = NewWorld(Category.Scenery);
+        w.Add(Scenery("eham-x", fullRecords: [Rec("EHAM", "Schiphol")]) with { ThumbnailPath = @"C:	.png" });
+        var found = Assert.Single(Assert.Single(Wall(w).Cards).Packages);
+
+        w.Without("eham-x");
+        var gone = Assert.Single(Assert.Single(BoardBuilder.Build(w.State, w.Input()).Cards).Packages);
+
+        Assert.Equal(@"C:	.png", found.ThumbnailPath);
+        Assert.Equal("Schiphol", Assert.Single(found.Airports).Name);
+        Assert.Equal(@"C:	.png", gone.ThumbnailPath);
+        Assert.Equal("Schiphol", Assert.Single(gone.Airports).Name);
+    }
+
+    [Fact]
     public void A_library_not_found_package_keeps_its_card_place_name_and_image()
     {
         var w = new World();

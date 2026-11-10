@@ -14,16 +14,7 @@
         <ItemsControl ItemsSource="{Binding Gsx.Rows}">
             <ItemsControl.Resources>
                 <DataTemplate DataType="{x:Type vm:GsxProfileRow}">
-                    <DockPanel Margin="0,0,0,6">
-                        <DockPanel.Style>
-                            <Style TargetType="DockPanel">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Dimmed}" Value="True">
-                                        <Setter Property="Opacity" Value="0.5" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DockPanel.Style>
+                    <DockPanel Margin="0,0,0,6" Style="{StaticResource DimmedRow}">
                         <ui:Button DockPanel.Dock="Right" Content="Remove" VerticalAlignment="Center" Margin="12,0,0,0"
                                    Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                    CommandParameter="{Binding}"

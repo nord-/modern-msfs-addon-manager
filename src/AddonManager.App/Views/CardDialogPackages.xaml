@@ -11,16 +11,7 @@
     <ItemsControl ItemsSource="{Binding Rows}">
         <ItemsControl.ItemTemplate>
             <DataTemplate>
-                <DockPanel Margin="0,0,0,12">
-                    <DockPanel.Style>
-                        <Style TargetType="DockPanel">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Dimmed}" Value="True">
-                                    <Setter Property="Opacity" Value="0.5" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DockPanel.Style>
+                <DockPanel Margin="0,0,0,12" Style="{StaticResource DimmedRow}">
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="12,0,0,0">
                         <ui:Button Content="Split" Icon="{ui:SymbolIcon ArrowSplit20}" Margin="0,0,8,0"
                                    Command="{Binding DataContext.SplitCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

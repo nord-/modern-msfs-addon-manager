@@ -71,12 +71,13 @@ public partial class CardDialogHeader : UserControl
 
     private void OnCodeLostFocus(object sender, KeyboardFocusChangedEventArgs e) => Dialog?.CloseSuggestions();
 
-    private void OnSuggestionClick(object sender, MouseButtonEventArgs e)
+    private void OnSuggestionPress(object sender, MouseButtonEventArgs e)
     {
-        if (Dialog is { } dialog && ItemsControl.ContainerFromElement((ItemsControl)sender, (DependencyObject)e.OriginalSource) is ListBoxItem item
-            && dialog.PickSuggestionCommand.CanExecute(item.DataContext))
-        {
+        // The item under the pointer, not SelectedItem: a non-focusable item never becomes selected by a click.
+        if (Dialog is not { } dialog || ItemsControl.ContainerFromElement((ItemsControl)sender, (DependencyObject)e.OriginalSource) is not ListBoxItem item)
+            return;
+        e.Handled = true;
+        if (dialog.PickSuggestionCommand.CanExecute(item.DataContext))
             dialog.PickSuggestionCommand.Execute(item.DataContext);
-        }
     }
 }

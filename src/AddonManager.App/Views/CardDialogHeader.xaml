@@ -10,6 +10,14 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <!-- Feeds the package thumbnails into the image menu next to its fixed items. -->
         <CollectionViewSource x:Key="ImageChoices" Source="{Binding ImageChoices}" />
+        <!-- A provisional card's header is read-only (spec 6.5). -->
+        <Style x:Key="EditableBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                    <Setter Property="IsReadOnly" Value="True" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -61,18 +69,8 @@
         </ui:Button>
 
         <StackPanel Grid.Column="1" Grid.Row="0" Margin="12,0,12,0">
-            <TextBox x:Name="NameBox" Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}" FontSize="18"
-                     KeyDown="OnNameKeyDown" GotKeyboardFocus="OnNameGotFocus" LostKeyboardFocus="OnNameLostFocus">
-                <TextBox.Style>
-                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CanEdit}" Value="False">
-                                <Setter Property="IsReadOnly" Value="True" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
+            <TextBox x:Name="NameBox" Style="{StaticResource EditableBox}" Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}" FontSize="18"
+                     KeyDown="OnNameKeyDown" GotKeyboardFocus="OnNameGotFocus" LostKeyboardFocus="OnNameLostFocus" />
 
             <!-- ICAO codes as chips, then a box that suggests known Airports. Scenery cards only. -->
             <StackPanel Margin="0,8,0,0" Visibility="{Binding ShowCodes, Converter={StaticResource BoolToVisibility}}">
@@ -99,26 +97,17 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBox x:Name="CodeBox" Width="120" Margin="0,0,0,4" Text="{Binding CodeText, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewKeyDown="OnCodePreviewKeyDown" LostKeyboardFocus="OnCodeLostFocus">
-                            <TextBox.Style>
-                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CanEdit}" Value="False">
-                                            <Setter Property="IsReadOnly" Value="True" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBox.Style>
-                        </TextBox>
+                        <TextBox x:Name="CodeBox" Style="{StaticResource EditableBox}" Width="120" Margin="0,0,0,4" Text="{Binding CodeText, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewKeyDown="OnCodePreviewKeyDown" LostKeyboardFocus="OnCodeLostFocus" />
                     </WrapPanel>
                 </DockPanel>
                 <Popup IsOpen="{Binding SuggestionsOpen, Mode=OneWay}" PlacementTarget="{Binding ElementName=CodeBox}" Placement="Bottom"
                        StaysOpen="True" AllowsTransparency="True">
                     <Border Background="#2B2B2B" BorderBrush="#555555" BorderThickness="1" CornerRadius="4" Padding="2" MinWidth="240">
-                        <!-- Not focusable: a click picks a suggestion without taking focus from the code box. -->
+                        <!-- Not focusable, so a click never selects an item: the pick is resolved from the item under the pointer, on press,
+                             before the press can reach the dialog and take focus from the code box (which closes the list). -->
                         <ListBox ItemsSource="{Binding Suggestions}" SelectedItem="{Binding SelectedSuggestion}" Focusable="False"
-                                 MouseLeftButtonUp="OnSuggestionClick">
+                                 PreviewMouseLeftButtonDown="OnSuggestionPress">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                                     <Setter Property="Focusable" Value="False" />

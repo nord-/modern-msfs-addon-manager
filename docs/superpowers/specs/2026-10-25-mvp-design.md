@@ -2,6 +2,10 @@
 
 Date: 2026-10-25, revised 2026-10-28 after the UI design session (menus, tabs, cards, tags) and 2026-10-29 for the card model (cards and Packages, Libraries per menu section, Not found, one SQLite file). Status: draft, revised after a builder check and two independent reviews; the card model went through five review rounds on 2026-10-29.
 
+## Changed by the 5c spec (2026-11-10)
+
+Plan 5c ([2026-11-09-plan-5c-editing-design.md](2026-11-09-plan-5c-editing-design.md)) is implemented and changes these places; the 5c spec wins where they differ. Section 2, goal 3: "Move out" is called Split (5c 4.1). Section 6.5: Split needs at least two Packages that are not GSX profiles (5c 4.1), a merge asks for confirmation and so does moving a card with ICAO codes out of Scenery (5c 4.2), and the ICAO code field suggests Airport names as well as codes (5c 3). Section 8: there is no copy action for shipped profiles, they are labelled "shipped with scenery" and hidden when the installed profile has a row, and Two profiles is shown at each profile's name (5c 6 and 7). Section 10: the card dialog follows 5c 3, 5 and 6, and GSX profiles are listed in the GSX section instead of among the Package rows. Section 15 is closed by 5c 6.1.
+
 Vocabulary is defined in [GLOSSARY.md](../../../GLOSSARY.md) and used strictly below. Background and the full decision log are in [ANALYS.md](../../../ANALYS.md) (Swedish). Architectural decisions are in [docs/adr](../../adr).
 
 ## 1. Intent
@@ -340,6 +344,8 @@ The reconcile, watcher, apply path, pending set and own-change suppression form 
 - Logging and diagnostics.
 
 ## 15. Open investigation
+
+Closed by plan 5c (2026-11-10, 5c 6.1): shipped profiles are not active. The text below is kept as the question that was asked.
 
 - **Does GSX Pro load profiles shipped inside scenery Packages?** Evidence so far (GSX's own log) says no. If it turns out yes, shipped profiles count as active, and Two profiles may change for ESSA, ESGG, EDDF and EPKK on Rickard's machine. Note that a shipped and an installed profile can be variants of the same profile (ESSA: `essa-bwib1r.ini` and `essa-bwib1r-noolvdgs.ini`), which would make a plain Two profiles warning a false alarm.
 

@@ -394,6 +394,10 @@ Designen står i `docs/superpowers/specs/2026-11-09-plan-5c-editing-design.md` (
 - **Medföljande profiler** märks "shipped with scenery" och döljs när den installerade profilen redan har en rad i dialogen.
 - **Medföljande profiler är inte aktiva (spec 15 stängd).** GSX Pro med SU10 Navdata API läser egna flygplatsprofiler bara från `%APPDATA%\Virtuali\GSX\MSFS`. Virtuali i FSDT:s forum, med citat ur GSX-manualen sida 83: "Custom profiles which were previously distributed by a scenery developer in the scenery package itself won't be used anymore" och "you need to be sure you have only ONE .INI for a given ICAO". Dave's GSX Profile Manager läser också bara GSX-mappen och installerar genom att kopiera dit.
 
+### Plan 5c är implementerad (2026-11-10)
+
+Alla fyra delarna av designen är byggda. Kortets namn kan ändras, bilden väljs (paketets thumbnail, en vald fil eller Automatic) och ICAO-koderna redigeras med förslag. Ett paket kan delas av från ett kort (Split), kort slås ihop med drag och släpp efter en bekräftelse, och ett kort flyttas till en annan flik eller menysektion med drag och släpp (en flytt ut ur Scenery av ett kort med ICAO-koder frågar först). Dialogen visar inbyggda delar, flygplatser med namn, Replaces built-in, andra kort på samma flygplats, taggar och en GSX-del som bara visar (installerade, medföljande och saknade profiler, varningen för två profiler och söklänken till flightsim.to). Det som återstår är 5d (Settings), spårat i issue #24. Den manuella kontrollen av 5c på simmaskinen görs av Rickard och är inte gjord än.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

@@ -93,7 +93,7 @@ GSX
   EHRD  🔍                             (no active profile for EHRD)
 ```
 
-- **GSX profile Packages are listed only here**, not among the Package rows; the Packages part lists the card's other Packages. A profile that is Not found (its file was deleted) is dimmed with "Not found" and keeps its Remove button, as on a Package row in 5b.
+- **GSX profile Packages are listed only here**, not among the Package rows; the Packages part lists the card's other Packages. A profile that is Not found (its file was deleted) is dimmed with "Not found" and keeps its Remove button, as on a Package row in 5b. A profile that cannot be seen for another reason (the GSX folder is missing or cannot be read) is dimmed without a label; the banner says why (Rickard, 2026-11-10).
 - One row per profile Package of the card, its name only (the Package's display name, the file name without extension). No `.py` files and no file details.
 - **Active profiles on another card:** an active profile for one of the card's ICAO codes that sits on another card (automation may give two cards the same code, MVP 6.5) also gets a row, with "on <card name>" as a clickable name that switches the dialog to that card, like the other cards of section 5. So the dialog always shows the profiles behind the wall's Two profiles warning.
 - **Two active profiles:** more than one active `.ini` for one ICAO code (`GsxAirport.Active`, on any card) puts a yellow `Warning` icon at each of those profile rows, with the tooltip "Two GSX profiles for EHAM".

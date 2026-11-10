@@ -176,7 +176,7 @@ public sealed class GsxProfileTests
     }
 
     [Fact]
-    public void Move_out_is_refused_on_a_profile()
+    public void Split_is_refused_on_a_profile()
     {
         var w = NewWorld();
         w.Add(Scenery("eham-x", ["EHAM"]));
@@ -185,7 +185,22 @@ public sealed class GsxProfileTests
         var card = Assert.Single(w.State.Cards);
         var editor = new CardEditor(new InMemoryUserStateStore(), TimeProvider.System);
 
-        Assert.Throws<InvalidOperationException>(() => editor.MoveOut(w.State, card.Id, Profile("eham")));
+        Assert.Throws<InvalidOperationException>(() => editor.Split(w.State, card.Id, Profile("eham")));
+
+        Assert.Equal([Profile("eham"), Folder("eham-x")], w.State.PackagesOn(card.Id));
+    }
+
+    [Fact]
+    public void Split_is_refused_when_the_only_other_package_is_a_profile()
+    {
+        var w = NewWorld();
+        w.Add(Scenery("eham-x", ["EHAM"]));
+        w.Profile("eham", "EHAM");
+        w.Place();
+        var card = Assert.Single(w.State.Cards);
+        var editor = new CardEditor(new InMemoryUserStateStore(), TimeProvider.System);
+
+        Assert.Throws<InvalidOperationException>(() => editor.Split(w.State, card.Id, Folder("eham-x")));
 
         Assert.Equal([Profile("eham"), Folder("eham-x")], w.State.PackagesOn(card.Id));
     }

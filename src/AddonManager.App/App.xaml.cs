@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using AddonManager.App.Session;
 using AddonManager.App.Startup;
@@ -45,8 +46,12 @@ public partial class App : Application
 
         Action<Action> post = action => Dispatcher.InvokeAsync(action);
         var thumbnails = new ThumbnailCache();
-        var main = new MainViewModel(session, post, AppPaths.GsxProfileFolder, thumbnails.LoadAsync,
-            text => MessageBox.Show(text, "Remove", MessageBoxButton.YesNo) == MessageBoxResult.Yes);
+        var services = new DialogServices(
+            (caption, text) => MessageBox.Show(text, caption, MessageBoxButton.YesNo) == MessageBoxResult.Yes,
+            thumbnails.LoadAsync,
+            PickImage,
+            url => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }));
+        var main = new MainViewModel(session, post, AppPaths.GsxProfileFolder, services);
         var firstRun = new FirstRunViewModel(session, post, PickFolder);
 
         MainWindow = new MainWindow(main, firstRun);
@@ -65,6 +70,12 @@ public partial class App : Application
     {
         var dialog = new OpenFolderDialog();
         return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
+
+    private static string? PickImage()
+    {
+        var dialog = new OpenFileDialog { Filter = "Images (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png" };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
     /// <summary>Runs on a thread-pool thread when a second start signals; does nothing before the window exists.</summary>

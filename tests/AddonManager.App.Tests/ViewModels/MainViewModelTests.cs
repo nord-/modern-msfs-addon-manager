@@ -13,16 +13,22 @@ public sealed class MainViewModelTests
 {
     private readonly FakeSession session = new();
     private readonly List<string?> loads = [];
+    private readonly List<(string Caption, string Text)> prompts = [];
+    private bool answer = true;
     private Func<string?, Task<ImageSource?>> loader;
 
     public MainViewModelTests() => loader = _ => Task.FromResult<ImageSource?>(null);
 
     private MainViewModel Create(Action<Action>? post = null)
-        => new(session, post ?? (a => a()), @"C:\GSX", path =>
+        => new(session, post ?? (a => a()), @"C:\GSX", new DialogServices((caption, text) =>
+        {
+            prompts.Add((caption, text));
+            return answer;
+        }, path =>
         {
             loads.Add(path);
             return loader(path);
-        }, _ => true);
+        }, () => null, _ => { }));
 
     private static string[] Names(MainViewModel vm) => [.. vm.Cards.Select(c => c.Name)];
 
@@ -313,7 +319,23 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
-    public void A_loaded_thumbnail_is_not_loaded_again()
+    public void A_card_whose_image_loads_as_null_on_a_new_board_loses_its_image()
+    {
+        var image = new DrawingImage();
+        loader = _ => Task.FromResult<ImageSource?>(image);
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"], image: "a.png"));
+        Show(Ready(board));
+        Assert.Same(image, vm.Cards[0].Image);
+
+        loader = _ => Task.FromResult<ImageSource?>(null);
+        Show(Ready(board with { }));
+
+        Assert.Null(vm.Cards[0].Image);
+    }
+
+    [Fact]
+    public void A_loaded_thumbnail_is_asked_for_again_on_every_board()
     {
         var image = new DrawingImage();
         loader = _ => Task.FromResult<ImageSource?>(image);
@@ -323,7 +345,7 @@ public sealed class MainViewModelTests
 
         Show(Ready(Board(a)));
 
-        Assert.Equal(["a.png"], loads);
+        Assert.Equal(["a.png", "a.png"], loads);
         Assert.Same(image, vm.Cards[0].Image);
     }
 
@@ -410,7 +432,7 @@ public sealed class MainViewModelTests
 
         vm.OpenCardCommand.Execute(vm.Cards[1]);
 
-        Assert.Equal("B", vm.CardDialog?.Title);
+        Assert.Equal("B", vm.CardDialog?.NameText);
 
         vm.CloseCardCommand.Execute(null);
 
@@ -428,7 +450,7 @@ public sealed class MainViewModelTests
         Show(Ready(Board(Card(1, "A2", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
 
         Assert.Same(dialog, vm.CardDialog);
-        Assert.Equal("A2", vm.CardDialog!.Title);
+        Assert.Equal("A2", vm.CardDialog!.NameText);
 
         Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
 
@@ -446,5 +468,334 @@ public sealed class MainViewModelTests
 
         Show(Ready(board));
         Assert.DoesNotContain("Some links wait for MSFS to close. Close MSFS, then press F5.", vm.BannerLines);
+    }
+
+    private const string Locked = "userdata.db is locked";
+
+    private CardDialogViewModel Open(MainViewModel vm, int index = 0)
+    {
+        vm.OpenCardCommand.Execute(vm.Cards[index]);
+        return vm.CardDialog!;
+    }
+
+    [Fact]
+    public async Task A_card_gone_from_the_board_closes_the_dialog_and_drops_the_text()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameFocused = true;
+        dialog.NameText = "typed";
+
+        Show(Ready(Board(Card(2, "B", codes: ["ESSB"]))));
+        // The unloading name box loses focus after the dialog closed.
+        await dialog.NameLostFocusAsync();
+
+        Assert.Null(vm.CardDialog);
+        Assert.Empty(session.Renamed);
+    }
+
+    [Fact]
+    public async Task Escape_discards_the_name_and_closes()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "typed";
+
+        vm.DiscardCardCommand.Execute(null);
+        await dialog.NameLostFocusAsync();
+
+        Assert.Null(vm.CardDialog);
+        Assert.Empty(session.Renamed);
+        Assert.Equal("A", dialog.NameText);
+    }
+
+    [Fact]
+    public async Task Close_saves_the_name_first()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        Assert.Same(dialog, vm.CardDialog);
+        hold.SetResult(null);
+        await close;
+
+        Assert.Equal([(new CardRef(1, null), (string?)"Home")], session.Renamed);
+        Assert.Null(vm.CardDialog);
+        Assert.Null(await dialog.CommitNameAsync());
+        Assert.Single(session.Renamed);
+    }
+
+    [Fact]
+    public async Task A_refused_name_save_on_close_still_closes_and_goes_to_the_banner()
+    {
+        session.RenameMessage = Locked;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        Open(vm).NameText = "Home";
+
+        await vm.CloseCardCommand.ExecuteAsync(null);
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+    }
+
+    [Fact]
+    public async Task A_close_whose_commit_finishes_after_another_card_opened_leaves_that_card_open()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        Open(vm).NameText = "Home";
+
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        var other = Open(vm, 1);
+        hold.SetResult(null);
+        await close;
+
+        Assert.Same(other, vm.CardDialog);
+    }
+
+    [Fact]
+    public void The_notice_is_kept_by_progress_and_cleared_by_a_new_board()
+    {
+        var vm = Create();
+        var board = Board(Card(1, "A", codes: ["ESSA"]));
+        Show(Ready(board));
+
+        vm.ShowNotice(Locked);
+        Assert.Equal([Locked], vm.BannerLines);
+
+        Show(Ready(board, new ScanProgress(5, 10, null)));
+        Assert.Equal(["Scanning… 5 of 10", Locked], vm.BannerLines);
+
+        Show(Ready(board with { }));
+        Assert.Empty(vm.BannerLines);
+
+        vm.ShowNotice(Locked);
+        vm.ClearNotice();
+        Assert.Empty(vm.BannerLines);
+    }
+
+    [Fact]
+    public async Task A_dialog_command_clears_the_notice()
+    {
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        vm.ShowNotice(Locked);
+        IReadOnlyList<string>? seen = null;
+        session.OnSwitch = _ => seen = vm.BannerLines;
+
+        await dialog.ToggleCommand.ExecuteAsync(null);
+
+        Assert.Equal([], seen);
+    }
+
+    [Fact]
+    public async Task A_refused_save_on_switch_does_not_carry_the_text_to_the_other_card()
+    {
+        session.RenameMessage = Locked;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+        dialog.CodeText = "EH";
+
+        await dialog.ShowCardCommand.ExecuteAsync(new CardRef(2, null));
+
+        Assert.Same(dialog, vm.CardDialog);
+        Assert.Equal("B", dialog.NameText);
+        Assert.Equal("", dialog.CodeText);
+        Assert.Null(dialog.Message);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+    }
+
+    [Fact]
+    public async Task A_refusal_of_the_focus_loss_commit_reaches_the_banner_on_close()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]))));
+        var dialog = Open(vm);
+        dialog.NameFocused = true;
+        dialog.NameText = "Home";
+
+        var focusLoss = dialog.NameLostFocusAsync();
+        var close = vm.CloseCardCommand.ExecuteAsync(null);
+        hold.SetResult(Locked);
+        await focusLoss;
+        await close;
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal(Locked, vm.BannerLines[^1]);
+        Assert.Single(session.Renamed);
+    }
+
+    [Fact]
+    public async Task A_switch_whose_commit_finishes_after_escape_does_nothing_more()
+    {
+        var hold = new TaskCompletionSource<string?>();
+        session.RenameHold = hold;
+        var vm = Create();
+        Show(Ready(Board(Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]))));
+        var dialog = Open(vm);
+        dialog.NameText = "Home";
+
+        var show = dialog.ShowCardCommand.ExecuteAsync(new CardRef(2, null));
+        vm.DiscardCardCommand.Execute(null);
+        hold.SetResult(Locked);
+        await show;
+
+        Assert.Null(vm.CardDialog);
+        Assert.Equal("A", dialog.NameText);
+        Assert.Empty(vm.BannerLines);
+    }
+
+    private const string Gone = "The card is no longer there.";
+
+    private static CardViewModel Named(MainViewModel vm, string name) => vm.Cards.Single(c => c.Name == name);
+
+    private MainViewModel Wall()
+    {
+        var vm = Create();
+        Show(Ready(Board(
+            Card(1, "A", codes: ["ESSA"]), Card(2, "B", codes: ["ESSB"]), Card(null, "P"), Card(3, "Land", tab: CardTab.Landscapes))));
+        return vm;
+    }
+
+    [Fact]
+    public void Only_stored_different_cards_accept_a_card_drop()
+    {
+        var vm = Wall();
+        var (a, b, p) = (Named(vm, "A"), Named(vm, "B"), Named(vm, "P"));
+
+        Assert.True(vm.CanDropOnCard(a, b));
+        Assert.False(vm.CanDropOnCard(a, a));
+        Assert.False(vm.CanDropOnCard(a, p));
+        Assert.False(vm.CanDropOnCard(p, a));
+    }
+
+    [Fact]
+    public void Only_other_tabs_of_the_section_accept_a_drop()
+    {
+        var vm = Wall();
+        var (a, p) = (Named(vm, "A"), Named(vm, "P"));
+
+        Assert.False(vm.CanDropOnTab(a, vm.Tabs[0]));
+        Assert.True(vm.CanDropOnTab(a, vm.Tabs[1]));
+        Assert.False(vm.CanDropOnTab(p, vm.Tabs[1]));
+        Assert.False(vm.CanDropOnTab(a, new TabViewModel(CardTab.Instruments)));
+    }
+
+    [Fact]
+    public void Only_another_content_section_accepts_a_drop()
+    {
+        var vm = Wall();
+        var (a, p) = (Named(vm, "A"), Named(vm, "P"));
+
+        Assert.False(vm.CanDropOnSection(a, MenuSection.Scenery));
+        Assert.True(vm.CanDropOnSection(a, MenuSection.Aircraft));
+        Assert.True(vm.CanDropOnSection(a, MenuSection.Other));
+        Assert.False(vm.CanDropOnSection(a, MenuSection.Settings));
+        Assert.False(vm.CanDropOnSection(p, MenuSection.Aircraft));
+    }
+
+    [Fact]
+    public async Task A_card_drop_asks_before_merging_and_no_merges_nothing()
+    {
+        var vm = Wall();
+        var (a, b) = (Named(vm, "A"), Named(vm, "B"));
+
+        answer = false;
+        await vm.DropOnCardAsync(b, a);
+        Assert.Equal([("Merge", "Merge B into A?")], prompts);
+        Assert.Empty(session.Merges);
+
+        answer = true;
+        await vm.DropOnCardAsync(b, a);
+        Assert.Equal([(b.Ref, a.Ref)], session.Merges);
+
+        await vm.DropOnCardAsync(a, a);
+        Assert.Equal(2, prompts.Count);
+        Assert.Single(session.Merges);
+    }
+
+    [Fact]
+    public async Task Moving_a_card_with_codes_out_of_scenery_asks_and_without_codes_does_not()
+    {
+        var vm = Wall();
+        var a = Named(vm, "A");
+        vm.SelectedTab = vm.Tabs[1];
+        var land = Named(vm, "Land");
+
+        answer = false;
+        await vm.DropOnSectionAsync(a, MenuSection.Other);
+        Assert.Equal([("Move", "Move A to Other? It loses its ICAO codes.")], prompts);
+        Assert.Empty(session.SectionMoves);
+
+        answer = true;
+        await vm.DropOnSectionAsync(a, MenuSection.Other);
+        await vm.DropOnSectionAsync(land, MenuSection.Aircraft);
+        Assert.Equal(2, prompts.Count);
+        Assert.Equal([(a.Ref, Category.Other), (land.Ref, Category.Aircraft)], session.SectionMoves);
+    }
+
+    [Fact]
+    public async Task A_drop_keeps_the_menu_and_tab()
+    {
+        var vm = Wall();
+        var (a, b) = (Named(vm, "A"), Named(vm, "B"));
+        var airports = vm.SelectedTab;
+
+        await vm.DropOnTabAsync(a, vm.Tabs[1]);
+        await vm.DropOnSectionAsync(b, MenuSection.Aircraft);
+
+        Assert.Equal([(a.Ref, CardTab.Landscapes)], session.TabMoves);
+        Assert.Single(session.SectionMoves);
+        Assert.Equal(MenuSection.Scenery, vm.SelectedMenu);
+        Assert.Same(airports, vm.SelectedTab);
+    }
+
+    [Fact]
+    public async Task A_refused_drop_shows_its_message_as_a_banner_line()
+    {
+        session.MergeMessage = Gone;
+        session.MoveToTabMessage = Locked;
+        session.MoveToSectionMessage = Gone;
+        var vm = Wall();
+        var (a, b) = (Named(vm, "A"), Named(vm, "B"));
+
+        await vm.DropOnCardAsync(b, a);
+        Assert.Equal([Gone], vm.BannerLines);
+
+        await vm.DropOnTabAsync(a, vm.Tabs[1]);
+        Assert.Equal([Locked], vm.BannerLines);
+
+        await vm.DropOnSectionAsync(a, MenuSection.Aircraft);
+        Assert.Equal([Gone], vm.BannerLines);
+    }
+
+    [Fact]
+    public async Task The_next_drop_clears_the_previous_notice()
+    {
+        var vm = Wall();
+        var a = Named(vm, "A");
+
+        vm.ShowNotice(Locked);
+        await vm.DropOnTabAsync(a, vm.Tabs[1]);
+        Assert.Empty(vm.BannerLines);
+
+        vm.ShowNotice(Locked);
+        await vm.DropOnCardAsync(a, a);
+        Assert.Empty(vm.BannerLines);
     }
 }

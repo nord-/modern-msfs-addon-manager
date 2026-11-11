@@ -2,7 +2,7 @@
 
 A modern addon manager for Microsoft Flight Simulator 2020, built with .NET.
 
-> **Status:** in development. The link engine, the content scan and the card wall are done, as a headless engine with a command-line tool. The app turns cards on and off and removes Packages that are gone; changes made in Community outside the app are adopted silently, and nothing changes while MSFS runs. Card editing, GSX and settings come in the next versions. The design is in the [MVP spec](docs/superpowers/specs/2026-10-25-mvp-design.md), and [ANALYS.md](ANALYS.md) (Swedish) holds the analysis and decisions.
+> **Status:** in development. The link engine, the content scan and the card wall are done, as a headless engine with a command-line tool. The app turns cards on and off and removes Packages that are gone; changes made in Community outside the app are adopted silently, and nothing changes while MSFS runs. Cards can be renamed, given an image and ICAO codes, split and merged, and dragged to another tab or section, and the card dialog shows the GSX profiles of an Airport (read-only). Settings come in the next version. The design is in the [MVP spec](docs/superpowers/specs/2026-10-25-mvp-design.md), and [ANALYS.md](ANALYS.md) (Swedish) holds the analysis and decisions.
 
 ## Running the app
 

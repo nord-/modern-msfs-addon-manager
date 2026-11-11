@@ -49,6 +49,13 @@ public sealed partial class CardViewModel : ObservableObject
     [ObservableProperty]
     private CardTab tab;
 
+    [ObservableProperty]
+    private Category section;
+
+    /// <summary>Whether the card has ICAO codes, which a move out of Scenery takes away.</summary>
+    [ObservableProperty]
+    private bool hasCodes;
+
     /// <summary>The thumbnail; set by the loader once <see cref="ImagePath"/> has been read.</summary>
     [ObservableProperty]
     private ImageSource? image;
@@ -64,6 +71,9 @@ public sealed partial class CardViewModel : ObservableObject
 
     /// <summary>Names the card for the session, refreshed by <see cref="Update"/>.</summary>
     public CardRef Ref { get; private set; } = null!;
+
+    /// <summary>Only a stored card can be dragged or take a drop; a provisional card has no id to merge or move.</summary>
+    public bool CanDrag => Ref.Id is not null;
 
     /// <summary>UI Automation falls back to this for the card's name: the code and the name, as the card shows them.</summary>
     public override string ToString() => Code is null ? Name : $"{Code} {Name}";
@@ -87,6 +97,8 @@ public sealed partial class CardViewModel : ObservableObject
         Light = card.State;
         ImagePath = card.ImagePath;
         Tab = card.Tab;
+        Section = card.Section;
+        HasCodes = card.Codes.Count > 0;
     }
 
     private static IEnumerable<string> LabelsOf(Card card)

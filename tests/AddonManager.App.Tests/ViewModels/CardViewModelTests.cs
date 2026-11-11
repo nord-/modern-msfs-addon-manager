@@ -129,4 +129,18 @@ public sealed class CardViewModelTests
         Assert.Contains(nameof(CardViewModel.Light), changed);
         Assert.DoesNotContain(nameof(CardViewModel.Code), changed);
     }
+
+    [Fact]
+    public void Only_stored_cards_can_be_dragged_and_they_carry_their_section_and_codes()
+    {
+        var stored = new CardViewModel(Card(1, "Arlanda", codes: ["ESSA"]), null, true);
+        var provisional = new CardViewModel(Card(null, "pkg", Category.Aircraft, CardTab.Aircraft), null, false);
+
+        Assert.True(stored.CanDrag);
+        Assert.True(stored.HasCodes);
+        Assert.Equal(Category.Scenery, stored.Section);
+        Assert.False(provisional.CanDrag);
+        Assert.False(provisional.HasCodes);
+        Assert.Equal(Category.Aircraft, provisional.Section);
+    }
 }

@@ -1,5 +1,7 @@
 using AddonManager.App.Session;
+using AddonManager.Core.Cards;
 using AddonManager.Core.Community;
+using AddonManager.Core.Content;
 using AddonManager.Core.Packages;
 using AddonManager.Core.State;
 using AddonManager.Sim2020;
@@ -54,6 +56,24 @@ internal sealed class FirstRunFakeSession : IAppSession
     public Task<string?> SwitchCardAsync(CardRef card) => Task.FromResult<string?>(null);
 
     public Task<string?> RemoveAsync(CardRef card, PackageKey package) => Task.FromResult<string?>(null);
+
+    public IReadOnlyDictionary<AirportCode, Airport> Airports { get; } = new Dictionary<AirportCode, Airport>();
+
+    public Task<string?> RenameAsync(CardRef card, string? name) => Task.FromResult<string?>(null);
+
+    public Task<string?> SetImageAsync(CardRef card, string? path) => Task.FromResult<string?>(null);
+
+    public Task<(CodeOutcome? Outcome, string? Message)> AddCodeAsync(CardRef card, string text) => Task.FromResult<(CodeOutcome?, string?)>((null, null));
+
+    public Task<string?> RemoveCodeAsync(CardRef card, AirportCode code) => Task.FromResult<string?>(null);
+
+    public Task<string?> SplitAsync(CardRef card, PackageKey package) => Task.FromResult<string?>(null);
+
+    public Task<string?> MergeAsync(CardRef dragged, CardRef target) => Task.FromResult<string?>(null);
+
+    public Task<string?> MoveToTabAsync(CardRef card, CardTab tab) => Task.FromResult<string?>(null);
+
+    public Task<string?> MoveToSectionAsync(CardRef card, Category section) => Task.FromResult<string?>(null);
 
     public void Publish(SessionView view)
     {

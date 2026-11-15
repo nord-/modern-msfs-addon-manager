@@ -33,6 +33,7 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
     private Task<ScanOutcome>? latestTask;
     private IReadOnlyList<PackageContent> cachedContents = [];
     private ContentAnalysis? cachedAnalysis;
+    private IReadOnlyDictionary<AirportCode, Airport> airports = new Dictionary<AirportCode, Airport>();
     private bool unsaved;
     private volatile bool disposed;
     private int handledOutcomes;
@@ -47,6 +48,9 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
     public SimPaths? Paths => services?.Paths;
 
     public string DatabaseFile => services?.Database.FilePath ?? "";
+
+    /// <summary>Read without the lock, so the UI thread never waits on a run: the Airports of the analysis behind the latest board.</summary>
+    public IReadOnlyDictionary<AirportCode, Airport> Airports => Volatile.Read(ref airports);
 
     /// <summary>How many completed runs were settled; a test checks that merged callers settle one run once.</summary>
     internal int HandledOutcomes => Volatile.Read(ref handledOutcomes);
@@ -448,8 +452,13 @@ public sealed partial class AppSession(Func<AppServices> openServices, Func<SimP
     /// <summary>The input as every board and settlement takes it: Community as it is now, analysed with the current cards. Caller holds the lock.</summary>
     private BoardInput Reanalyzed(BoardInput input) => WithCurrentCommunity(input).Reanalyze(State);
 
-    /// <summary>A board from the given input, never empty, also when the wall is not shown. Caller holds the lock.</summary>
-    private Board BuildBoard(BoardInput input) => BoardBuilder.Build(State, Reanalyzed(input));
+    /// <summary>A board from the given input, never empty, also when the wall is not shown; publishes the Airports it was named from. Caller holds the lock.</summary>
+    private Board BuildBoard(BoardInput input)
+    {
+        var reanalyzed = Reanalyzed(input);
+        Volatile.Write(ref airports, reanalyzed.Analysis.Airports);
+        return BoardBuilder.Build(State, reanalyzed);
+    }
 
     private IContentWatcher NewWatcher(DiscoveryOutcome? discovery)
     {

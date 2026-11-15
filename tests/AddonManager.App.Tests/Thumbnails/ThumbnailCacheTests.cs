@@ -71,6 +71,21 @@ public class ThumbnailCacheTests
     }
 
     [Fact]
+    public async Task A_cached_image_whose_file_is_gone_loads_as_null()
+    {
+        using var temp = new TempFolder();
+        var path = WriteJpeg(temp);
+        var cache = new ThumbnailCache();
+        Assert.NotNull(await cache.LoadAsync(path));
+
+        File.Delete(path);
+        Assert.Null(await cache.LoadAsync(path));
+
+        WriteJpeg(temp);
+        Assert.NotNull(await cache.LoadAsync(path));
+    }
+
+    [Fact]
     public async Task A_file_that_failed_loads_once_it_is_readable()
     {
         using var temp = new TempFolder();

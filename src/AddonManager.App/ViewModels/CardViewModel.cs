@@ -18,6 +18,10 @@ public sealed partial class CardViewModel : ObservableObject
     [ObservableProperty]
     private string name = "";
 
+    /// <summary>The name as the card shows it after its code: without the code when the name starts with it, so "EPWA Chopin Airport" reads "Chopin Airport".</summary>
+    [ObservableProperty]
+    private string title = "";
+
     [ObservableProperty]
     private string? subtitle;
 
@@ -49,6 +53,9 @@ public sealed partial class CardViewModel : ObservableObject
     [ObservableProperty]
     private CardTab tab;
 
+    [ObservableProperty]
+    private Category section;
+
     /// <summary>The thumbnail; set by the loader once <see cref="ImagePath"/> has been read.</summary>
     [ObservableProperty]
     private ImageSource? image;
@@ -65,8 +72,11 @@ public sealed partial class CardViewModel : ObservableObject
     /// <summary>Names the card for the session, refreshed by <see cref="Update"/>.</summary>
     public CardRef Ref { get; private set; } = null!;
 
-    /// <summary>UI Automation falls back to this for the card's name: the code and the name, as the card shows them.</summary>
-    public override string ToString() => Code is null ? Name : $"{Code} {Name}";
+    /// <summary>Only a stored card can be dragged or take a drop; a provisional card has no id to merge or move.</summary>
+    public bool CanDrag => Ref.Id is not null;
+
+    /// <summary>UI Automation falls back to this for the card's name: the code and the title, as the card shows them.</summary>
+    public override string ToString() => Code is null ? Name : $"{Code} {Title}";
 
     public static string KeyOf(Card card)
         => card.Id is { } id ? $"#{id}" : $"P:{card.ProvisionalPackage?.Kind}:{card.ProvisionalPackage?.Name.Value.ToUpperInvariant()}";
@@ -77,6 +87,7 @@ public sealed partial class CardViewModel : ObservableObject
         Code = card.Several ? "(several)" : card.Codes.Count == 1 ? card.Codes[0].Value : null;
         CodesLine = card.Several ? string.Join(", ", card.Codes.Select(c => c.Value)) : null;
         Name = card.Name;
+        Title = TitleOf(Code, card.Name);
         Subtitle = subtitle;
         TypeDesignators = card.Section == Category.Aircraft && card.TypeDesignators.Count > 0 ? string.Join(", ", card.TypeDesignators) : null;
         PackageCount = CardText.PackageCount(card.Packages.Count);
@@ -87,6 +98,17 @@ public sealed partial class CardViewModel : ObservableObject
         Light = card.State;
         ImagePath = card.ImagePath;
         Tab = card.Tab;
+        Section = card.Section;
+    }
+
+    /// <summary>The name without a leading code and the separators after it; the whole name when the code is only the start of a longer word or nothing would be left.</summary>
+    public static string TitleOf(string? code, string name)
+    {
+        if (code is null || !name.StartsWith(code, StringComparison.OrdinalIgnoreCase)
+            || (name.Length > code.Length && char.IsLetterOrDigit(name[code.Length])))
+            return name;
+        var rest = name[code.Length..].TrimStart(' ', '-', '–', '_', ':', ',');
+        return rest.Length > 0 ? rest : name;
     }
 
     private static IEnumerable<string> LabelsOf(Card card)

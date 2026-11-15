@@ -8,6 +8,7 @@ namespace AddonManager.App.Thumbnails;
 /// <summary>
 /// Loads card thumbnails on a background thread, decoded to card width and frozen so the UI thread can use them. Loaded images are
 /// kept by normalised path; a failure (missing, locked or undecodable file) is not kept, so the thumbnail is tried again on the next board.
+/// A kept image is checked against the disk on every load, off the UI thread, and forgotten when its file is gone.
 /// </summary>
 public sealed class ThumbnailCache
 {
@@ -21,11 +22,17 @@ public sealed class ThumbnailCache
             return Task.FromResult<ImageSource?>(null);
 
         var key = PathNormalizer.Normalize(path);
-        if (loaded.TryGetValue(key, out var cached))
-            return Task.FromResult<ImageSource?>(cached);
-
         return Task.Run(() =>
         {
+            if (loaded.TryGetValue(key, out var cached))
+            {
+                // Checked here, never on the UI thread: a sleeping network share can block File.Exists for seconds.
+                if (File.Exists(path))
+                    return cached;
+                loaded.TryRemove(key, out _);
+                return null;
+            }
+
             var image = Read(path);
             // Two loads of one path that overlap end on the same instance.
             return image is null ? null : loaded.GetOrAdd(key, image);

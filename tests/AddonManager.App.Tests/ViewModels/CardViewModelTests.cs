@@ -34,6 +34,7 @@ public sealed class CardViewModelTests
     public void Automation_name_is_the_code_and_name_or_just_the_name()
     {
         Assert.Equal("LOWI Innsbruck", new CardViewModel(Card(1, "Innsbruck", codes: ["LOWI"]), null, true).ToString());
+        Assert.Equal("EPWA Chopin Airport", new CardViewModel(Card(1, "EPWA Chopin Airport", codes: ["EPWA"]), null, true).ToString());
         Assert.Equal("(several) Stockholm", new CardViewModel(Card(1, "Stockholm", codes: ["ESSA", "ESSB"]), null, true).ToString());
         Assert.Equal("Nothing", new CardViewModel(Card(1, "Nothing"), null, true).ToString());
     }
@@ -128,5 +129,27 @@ public sealed class CardViewModelTests
         Assert.Contains(nameof(CardViewModel.Name), changed);
         Assert.Contains(nameof(CardViewModel.Light), changed);
         Assert.DoesNotContain(nameof(CardViewModel.Code), changed);
+    }
+
+    [Theory]
+    [InlineData("EPWA", "EPWA Chopin Airport", "Chopin Airport")]
+    [InlineData("EPWA", "epwa - Warsaw", "Warsaw")]
+    [InlineData("EPWA", "Chopin Airport", "Chopin Airport")]
+    [InlineData("EPWA", "EPWA", "EPWA")]
+    [InlineData("ESS", "ESSA Arlanda", "ESSA Arlanda")]
+    [InlineData(null, "EPWA Chopin Airport", "EPWA Chopin Airport")]
+    public void The_title_drops_the_code_the_card_already_shows(string? code, string name, string title)
+        => Assert.Equal(title, CardViewModel.TitleOf(code, name));
+
+    [Fact]
+    public void Only_stored_cards_can_be_dragged_and_they_carry_their_section()
+    {
+        var stored = new CardViewModel(Card(1, "Arlanda", codes: ["ESSA"]), null, true);
+        var provisional = new CardViewModel(Card(null, "pkg", Category.Aircraft, CardTab.Aircraft), null, false);
+
+        Assert.True(stored.CanDrag);
+        Assert.Equal(Category.Scenery, stored.Section);
+        Assert.False(provisional.CanDrag);
+        Assert.Equal(Category.Aircraft, provisional.Section);
     }
 }

@@ -15,7 +15,8 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
     </UserControl.Resources>
-    <Border x:Name="Frame" CornerRadius="8" Background="#2B2B2B" Cursor="Hand" MouseLeftButtonDown="OnPress" MouseLeftButtonUp="OnRelease" LostMouseCapture="OnCaptureLost">
+    <Border x:Name="Frame" CornerRadius="8" Background="#2B2B2B" Cursor="Hand" MouseLeftButtonDown="OnPress" MouseLeftButtonUp="OnRelease" LostMouseCapture="OnCaptureLost"
+            MouseMove="OnMove" AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop">
         <Grid>
             <ui:SymbolIcon FontSize="64" Symbol="{Binding Tab, Converter={StaticResource TabSymbol}}"
                            Foreground="#55FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -30,9 +31,10 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <StackPanel>
-                    <TextBlock Style="{StaticResource CardText}" Text="{Binding Code}" FontSize="20" FontWeight="Bold"
-                               Visibility="{Binding Code, Converter={StaticResource Present}}" />
-                    <TextBlock Style="{StaticResource CardText}" Text="{Binding Name}" ToolTip="{Binding Name}" />
+                    <!-- One line: the code, dimmed, then the name without the code (Rickard, 2026-11-15). A null code shows nothing, not the space. -->
+                    <TextBlock Style="{StaticResource CardText}" FontSize="16" ToolTip="{Binding Name}">
+                        <Run Text="{Binding Code, Mode=OneWay, StringFormat='{}{0} '}" Foreground="#99FFFFFF" /><Run Text="{Binding Title, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
                     <TextBlock Style="{StaticResource CardText}" Text="{Binding Subtitle}" Opacity="0.8"
                                Visibility="{Binding Subtitle, Converter={StaticResource Present}}" />
                     <TextBlock Style="{StaticResource CardText}" Text="{Binding CodesLine}" Opacity="0.8"

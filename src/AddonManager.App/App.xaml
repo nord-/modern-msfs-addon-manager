@@ -8,6 +8,14 @@
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
+            <!-- A card dialog row (Package or GSX profile) whose Dimmed is true. -->
+            <Style x:Key="DimmedRow" TargetType="DockPanel">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Dimmed}" Value="True">
+                        <Setter Property="Opacity" Value="0.5" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

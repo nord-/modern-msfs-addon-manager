@@ -8,11 +8,20 @@
                  WindowStartupLocation="CenterScreen">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RescanCommand}" />
-        <KeyBinding Key="Escape" Command="{Binding CloseCardCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding DiscardCardCommand}" />
     </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <local:PresentToVisibilityConverter x:Key="Present" />
+        <!-- A tab or menu item that takes a dragged card fills its whole item, so the accent border (DropHighlight) goes round all of it.
+             The transparent border keeps the item from moving when the accent border shows. -->
+        <Style x:Key="DropTarget" TargetType="Border">
+            <Setter Property="AllowDrop" Value="True" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -33,10 +42,28 @@
                 <ListBox DockPanel.Dock="Bottom" SelectedValuePath="Tag" SelectedValue="{Binding SelectedMenu, Mode=TwoWay}">
                     <ListBoxItem Content="Settings" Tag="{x:Static vm:MenuSection.Settings}" />
                 </ListBox>
+                <!-- The three content sections take a dragged card; the Border inside each item draws the drop border. -->
                 <ListBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedMenu, Mode=TwoWay}">
-                    <ListBoxItem Content="Scenery" Tag="{x:Static vm:MenuSection.Scenery}" />
-                    <ListBoxItem Content="Aircraft" Tag="{x:Static vm:MenuSection.Aircraft}" />
-                    <ListBoxItem Content="Other" Tag="{x:Static vm:MenuSection.Other}" />
+                    <ListBox.Resources>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="AllowDrop" Value="True" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                            <EventSetter Event="DragOver" Handler="OnSectionDragOver" />
+                            <EventSetter Event="DragLeave" Handler="OnSectionDragLeave" />
+                            <EventSetter Event="Drop" Handler="OnSectionDrop" />
+                        </Style>
+                    </ListBox.Resources>
+                    <ListBoxItem Tag="{x:Static vm:MenuSection.Scenery}" AutomationProperties.Name="Scenery">
+                        <Border Style="{StaticResource DropTarget}" Padding="8,4"><TextBlock Text="Scenery" /></Border>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="{x:Static vm:MenuSection.Aircraft}" AutomationProperties.Name="Aircraft">
+                        <Border Style="{StaticResource DropTarget}" Padding="8,4"><TextBlock Text="Aircraft" /></Border>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="{x:Static vm:MenuSection.Other}" AutomationProperties.Name="Other">
+                        <Border Style="{StaticResource DropTarget}" Padding="8,4"><TextBlock Text="Other" /></Border>
+                    </ListBoxItem>
                 </ListBox>
             </DockPanel>
 
@@ -77,9 +104,18 @@
                                 <StackPanel Orientation="Horizontal" />
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Header}" Margin="8,2" />
+                                <Border Style="{StaticResource DropTarget}" Padding="12,4" DragOver="OnTabDragOver" DragLeave="OnTabDragLeave" Drop="OnTabDrop">
+                                    <TextBlock Text="{Binding Header}" />
+                                </Border>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -115,5 +151,8 @@
                 </Grid>
             </Grid>
         </Grid>
+
+        <!-- Yes/No questions (merge, Remove) open here over the whole window; last, so it is on top. -->
+        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="0" Grid.RowSpan="2" />
     </Grid>
 </ui:FluentWindow>

@@ -412,6 +412,18 @@ Kontrollen gjordes på simmaskinen 2026-11-15 (PR #28) och gav sju fynd, som all
 - **ICAO-raden i dialogen** har etiketten, chipsen och textrutan på samma mittlinje.
 - Punkterna om provisional cards kan inte testas för hand, eftersom korten bara finns medan skanningen pågår. De täcks av enhetstesterna.
 
+## Beslut för plan 5d (2026-11-15)
+
+Designen står i `docs/superpowers/specs/2026-11-15-plan-5d-libraries-design.md` (issue #24). Rickard valde 2026-11-15 att 5d bara gör Libraries: "Bara Libraries i 5d". Not shown, Community-listan, Packages-roten, innehållsinställningarna och målet om ett fönster på ungefär 1 sekund flyttas till en egen issue; Core har redan det mesta av logiken för dem och saknar bara vyn.
+
+- **Varje Add och Remove sparar listan och startar en vanlig inkrementell körning**, som F5. Körningens upptäckt går igenom de nya Libraries, `SyncCoordinator.Start` tar in Community, och körningens slut fördelar korten, låser paket som inget Library håller och bygger om bevakaren. Skäl (granskningen 2026-11-15): sessionen har ingen färdig analys medan en körning pågår, och ett index från förra körningen klassar en borttagen mapps länkar som Managed. Avviker från spec 6.1 ("Registering a Library later"): ett Not shown-paket som är av behåller sin Stale-länk.
+- **Remove frågar inget.** Det ångras genom att mappen läggs till igen (Kjell, i linje med 5c).
+- **Add och Remove fungerar medan simmen kör och medan en körning pågår.** Lagning av Stale-länkar väntar som i 5b.
+- **Sista Library får tas bort**; då gäller 5a D13.
+- **Ett misslyckat sparande återställer listan i minnet**, som `CompleteFirstRunAsync`, till skillnad från kortredigeringarna.
+- **Länktäckningen visas också i Settings**, räknad från senaste upptäckts Community.
+- **Ersätter 5a D6 ("Efter Start ändrar ingenting dem") och D11 (Settings skrivskyddat).**
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

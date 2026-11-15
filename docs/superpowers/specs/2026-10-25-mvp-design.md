@@ -6,6 +6,10 @@ Date: 2026-10-25, revised 2026-10-28 after the UI design session (menus, tabs, c
 
 Plan 5c ([2026-11-09-plan-5c-editing-design.md](2026-11-09-plan-5c-editing-design.md)) is implemented and changes these places; the 5c spec wins where they differ. Section 2, goal 3: "Move out" is called Split (5c 4.1). Section 6.5: Split needs at least two Packages that are not GSX profiles (5c 4.1), a merge asks for confirmation and so does moving a card with ICAO codes out of Scenery (5c 4.2), and the ICAO code field suggests Airport names as well as codes (5c 3). Section 8: there is no copy action for shipped profiles, they are labelled "shipped with scenery" and hidden when the installed profile has a row, and Two profiles is shown at each profile's name (5c 6 and 7). Section 10: the card dialog follows 5c 3, 5 and 6, and GSX profiles are listed in the GSX section instead of among the Package rows. Section 15 is closed by 5c 6.1.
 
+## Changed by the 5d spec (2026-11-15)
+
+Plan 5d ([2026-11-15-plan-5d-libraries-design.md](2026-11-15-plan-5d-libraries-design.md)) lets the user add and remove Libraries from Settings after first run; the 5d spec wins where they differ. Section 6.1, "Registering a Library later": every Add or Remove saves the list and starts an ordinary run, and the adoption is done by that run's discovery (`SyncCoordinator.Start`, 7.4) rather than at the moment of registering, so a Not shown Package that is off keeps its Stale entry (5b). Removing the last Library is allowed. Section 10, Settings: Libraries are editable and the link coverage is shown in Settings too; Not shown, Community, the Packages root and the content settings move out of 5d, and so does the ~1 s window target (7.2).
+
 Vocabulary is defined in [GLOSSARY.md](../../../GLOSSARY.md) and used strictly below. Background and the full decision log are in [ANALYS.md](../../../ANALYS.md) (Swedish). Architectural decisions are in [docs/adr](../../adr).
 
 ## 1. Intent

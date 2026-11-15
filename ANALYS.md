@@ -380,6 +380,38 @@ Kontrollen gjordes på simmaskinen 2026-11-08 och på utvecklingsdatorn 2026-11-
 - **Kortdialogen har bara krysset i hörnet.** Close-knappen längst ner är borttagen. Esc och ett klick utanför dialogen stänger den fortfarande.
 - **Testmappen för kontrollen** innehåller `SCENERY`-paket utan BGL-filer, och appen klassar dem som Other. Skriptet `tools/dev-check/New-TestPackages.ps1` skriver nu ut att Library ska läggas till under Other.
 
+## Beslut för plan 5c (2026-11-09)
+
+Designen står i `docs/superpowers/specs/2026-11-09-plan-5c-editing-design.md` (issue #23). Alla fyra delarna är med: redigering av kortets huvud, Split och drag och släpp, dialogens övriga info och GSX-delen.
+
+- **"Move out" heter "Split"**, som motsats till "Merge", i gränssnittet, i spec och i koden (`CardEditor.Split`). Knappen har Fluent-ikonen `ArrowSplit20` framför texten. Appen använder WPF-UI:s ikoner (microsoft/fluentui-system-icons), inte MDI.
+- **Huvudet är alltid redigerbart**, utan redigeringsläge. Namnet sparas på Enter eller när fokus lämnar rutan; bilden väljs i en meny (paketens thumbnails, "Choose file…", "Automatic"); ICAO-koderna visas som chips med × och förslag medan man skriver.
+- **Merge kräver bekräftelse** ("Merge EHRD Rotterdam into EHAM Schiphol?"). Split ångrar inte en merge helt: ICAO-koderna, de borttagna koderna och namnet och bilden som mergen gav målkortet ligger kvar och rättas för hand. Rickard valde bekräftelsen 2026-11-09 efter spec-granskningens runda 1. Av samma skäl frågade en flytt ut ur Scenery av ett kort med ICAO-koder först (ersatt 2026-11-15: ingen flytt frågar, se "Efter Rickards kontroll av 5c"). Flikar öppnas inte när man hovrar över dem under ett drag.
+- **GSX-delen är bara visning i 5c.** Ingen kopiering av medföljande profiler och ingen on/off; Rickard, 2026-11-09: det finns bara on/off för en profil, och on/off ingår inte i 5c. En rad per profil med bara namnet, inga `.py`-filer. Två aktiva profiler för samma ICAO-kod ger en gul varningsikon vid varje profils namn. Fel visas aldrig som dialog; varningsikonen tänds och tooltipen säger felet. Söklänken till flightsim.to är bara en ikon (`Search20`). Avviker från spec 8 och issue #23.
+- **GSX-profiler visas bara i GSX-delen**, inte bland paketraderna som i 5b. GSX-delen visas så fort kortet har en profil, och aktiva profiler för kortets koder som ligger på ett annat kort får en rad med en klickbar länk till det kortet.
+- **Split kräver minst två paket som inte är GSX-profiler**; Core ändras på samma sätt (MVP 6.5 "Move out" räknade alla paket).
+- **ICAO-förslagen matchar även flygplatsnamn**, med Cores befintliga `AirportSuggestions.Find` (högst 10) Första förslaget är förvalt och Enter lägger till det; Esc stänger listan, och Enter lägger sedan till exakt den skrivna texten (Rickard, 2026-11-09).
+- **Medföljande profiler** märks "shipped with scenery" och döljs när den installerade profilen redan har en rad i dialogen.
+- **Medföljande profiler är inte aktiva (spec 15 stängd).** GSX Pro med SU10 Navdata API läser egna flygplatsprofiler bara från `%APPDATA%\Virtuali\GSX\MSFS`. Virtuali i FSDT:s forum, med citat ur GSX-manualen sida 83: "Custom profiles which were previously distributed by a scenery developer in the scenery package itself won't be used anymore" och "you need to be sure you have only ONE .INI for a given ICAO". Dave's GSX Profile Manager läser också bara GSX-mappen och installerar genom att kopiera dit.
+
+### Plan 5c är implementerad (2026-11-10)
+
+Alla fyra delarna av designen är byggda. Kortets namn kan ändras, bilden väljs (paketets thumbnail, en vald fil eller Automatic) och ICAO-koderna redigeras med förslag. Ett paket kan delas av från ett kort (Split), kort slås ihop med drag och släpp efter en bekräftelse, och ett kort flyttas till en annan flik eller menysektion med drag och släpp (en flytt ut ur Scenery av ett kort med ICAO-koder frågade först; borttaget 2026-11-15, se nedan). Dialogen visar inbyggda delar, flygplatser med namn, Replaces built-in, andra kort på samma flygplats, taggar och en GSX-del som bara visar (installerade, medföljande och saknade profiler, varningen för två profiler och söklänken till flightsim.to). Det som återstår är 5d (Settings), spårat i issue #24. Den manuella kontrollen av 5c på simmaskinen görs av Rickard och är inte gjord än.
+
+### Efter Rickards kontroll av 5c (2026-11-15)
+
+Kontrollen gjordes på simmaskinen 2026-11-15 (PR #28) och gav sju fynd, som alla är åtgärdade på samma PR.
+
+- **Kortets namnrad visar koden dämpad följd av namnet, på en rad.** Den tidigare stora koden på egen rad är borttagen, och namnet visas utan koden när det börjar med den: "EPWA Chopin Airport" visas som "EPWA" (dämpad) och "Chopin Airport". Rickard: "ICAO-koden är upprepad i namnet." Avviker från spec 10 (kortväggen).
+- **En bild som valts med "Choose file…" står först i bildmenyn**, med filnamnet som rubrik, så att den syns bland kortets bilder.
+- **En vald bild sparas inte när man väljer "Automatic".** Den försvinner då ur bildmenyn och väljs igen med "Choose file…". En lista med tidigare valda bilder skulle kräva en ny lista per kort i `userdata.db`, ett kryss för att rensa den och regler för vad som händer vid merge och split. Det byggs inte nu (Rickard, 2026-11-15).
+- **Ingen flytt frågar, bara merge.** En flytt till en flik frågade aldrig, men en flytt ut ur Scenery av ett kort med ICAO-koder frågade. Rickard, 2026-11-15: "för användaren syns ingen skillnad på 'går att ångra' och 'går inte att ångra', bara att i ena läget kommer en fråga och i andra ingen alls." Koderna kommer också tillbaka från paketen när kortet dras tillbaka till Scenery. Bara koder som lagts till för hand går förlorade. Ersätter beslutet om flytt ut ur Scenery under "Beslut för plan 5c".
+- **Ja/nej-frågor visas i appens egen dialog** (WPF-UI `ContentDialog` över fönstret), inte i Windows `MessageBox`. Det gäller merge och Remove.
+- **Kortet följer pekaren under ett drag**, som en halvgenomskinlig bild, och dess plats på väggen tonas ned tills släppet.
+- **Släppramen går runt hela fliken eller menyraden**, inte bara runt texten.
+- **ICAO-raden i dialogen** har etiketten, chipsen och textrutan på samma mittlinje.
+- Punkterna om provisional cards kan inte testas för hand, eftersom korten bara finns medan skanningen pågår. De täcks av enhetstesterna.
+
 ## Komponenter och bedömd svårighet
 
 | Del | Svårighet | Anteckning |

@@ -9,7 +9,7 @@ A folder with a `manifest.json`, or a GSX profile file. A folder Package is the 
 _Avoid_: Addon, Mod
 
 **Card**:
-The app's group of Packages that belong together, such as all Packages for one Airport or one aircraft. A Package belongs to at most one card. On the card wall it shows an image, the ICAO code and Airport name or the card's name, and a light for its state: red Off, yellow Mixed, green On, or grey with a lock when Locked; its Packages are listed in the card's dialog. Scenery, Aircraft and Other cards are different kinds: only Scenery cards have ICAO codes, and cards are merged only within one menu section.
+The app's group of Packages that belong together, such as all Packages for one Airport or one aircraft. A Package belongs to at most one card. On the card wall it shows an image, the ICAO code and Airport name or the card's name, and a light for its state: red Off, yellow Mixed, green On, or grey with a lock when Locked; its Packages are listed in the card's dialog. Scenery, Aircraft and Other cards are different kinds: only Scenery cards have ICAO codes, and cards are merged only within one menu section. A Package can be split off a card onto a card of its own.
 _Avoid_: Addon, bundle, group, product, tile
 
 **Provisional card**:

@@ -340,7 +340,7 @@ public sealed class CardEditorTests
     }
 
     [Fact]
-    public void Move_out_copies_the_removals_and_takes_no_icao_codes()
+    public void Split_copies_the_removals_and_takes_no_icao_codes()
     {
         var w = NewWorld();
         w.Add(Scenery("eham-a", ["EHAM"]));
@@ -350,7 +350,7 @@ public sealed class CardEditorTests
         source.RemoveCode(Code("EHRD"));
         var (editor, _) = NewEditor();
 
-        var id = editor.MoveOut(w.State, source.Id, Key("eham-b"));
+        var id = editor.Split(w.State, source.Id, Key("eham-b"));
 
         var created = Assert.IsType<CardRecord>(w.State.FindCard(id));
         Assert.Empty(created.Codes);
@@ -360,13 +360,13 @@ public sealed class CardEditorTests
     }
 
     [Fact]
-    public void Move_out_is_refused_on_the_only_package()
+    public void Split_is_refused_on_the_only_package()
     {
         var w = AirportsWorld();
         var card = CardOf(w, "eham-x");
         var (editor, store) = NewEditor();
 
-        Assert.Throws<InvalidOperationException>(() => editor.MoveOut(w.State, card.Id, Key("eham-x")));
+        Assert.Throws<InvalidOperationException>(() => editor.Split(w.State, card.Id, Key("eham-x")));
 
         Assert.Equal(2, w.State.Cards.Count);
         Assert.Equal(0, store.SaveCount);
@@ -403,7 +403,7 @@ public sealed class CardEditorTests
     }
 
     [Fact]
-    public void Move_out_gives_the_package_a_new_card_on_the_same_tab()
+    public void Split_gives_the_package_a_new_card_on_the_same_tab()
     {
         var w = NewWorld();
         w.Add(Scenery("eham-a", ["EHAM"]));
@@ -411,7 +411,7 @@ public sealed class CardEditorTests
         var source = w.Group(Category.Scenery, CardTab.Assets, "eham-a", "eham-b");
         var (editor, store) = NewEditor();
 
-        var id = editor.MoveOut(w.State, source.Id, Key("eham-b"));
+        var id = editor.Split(w.State, source.Id, Key("eham-b"));
 
         var created = Assert.IsType<CardRecord>(w.State.FindCard(id));
         Assert.Equal([Key("eham-b")], w.State.PackagesOn(created.Id));
@@ -428,9 +428,9 @@ public sealed class CardEditorTests
         var card = CardOf(w, "eham-x");
         var (editor, store) = NewEditor();
 
-        Assert.Throws<InvalidOperationException>(() => editor.MoveOut(w.State, card.Id, Key("eham-x")));
-        Assert.Throws<InvalidOperationException>(() => editor.MoveOut(w.State, card.Id, Key("essa-x")));
-        Assert.Throws<ArgumentException>(() => editor.MoveOut(w.State, 99, Key("eham-x")));
+        Assert.Throws<InvalidOperationException>(() => editor.Split(w.State, card.Id, Key("eham-x")));
+        Assert.Throws<InvalidOperationException>(() => editor.Split(w.State, card.Id, Key("essa-x")));
+        Assert.Throws<ArgumentException>(() => editor.Split(w.State, 99, Key("eham-x")));
 
         Assert.Equal(2, w.State.Cards.Count);
         Assert.Equal(0, store.SaveCount);

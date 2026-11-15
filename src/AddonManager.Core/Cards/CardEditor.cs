@@ -119,13 +119,13 @@ public sealed class CardEditor(IUserStateStore store, TimeProvider clock)
     }
 
     /// <summary>Splits one Package off onto a new card of its own in the same section and tab. Returns the new card's id.</summary>
-    public long MoveOut(UserState state, long card, PackageKey package)
+    public long Split(UserState state, long card, PackageKey package)
     {
         using var change = store.BeginChange();
         var source = Require(state, card);
         if (package.Kind == PackageKind.GsxProfile)
         {
-            throw new InvalidOperationException("A GSX profile cannot be moved out of its card.");
+            throw new InvalidOperationException("A GSX profile cannot be split off its card.");
         }
 
         if (state.CardOf(package)?.Id != card)
@@ -133,9 +133,9 @@ public sealed class CardEditor(IUserStateStore store, TimeProvider clock)
             throw new InvalidOperationException($"{package} is not on this card.");
         }
 
-        if (state.PackagesOn(card).Count == 1)
+        if (state.PackagesOn(card).Count(k => k.Kind != PackageKind.GsxProfile) < 2)
         {
-            throw new InvalidOperationException("The only Package of a card cannot be moved out.");
+            throw new InvalidOperationException("A card needs two Packages that are not GSX profiles to be split.");
         }
 
         var created = state.NewCard(source.Section, source.Tab, [], clock.GetUtcNow());

@@ -92,6 +92,12 @@ public sealed record CardPackage(
 {
     /// <summary>A <c>.off</c> GSX profile: shown as disabled, not counted (spec 8).</summary>
     public bool Disabled { get; init; }
+
+    /// <summary>The Package's thumbnail, also when it is not found (the last scanned value).</summary>
+    public string? ThumbnailPath { get; init; }
+
+    /// <summary>The records (name and position) of the Airports among <see cref="Codes"/>, also when not found.</summary>
+    public IReadOnlyList<AirportRecord> Airports { get; init; } = [];
 }
 
 /// <summary>A Package on no card that is not shown: no Library registered for its section holds it (spec 6.1). <c>CanShowIn</c> is true once its section is fixed.</summary>

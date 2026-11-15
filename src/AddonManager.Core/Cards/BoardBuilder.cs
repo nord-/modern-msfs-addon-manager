@@ -87,7 +87,7 @@ public static class BoardBuilder
             p.Presence == Presence.Found && p.Lock == LockReason.None,
             DisabledReason(p, facts),
             facts.Replaces(p),
-            p.Presence == Presence.NotFound || p.Lock == LockReason.NotInRegisteredLibrary) { Disabled = p.Disabled }).ToList();
+            p.Presence == Presence.NotFound || p.Lock == LockReason.NotInRegisteredLibrary) { Disabled = p.Disabled, ThumbnailPath = p.ThumbnailPath, Airports = p.Airports }).ToList();
 
         // Type designators are the aircraft's own tags (spec 6.4): they join the folder tags on Aircraft cards only.
         IReadOnlyList<string> designators = layout.Section == Category.Aircraft

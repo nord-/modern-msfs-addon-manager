@@ -414,7 +414,7 @@ Kontrollen gjordes på simmaskinen 2026-11-15 (PR #28) och gav sju fynd, som all
 
 ## Beslut för plan 5d (2026-11-15)
 
-Designen står i `docs/superpowers/specs/2026-11-15-plan-5d-libraries-design.md` (issue #24). Rickard valde 2026-11-15 att 5d bara gör Libraries: "Bara Libraries i 5d". Not shown, Community-listan, Packages-roten, innehållsinställningarna och målet om ett fönster på ungefär 1 sekund flyttas till en egen issue; Core har redan det mesta av logiken för dem och saknar bara vyn.
+Designen står i `docs/superpowers/specs/2026-11-15-plan-5d-libraries-design.md` (issue #24). Rickard valde 2026-11-15 att 5d bara gör Libraries: "Bara Libraries i 5d". Not shown, Community-listan, Packages-roten, innehållsinställningarna och målet om ett fönster på ungefär 1 sekund flyttas till issue #29 (plan 5e); Core har redan det mesta av logiken för dem och saknar bara vyn.
 
 - **Varje Add och Remove sparar listan och startar en vanlig inkrementell körning**, som bevakarens (F5 kör en full skanning). Add ändrar bara listan; `RegisterLibrary` förlorar sin adoption. Körningens upptäckt går igenom de nya Libraries, `SyncCoordinator.Start` tar in Community, och körningens slut fördelar korten, låser paket som inget Library håller och bygger om bevakaren. Skäl (granskningen 2026-11-15): sessionen har ingen färdig analys medan en körning pågår, och ett index från förra körningen klassar en borttagen mapps länkar som Managed. Avviker från spec 6.1 ("Registering a Library later"): ett Not shown-paket som är av behåller sin Stale-länk.
 - **Remove frågar inget.** Det ångras genom att mappen läggs till igen (Kjell, i linje med 5c).
@@ -422,9 +422,11 @@ Designen står i `docs/superpowers/specs/2026-11-15-plan-5d-libraries-design.md`
 - **Sista Library får tas bort**; då gäller 5a D13.
 - **Ett misslyckat sparande återställer listan i minnet**, som `CompleteFirstRunAsync`, till skillnad från kortredigeringarna.
 - **Länktäckningen visas också i Settings**, räknad från senaste upptäckts Community.
-- **En kopia rangordnas efter det först registrerade Library som håller den**, inte efter det innersta. Det följer spec 6.1 ("the order its folder was first registered"), och då ändrar en nästlad Add eller Remove aldrig förvald aktiv kopia. Library som visas i dialogen och taggarna kommer fortfarande från det innersta.
-- **Mellan sparandet och nästa upptäckt** vägras kortets switch och Remove ("Libraries are being updated. Try again in a moment."), och väggen publiceras inte om. Annars kan en switch skapa en junction in i en mapp som just tagits bort (granskning 2, 2026-11-15).
-- **Add vägrar en mapp som inte finns eller inte går att läsa.**
+- **En kopia rangordnas efter det först registrerade Library som håller den**, inte efter det innersta. Det följer spec 6.1 ("the order its folder was first registered"), och då ändrar en nästlad Add aldrig förvald aktiv kopia (för Remove finns ett undantag, nedan). Library som visas i dialogen och taggarna kommer fortfarande från det innersta.
+- **Mellan sparandet och nästa upptäckt** vägras alla kortändringar ("Libraries are being updated. Wait for the scan to finish, or press F5."), och väggen publiceras inte om. Annars kan en switch skapa en junction in i en mapp som just tagits bort, och en annan ändring publicerar en vägg som blandar den nya listan med det gamla indexet (granskning 2 och 3, 2026-11-15). Spärren öppnas först när en upptäckt med exakt den sparade listan har kört `Start` utan fel och publicerat väggen.
+- **En upptäckt från en inaktuell lista kastas.** En körning som redan pågår behåller listan den startade med (`ScanService` byter bara listan för den köade). Upptäckten jämförs med den sparade listan (sökvägar, ordning och sektioner); skiljer den sig körs ingen `Start` och ingen `Settlement`, och inget publiceras (granskning 3, 2026-11-15).
+- **Två accepterade följder av Remove:** tas ett Library bort som inte hittas, och ett annat registrerat Library har en kopia, lagas länken mot den kopian (5b D10). Tas en inre mapp bort när ett tredje Library ligger mellan den inre och den yttre i ordningen, kan förvald aktiv kopia ändras. En vald aktiv kopia ändras aldrig.
+- **Add vägrar en mapp som inte finns eller inte går att läsa**, både i Settings och på första-startsskärmen; kontrollen görs i sessionen.
 - **Ersätter 5a D6 ("Efter Start ändrar ingenting dem") och D11 (Settings skrivskyddat).**
 
 ## Komponenter och bedömd svårighet

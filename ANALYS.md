@@ -416,12 +416,15 @@ Kontrollen gjordes på simmaskinen 2026-11-15 (PR #28) och gav sju fynd, som all
 
 Designen står i `docs/superpowers/specs/2026-11-15-plan-5d-libraries-design.md` (issue #24). Rickard valde 2026-11-15 att 5d bara gör Libraries: "Bara Libraries i 5d". Not shown, Community-listan, Packages-roten, innehållsinställningarna och målet om ett fönster på ungefär 1 sekund flyttas till en egen issue; Core har redan det mesta av logiken för dem och saknar bara vyn.
 
-- **Varje Add och Remove sparar listan och startar en vanlig inkrementell körning**, som F5. Körningens upptäckt går igenom de nya Libraries, `SyncCoordinator.Start` tar in Community, och körningens slut fördelar korten, låser paket som inget Library håller och bygger om bevakaren. Skäl (granskningen 2026-11-15): sessionen har ingen färdig analys medan en körning pågår, och ett index från förra körningen klassar en borttagen mapps länkar som Managed. Avviker från spec 6.1 ("Registering a Library later"): ett Not shown-paket som är av behåller sin Stale-länk.
+- **Varje Add och Remove sparar listan och startar en vanlig inkrementell körning**, som bevakarens (F5 kör en full skanning). Add ändrar bara listan; `RegisterLibrary` förlorar sin adoption. Körningens upptäckt går igenom de nya Libraries, `SyncCoordinator.Start` tar in Community, och körningens slut fördelar korten, låser paket som inget Library håller och bygger om bevakaren. Skäl (granskningen 2026-11-15): sessionen har ingen färdig analys medan en körning pågår, och ett index från förra körningen klassar en borttagen mapps länkar som Managed. Avviker från spec 6.1 ("Registering a Library later"): ett Not shown-paket som är av behåller sin Stale-länk.
 - **Remove frågar inget.** Det ångras genom att mappen läggs till igen (Kjell, i linje med 5c).
 - **Add och Remove fungerar medan simmen kör och medan en körning pågår.** Lagning av Stale-länkar väntar som i 5b.
 - **Sista Library får tas bort**; då gäller 5a D13.
 - **Ett misslyckat sparande återställer listan i minnet**, som `CompleteFirstRunAsync`, till skillnad från kortredigeringarna.
 - **Länktäckningen visas också i Settings**, räknad från senaste upptäckts Community.
+- **En kopia rangordnas efter det först registrerade Library som håller den**, inte efter det innersta. Det följer spec 6.1 ("the order its folder was first registered"), och då ändrar en nästlad Add eller Remove aldrig förvald aktiv kopia. Library som visas i dialogen och taggarna kommer fortfarande från det innersta.
+- **Mellan sparandet och nästa upptäckt** vägras kortets switch och Remove ("Libraries are being updated. Try again in a moment."), och väggen publiceras inte om. Annars kan en switch skapa en junction in i en mapp som just tagits bort (granskning 2, 2026-11-15).
+- **Add vägrar en mapp som inte finns eller inte går att läsa.**
 - **Ersätter 5a D6 ("Efter Start ändrar ingenting dem") och D11 (Settings skrivskyddat).**
 
 ## Komponenter och bedömd svårighet
